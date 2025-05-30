@@ -1,15 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import WidgetSelectionModal from '../components/WidgetSelectionModal';
 import InfoCard from '../components/widgets/InfoCard';
 import ChartWidget from '../components/widgets/ChartWidget';
 import DataTable from '../components/widgets/DataTable';
-import SOPWidget from '../components/widgets/SOPWidget';
+import DataVisualizationWidget from '../components/widgets/DataVisualizationWidget';
 import ChatBot from '../components/ChatBot';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { SOPCountData, SOPPatternData } from '@/services/sopDeviationService';
 import { useToast } from '@/hooks/use-toast';
 
 // Sample data for widgets
@@ -56,8 +54,12 @@ const Index = () => {
     'bar-chart',
     'data-table'
   ]);
-  const [sopCountData, setSOPCountData] = useState<SOPCountData | null>(null);
-  const [sopPatternsData, setSOPPatternsData] = useState<SOPPatternData[] | null>(null);
+  const [dataVisualizationWidgets, setDataVisualizationWidgets] = useState<Array<{
+    id: string;
+    type: string;
+    data: any[];
+    title: string;
+  }>>([]);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -79,7 +81,6 @@ const Index = () => {
       if (error) throw error;
 
       if (data && data.length > 0) {
-        // Extract widget IDs from preferences
         const widgetIds = data.map(pref => pref.selected_module).filter(Boolean);
         if (widgetIds.length > 0) {
           setSelectedWidgets(widgetIds);
@@ -103,13 +104,11 @@ const Index = () => {
     }
 
     try {
-      // Delete existing preferences
       await supabase
         .from('user_widget_preferences')
         .delete()
         .eq('user_id', user.id);
 
-      // Insert new preferences
       const preferences = widgets.map(widgetId => ({
         user_id: user.id,
         widget_id: crypto.randomUUID(),
@@ -136,9 +135,14 @@ const Index = () => {
     }
   };
 
-  const handleSOPDataReceived = (countData: SOPCountData, patternsData: SOPPatternData[]) => {
-    setSOPCountData(countData);
-    setSOPPatternsData(patternsData);
+  const handleDataReceived = (type: string, data: any[], title: string) => {
+    const newWidget = {
+      id: `data-viz-${Date.now()}`,
+      type,
+      data,
+      title
+    };
+    setDataVisualizationWidgets(prev => [...prev, newWidget]);
   };
 
   const renderWidget = (widgetId: string) => {
@@ -162,53 +166,20 @@ const Index = () => {
     }
   };
 
-  const renderSOPWidgets = () => {
-    const widgets = [];
-    
-    if (sopCountData) {
-      widgets.push(
-        <SOPWidget
-          key="sop-count-bar"
-          type="count"
-          data={sopCountData}
-          visualizationType="bar"
-          title="SOP Deviation Count"
-        />,
-        <SOPWidget
-          key="sop-count-pie"
-          type="count"
-          data={sopCountData}
-          visualizationType="pie"
-          title="SOP Compliance Overview"
-        />
-      );
-    }
-    
-    if (sopPatternsData) {
-      widgets.push(
-        <SOPWidget
-          key="sop-patterns-bar"
-          type="patterns"
-          data={sopPatternsData}
-          visualizationType="bar"
-          title="SOP Deviation Patterns (Bar)"
-        />,
-        <SOPWidget
-          key="sop-patterns-line"
-          type="patterns"
-          data={sopPatternsData}
-          visualizationType="line"
-          title="SOP Deviation Patterns (Line)"
-        />
-      );
-    }
-    
-    return widgets;
+  const renderDataVisualizationWidgets = () => {
+    return dataVisualizationWidgets.map(widget => (
+      <DataVisualizationWidget
+        key={widget.id}
+        type={widget.type as 'sop-table' | 'incomplete-bar' | 'longrunning-bar'}
+        data={widget.data}
+        title={widget.title}
+      />
+    ));
   };
 
   const allWidgets = [
     ...selectedWidgets.map(widgetId => renderWidget(widgetId)),
-    ...renderSOPWidgets()
+    ...renderDataVisualizationWidgets()
   ].filter(Boolean);
 
   return (
@@ -228,7 +199,7 @@ const Index = () => {
             <div className="text-center py-16">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 max-w-md mx-auto">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">No widgets selected</h3>
-                <p className="text-gray-600 mb-6">Choose widgets to personalize your dashboard experience or ask the chatbot for SOP deviation data</p>
+                <p className="text-gray-600 mb-6">Choose widgets to personalize your dashboard or ask the chatbot for data analysis</p>
                 <button 
                   onClick={() => setIsModalOpen(true)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
@@ -252,7 +223,7 @@ const Index = () => {
         selectedWidgets={selectedWidgets}
       />
       
-      <ChatBot onSOPDataReceived={handleSOPDataReceived} />
+      <ChatBot onDataReceived={handleDataReceived} />
     </div>
   );
 };

@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Minimize2, Loader2 } from "lucide-react";
-import { sopDeviationService, SOPCountData, SOPPatternData } from '@/services/sopDeviationService';
+import { dataService } from '@/services/dataService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,17 +14,17 @@ interface Message {
   timestamp: Date;
 }
 
-interface SOPDeviationProps {
-  onSOPDataReceived: (countData: SOPCountData, patternsData: SOPPatternData[]) => void;
+interface DataVisualizationProps {
+  onDataReceived: (type: string, data: any[], title: string) => void;
 }
 
-const ChatBot: React.FC<SOPDeviationProps> = ({ onSOPDataReceived }) => {
+const ChatBot: React.FC<DataVisualizationProps> = ({ onDataReceived }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     { 
       id: 1, 
-      text: "Hello! I'm your GenUI assistant. Type 'SOP deviation' to fetch and visualize SOP deviation data from the API!", 
+      text: "Hello! I'm your GenUI assistant. Ask me about 'SOP deviation', 'Incomplete cases', or 'Long running cases' to visualize real data!", 
       sender: 'bot',
       timestamp: new Date()
     }
@@ -35,67 +34,88 @@ const ChatBot: React.FC<SOPDeviationProps> = ({ onSOPDataReceived }) => {
   const { toast } = useToast();
 
   const handleSOPDeviation = async () => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to access SOP deviation data.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    
     try {
-      // Fetch data from both endpoints (with fallback)
-      const [countData, patternsData] = await Promise.all([
-        sopDeviationService.getSOPDeviationCount(),
-        sopDeviationService.getSOPDeviationPatterns()
-      ]);
-
-      console.log('Fetched count data:', countData);
-      console.log('Fetched patterns data:', patternsData);
-
-      // Notify parent component with the data
-      onSOPDataReceived(countData, patternsData);
-
-      // Add success message to chat
+      const data = await dataService.getSOPDeviationTableData();
+      onDataReceived('sop-table', data, 'SOP Deviation Analysis');
+      
       const successMessage: Message = {
         id: Date.now(),
-        text: `Successfully fetched SOP deviation data! Found ${countData.count} deviations (${countData.percentage}% of total) and ${patternsData.length} pattern types. The data has been visualized on your dashboard.`,
+        text: `Successfully loaded SOP deviation data! Found ${data.length} patterns with detailed analysis. The data has been visualized as a table on your dashboard.`,
         sender: 'bot',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, successMessage]);
-
-      toast({
-        title: "Data Fetched Successfully",
-        description: "SOP deviation data has been loaded and visualized.",
-      });
-
     } catch (error) {
       console.error('Error fetching SOP deviation data:', error);
-      
       const errorMessage: Message = {
         id: Date.now(),
-        text: "Sorry, I couldn't fetch the SOP deviation data. Please make sure the API endpoints are accessible and try again.",
+        text: "Sorry, I couldn't fetch the SOP deviation data. Please check that the sopdeviation.json file is accessible.",
         sender: 'bot',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
+    }
+  };
 
-      toast({
-        title: "API Error",
-        description: "Failed to fetch SOP deviation data. Please check API connectivity.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  const handleIncompleteCases = async () => {
+    try {
+      const data = await dataService.getIncompleteCasesChartData();
+      onDataReceived('incomplete-bar', data, 'Incomplete Cases Analysis');
+      
+      const successMessage: Message = {
+        id: Date.now(),
+        text: `Successfully loaded incomplete cases data! The analysis shows the distribution of complete vs incomplete cases. The data has been visualized as a bar chart on your dashboard.`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, successMessage]);
+    } catch (error) {
+      console.error('Error fetching incomplete cases data:', error);
+      const errorMessage: Message = {
+        id: Date.now(),
+        text: "Sorry, I couldn't fetch the incomplete cases data. Please check that the incompletecases.json file is accessible.",
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+  };
+
+  const handleLongRunningCases = async () => {
+    try {
+      const data = await dataService.getLongRunningCasesChartData();
+      onDataReceived('longrunning-bar', data, 'Long Running Cases Analysis');
+      
+      const successMessage: Message = {
+        id: Date.now(),
+        text: `Successfully loaded long running cases data! Found ${data[0]?.value || 0} long running cases. The data has been visualized as a bar chart on your dashboard.`,
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, successMessage]);
+    } catch (error) {
+      console.error('Error fetching long running cases data:', error);
+      const errorMessage: Message = {
+        id: Date.now(),
+        text: "Sorry, I couldn't fetch the long running cases data. Please check that the longrunning_case.json file is accessible.",
+        sender: 'bot',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     }
   };
 
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
+    
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to access data visualization features.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     const userMessage: Message = { 
       id: Date.now(), 
@@ -105,20 +125,31 @@ const ChatBot: React.FC<SOPDeviationProps> = ({ onSOPDataReceived }) => {
     };
     setMessages(prev => [...prev, userMessage]);
     
-    // Check if message contains "SOP deviation"
-    if (message.toLowerCase().includes('sop deviation')) {
-      await handleSOPDeviation();
-    } else {
-      // Default bot response for other queries
-      setTimeout(() => {
-        const botResponse: Message = { 
-          id: Date.now() + 1, 
-          text: "I can help you with SOP deviation analysis. Try typing 'SOP deviation' to fetch and visualize real-time data from the API endpoints!", 
-          sender: 'bot',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, botResponse]);
-      }, 1000);
+    setIsLoading(true);
+    
+    const lowerMessage = message.toLowerCase();
+    
+    try {
+      if (lowerMessage.includes('sop deviation')) {
+        await handleSOPDeviation();
+      } else if (lowerMessage.includes('incomplete cases')) {
+        await handleIncompleteCases();
+      } else if (lowerMessage.includes('long running cases')) {
+        await handleLongRunningCases();
+      } else {
+        // Default bot response for other queries
+        setTimeout(() => {
+          const botResponse: Message = { 
+            id: Date.now() + 1, 
+            text: "I can help you visualize data! Try asking about:\n• 'SOP deviation' - for detailed pattern analysis\n• 'Incomplete cases' - for case completion status\n• 'Long running cases' - for case duration analysis", 
+            sender: 'bot',
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, botResponse]);
+        }, 1000);
+      }
+    } finally {
+      setIsLoading(false);
     }
     
     setMessage('');
@@ -168,7 +199,7 @@ const ChatBot: React.FC<SOPDeviationProps> = ({ onSOPDataReceived }) => {
                       : 'bg-gray-100 text-gray-900'
                   }`}
                 >
-                  <p className="text-sm">{msg.text}</p>
+                  <p className="text-sm whitespace-pre-line">{msg.text}</p>
                   <p className="text-xs opacity-70 mt-1">
                     {msg.timestamp.toLocaleTimeString()}
                   </p>
@@ -178,7 +209,7 @@ const ChatBot: React.FC<SOPDeviationProps> = ({ onSOPDataReceived }) => {
                 <div className="bg-gray-100 text-gray-900 p-3 rounded-lg max-w-[85%]">
                   <div className="flex items-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Fetching SOP deviation data...</span>
+                    <span className="text-sm">Loading data...</span>
                   </div>
                 </div>
               )}
@@ -188,7 +219,7 @@ const ChatBot: React.FC<SOPDeviationProps> = ({ onSOPDataReceived }) => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Type 'SOP deviation' to fetch data..."
+                placeholder="Ask about SOP deviation, incomplete cases, or long running cases..."
                 className="flex-1 text-sm"
                 disabled={isLoading}
               />
