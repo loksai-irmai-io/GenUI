@@ -1,0 +1,40 @@
+{
+	"meta":
+	[
+		{
+			"name": "case_id",
+			"type": "String"
+		},
+		{
+			"name": "pattern",
+			"type": "String"
+		},
+		{
+			"name": "is_incomplete",
+			"type": "UInt8"
+		},
+		{
+			"name": "is_sop_deviation",
+			"type": "UInt8"
+		}
+	],
+
+	"data":
+	[
+		{
+			"case_id": "MORT_0508",
+			"pattern": "Application Submission > Initial Assessment > Pre-Approval > Appraisal Request > Valuation Accepted > Additional Info Required > Underwriting Rejected >  > Application Submission > Initial Assessment > Pre-Approval > Appraisal Request > Valuation Accepted > Additional Info Required > Underwriting Rejected > ",
+			"is_incomplete": 1,
+			"is_sop_deviation": 1
+		}
+	],
+
+	"rows": 1,
+
+	"statistics":
+	{
+		"elapsed": 3.928041609,
+		"rows_read": 443804,
+		"bytes_read": 19855790
+	}
+}
