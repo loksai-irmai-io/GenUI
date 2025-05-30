@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Minimize2, Loader2 } from "lucide-react";
 import { sopDeviationService, SOPCountData, SOPPatternData } from '@/services/sopDeviationService';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -48,25 +47,14 @@ const ChatBot: React.FC<SOPDeviationProps> = ({ onSOPDataReceived }) => {
     setIsLoading(true);
     
     try {
-      // Fetch data from both endpoints
+      // Fetch data from both endpoints (with fallback)
       const [countData, patternsData] = await Promise.all([
         sopDeviationService.getSOPDeviationCount(),
         sopDeviationService.getSOPDeviationPatterns()
       ]);
 
-      // Store data in Supabase
-      await Promise.all([
-        supabase.from('sop_deviation_data').insert({
-          user_id: user.id,
-          endpoint_type: 'count',
-          data: countData
-        }),
-        supabase.from('sop_deviation_data').insert({
-          user_id: user.id,
-          endpoint_type: 'patterns',
-          data: patternsData
-        })
-      ]);
+      console.log('Fetched count data:', countData);
+      console.log('Fetched patterns data:', patternsData);
 
       // Notify parent component with the data
       onSOPDataReceived(countData, patternsData);
