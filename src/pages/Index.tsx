@@ -1,11 +1,16 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import WidgetSelectionModal from '../components/WidgetSelectionModal';
 import InfoCard from '../components/widgets/InfoCard';
 import ChartWidget from '../components/widgets/ChartWidget';
 import DataTable from '../components/widgets/DataTable';
+import SOPWidget from '../components/widgets/SOPWidget';
 import ChatBot from '../components/ChatBot';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { SOPCountData, SOPPatternData } from '@/services/sopDeviationService';
+import { useToast } from '@/hooks/use-toast';
 
 // Sample data for widgets
 const sampleLineData = [
@@ -51,11 +56,89 @@ const Index = () => {
     'bar-chart',
     'data-table'
   ]);
+  const [sopCountData, setSOPCountData] = useState<SOPCountData | null>(null);
+  const [sopPatternsData, setSOPPatternsData] = useState<SOPPatternData[] | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const handleSaveWidgets = (widgets: string[]) => {
+  useEffect(() => {
+    if (user) {
+      loadUserWidgetPreferences();
+    }
+  }, [user]);
+
+  const loadUserWidgetPreferences = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_widget_preferences')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        // Extract widget IDs from preferences
+        const widgetIds = data.map(pref => pref.selected_module).filter(Boolean);
+        if (widgetIds.length > 0) {
+          setSelectedWidgets(widgetIds);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user preferences:', error);
+    }
+  };
+
+  const handleSaveWidgets = async (widgets: string[]) => {
     setSelectedWidgets(widgets);
-    console.log('Saved widgets:', widgets);
-    // Here you would typically save to Supabase
+
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to save widget preferences.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Delete existing preferences
+      await supabase
+        .from('user_widget_preferences')
+        .delete()
+        .eq('user_id', user.id);
+
+      // Insert new preferences
+      const preferences = widgets.map(widgetId => ({
+        user_id: user.id,
+        widget_id: crypto.randomUUID(),
+        selected_module: widgetId,
+      }));
+
+      const { error } = await supabase
+        .from('user_widget_preferences')
+        .insert(preferences);
+
+      if (error) throw error;
+
+      toast({
+        title: "Preferences Saved",
+        description: "Your widget preferences have been saved successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+      toast({
+        title: "Error Saving Preferences",
+        description: "There was a problem saving your widget preferences.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSOPDataReceived = (countData: SOPCountData, patternsData: SOPPatternData[]) => {
+    setSOPCountData(countData);
+    setSOPPatternsData(patternsData);
   };
 
   const renderWidget = (widgetId: string) => {
@@ -79,6 +162,55 @@ const Index = () => {
     }
   };
 
+  const renderSOPWidgets = () => {
+    const widgets = [];
+    
+    if (sopCountData) {
+      widgets.push(
+        <SOPWidget
+          key="sop-count-bar"
+          type="count"
+          data={sopCountData}
+          visualizationType="bar"
+          title="SOP Deviation Count"
+        />,
+        <SOPWidget
+          key="sop-count-pie"
+          type="count"
+          data={sopCountData}
+          visualizationType="pie"
+          title="SOP Compliance Overview"
+        />
+      );
+    }
+    
+    if (sopPatternsData) {
+      widgets.push(
+        <SOPWidget
+          key="sop-patterns-bar"
+          type="patterns"
+          data={sopPatternsData}
+          visualizationType="bar"
+          title="SOP Deviation Patterns (Bar)"
+        />,
+        <SOPWidget
+          key="sop-patterns-line"
+          type="patterns"
+          data={sopPatternsData}
+          visualizationType="line"
+          title="SOP Deviation Patterns (Line)"
+        />
+      );
+    }
+    
+    return widgets;
+  };
+
+  const allWidgets = [
+    ...selectedWidgets.map(widgetId => renderWidget(widgetId)),
+    ...renderSOPWidgets()
+  ].filter(Boolean);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header onSelectWidgets={() => setIsModalOpen(true)} />
@@ -87,14 +219,16 @@ const Index = () => {
         <div className="max-w-7xl mx-auto">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h2>
-            <p className="text-gray-600">Customize your data visualization experience</p>
+            <p className="text-gray-600">
+              Welcome back, {user?.email}! Customize your data visualization experience
+            </p>
           </div>
           
-          {selectedWidgets.length === 0 ? (
+          {allWidgets.length === 0 ? (
             <div className="text-center py-16">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 max-w-md mx-auto">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">No widgets selected</h3>
-                <p className="text-gray-600 mb-6">Choose widgets to personalize your dashboard experience</p>
+                <p className="text-gray-600 mb-6">Choose widgets to personalize your dashboard experience or ask the chatbot for SOP deviation data</p>
                 <button 
                   onClick={() => setIsModalOpen(true)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
@@ -105,7 +239,7 @@ const Index = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {selectedWidgets.map(widgetId => renderWidget(widgetId))}
+              {allWidgets}
             </div>
           )}
         </div>
@@ -118,7 +252,7 @@ const Index = () => {
         selectedWidgets={selectedWidgets}
       />
       
-      <ChatBot />
+      <ChatBot onSOPDataReceived={handleSOPDataReceived} />
     </div>
   );
 };
