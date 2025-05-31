@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { apiService } from '@/services/apiService';
+import { mockDataService } from '@/services/dataService';
 
 interface DynamicAPIWidgetProps {
   widgetType: 'sop-deviation-count' | 'sop-deviation-patterns' | 'incomplete-cases' | 
@@ -20,52 +21,101 @@ const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [usingMockData, setUsingMockData] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
+        setUsingMockData(false);
+        
+        console.log(`Attempting to fetch data for widget type: ${widgetType}`);
         
         let fetchedData;
-        switch (widgetType) {
-          case 'sop-deviation-count':
-            fetchedData = await apiService.getSOPDeviationCount();
-            break;
-          case 'sop-deviation-patterns':
-            fetchedData = await apiService.getSOPDeviationPatterns();
-            break;
-          case 'incomplete-cases':
-            fetchedData = await apiService.getIncompleteCasesCount();
-            break;
-          case 'long-running-cases':
-            fetchedData = await apiService.getLongRunningCasesCount();
-            break;
-          case 'resource-switches':
-            fetchedData = await apiService.getResourceSwitchesCount();
-            break;
-          case 'rework-activities':
-            fetchedData = await apiService.getReworkActivitiesCount();
-            break;
-          case 'timing-violations':
-            fetchedData = await apiService.getTimingViolationsCount();
-            break;
-          case 'case-complexity':
-            fetchedData = await apiService.getCaseComplexity();
-            break;
-          case 'resource-performance':
-            fetchedData = await apiService.getResourcePerformance();
-            break;
-          case 'timing-analysis':
-            fetchedData = await apiService.getTimingAnalysis();
-            break;
-          default:
-            throw new Error(`Unknown widget type: ${widgetType}`);
+        
+        // Try to fetch from real API first
+        try {
+          switch (widgetType) {
+            case 'sop-deviation-count':
+              fetchedData = await apiService.getSOPDeviationCount();
+              break;
+            case 'sop-deviation-patterns':
+              fetchedData = await apiService.getSOPDeviationPatterns();
+              break;
+            case 'incomplete-cases':
+              fetchedData = await apiService.getIncompleteCasesCount();
+              break;
+            case 'long-running-cases':
+              fetchedData = await apiService.getLongRunningCasesCount();
+              break;
+            case 'resource-switches':
+              fetchedData = await apiService.getResourceSwitchesCount();
+              break;
+            case 'rework-activities':
+              fetchedData = await apiService.getReworkActivitiesCount();
+              break;
+            case 'timing-violations':
+              fetchedData = await apiService.getTimingViolationsCount();
+              break;
+            case 'case-complexity':
+              fetchedData = await apiService.getCaseComplexity();
+              break;
+            case 'resource-performance':
+              fetchedData = await apiService.getResourcePerformance();
+              break;
+            case 'timing-analysis':
+              fetchedData = await apiService.getTimingAnalysis();
+              break;
+            default:
+              throw new Error(`Unknown widget type: ${widgetType}`);
+          }
+        } catch (apiError) {
+          console.warn(`API fetch failed for ${widgetType}, falling back to mock data:`, apiError);
+          
+          // Fallback to mock data
+          setUsingMockData(true);
+          switch (widgetType) {
+            case 'sop-deviation-count':
+              fetchedData = await mockDataService.getSOPDeviationCount();
+              break;
+            case 'sop-deviation-patterns':
+              fetchedData = await mockDataService.getSOPDeviationPatterns();
+              break;
+            case 'incomplete-cases':
+              fetchedData = await mockDataService.getIncompleteCasesCount();
+              break;
+            case 'long-running-cases':
+              fetchedData = await mockDataService.getLongRunningCasesCount();
+              break;
+            case 'resource-switches':
+              fetchedData = await mockDataService.getResourceSwitchesCount();
+              break;
+            case 'rework-activities':
+              fetchedData = await mockDataService.getReworkActivitiesCount();
+              break;
+            case 'timing-violations':
+              fetchedData = await mockDataService.getTimingViolationsCount();
+              break;
+            case 'case-complexity':
+              fetchedData = await mockDataService.getCaseComplexity();
+              break;
+            case 'resource-performance':
+              fetchedData = await mockDataService.getResourcePerformance();
+              break;
+            case 'timing-analysis':
+              fetchedData = await mockDataService.getTimingAnalysis();
+              break;
+            default:
+              throw new Error(`Unknown widget type: ${widgetType}`);
+          }
         }
         
+        console.log(`Successfully loaded data for ${widgetType}:`, fetchedData);
         setData(fetchedData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+        setError(errorMessage);
         console.error('Error fetching widget data:', err);
       } finally {
         setLoading(false);
@@ -89,8 +139,8 @@ const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({
       case 'rework-activities':
       case 'timing-violations':
         chartData = [
-          { name: 'Count', value: data.count },
-          { name: 'Total Cases', value: data.total_cases }
+          { name: 'Affected Cases', value: data.count },
+          { name: 'Normal Cases', value: data.total_cases - data.count }
         ];
         break;
       default:
@@ -264,24 +314,28 @@ const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({
       );
     }
 
-    if (error) {
+    if (error && !usingMockData) {
       return (
         <div className="flex items-center justify-center h-64 text-center">
           <div className="text-red-600">
-            <p className="font-semibold">Error loading data</p>
+            <p className="font-semibold">API Connection Failed</p>
             <p className="text-sm mt-1">{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-            >
-              Retry
-            </button>
+            <p className="text-xs mt-2 text-gray-600">Displaying sample data instead</p>
           </div>
         </div>
       );
     }
 
-    return visualizationType === 'bar' ? renderBarChart() : renderTable();
+    return (
+      <div>
+        {usingMockData && (
+          <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+            <span className="font-medium">Demo Mode:</span> Showing sample data (API server not available)
+          </div>
+        )}
+        {visualizationType === 'bar' ? renderBarChart() : renderTable()}
+      </div>
+    );
   };
 
   return (

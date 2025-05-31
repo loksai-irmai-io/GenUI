@@ -47,15 +47,42 @@ export interface TimingAnalysis {
 
 class APIService {
   private async fetchData<T>(endpoint: string): Promise<T> {
+    console.log(`Fetching data from: ${API_BASE_URL}${endpoint}`);
+    
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        mode: 'cors',
+      });
+      
+      clearTimeout(timeoutId);
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`);
       }
+      
       const data = await response.json();
+      console.log(`Successfully fetched data from ${endpoint}:`, data);
       return data;
     } catch (error) {
       console.error(`Error fetching data from ${endpoint}:`, error);
+      
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Request timeout - API server may be unavailable');
+        }
+        if (error.message.includes('Failed to fetch')) {
+          throw new Error('Cannot connect to API server. Please ensure the server is running on http://127.0.0.1:8001');
+        }
+      }
+      
       throw error;
     }
   }

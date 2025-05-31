@@ -1,17 +1,17 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import WidgetSelectionModal from '../components/WidgetSelectionModal';
 import InfoCard from '../components/widgets/InfoCard';
 import ChartWidget from '../components/widgets/ChartWidget';
 import DataTable from '../components/widgets/DataTable';
-import DataVisualizationWidget from '../components/widgets/DataVisualizationWidget';
 import ChatBot from '../components/ChatBot';
 import DynamicAPIWidget from '../components/widgets/DynamicAPIWidget';
 import { useAuth } from '@/hooks/useAuth';
 import { widgetService, UserWidgetPreference } from '@/services/widgetService';
 import { useToast } from '@/hooks/use-toast';
 
-// Sample data for widgets
+// Sample data for legacy widgets
 const sampleLineData = [
   { name: 'Jan', value: 4000 },
   { name: 'Feb', value: 3000 },
@@ -50,12 +50,6 @@ const tableColumns = [
 const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userWidgetPreferences, setUserWidgetPreferences] = useState<UserWidgetPreference[]>([]);
-  const [dataVisualizationWidgets, setDataVisualizationWidgets] = useState<Array<{
-    id: string;
-    type: string;
-    data: any[];
-    title: string;
-  }>>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -116,16 +110,6 @@ const Index = () => {
     }
   };
 
-  const handleDataReceived = (type: string, data: any[], title: string) => {
-    const newWidget = {
-      id: `data-viz-${Date.now()}`,
-      type,
-      data,
-      title
-    };
-    setDataVisualizationWidgets(prev => [...prev, newWidget]);
-  };
-
   const renderWidget = (widgetName: string, index: number) => {
     const key = `${widgetName}-${index}`;
     
@@ -146,7 +130,7 @@ const Index = () => {
       case 'data-table':
         return <DataTable key={key} title="User Management" data={sampleTableData} columns={tableColumns} />;
       
-      // New dynamic API widgets - Bar Charts
+      // New dynamic API widgets
       case 'Object Type Metrics':
         return <DynamicAPIWidget key={key} widgetType="sop-deviation-count" title="SOP Deviation Count" visualizationType="bar" />;
       case 'Case Complexity Outliers (Z-Score & Event Count)':
@@ -173,17 +157,6 @@ const Index = () => {
     }
   };
 
-  const renderDataVisualizationWidgets = () => {
-    return dataVisualizationWidgets.map(widget => (
-      <DataVisualizationWidget
-        key={widget.id}
-        type={widget.type as 'sop-table' | 'incomplete-bar' | 'longrunning-bar'}
-        data={widget.data}
-        title={widget.title}
-      />
-    ));
-  };
-
   // Get selected widget names for the modal
   const selectedWidgetNames = userWidgetPreferences.map(pref => pref.widget.widget_name);
   
@@ -191,11 +164,6 @@ const Index = () => {
   const userWidgets = userWidgetPreferences.map((pref, index) => 
     renderWidget(pref.widget.widget_name, index)
   ).filter(Boolean);
-
-  const allWidgets = [
-    ...userWidgets,
-    ...renderDataVisualizationWidgets()
-  ];
 
   if (loading) {
     return (
@@ -217,15 +185,15 @@ const Index = () => {
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900 mb-2">Dashboard Overview</h2>
             <p className="text-gray-600">
-              Welcome back, {user?.email}! Customize your data visualization experience
+              Welcome back, {user?.email}! Your data is fetched dynamically from API endpoints
             </p>
           </div>
           
-          {allWidgets.length === 0 ? (
+          {userWidgets.length === 0 ? (
             <div className="text-center py-16">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 max-w-md mx-auto">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">No widgets selected</h3>
-                <p className="text-gray-600 mb-6">Choose widgets to personalize your dashboard or ask the chatbot for data analysis</p>
+                <p className="text-gray-600 mb-6">Choose widgets to personalize your dashboard with real-time API data</p>
                 <button 
                   onClick={() => setIsModalOpen(true)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
@@ -236,7 +204,7 @@ const Index = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {allWidgets}
+              {userWidgets}
             </div>
           )}
         </div>
@@ -249,7 +217,7 @@ const Index = () => {
         selectedWidgets={selectedWidgetNames}
       />
       
-      <ChatBot onDataReceived={handleDataReceived} />
+      <ChatBot onDataReceived={() => {}} />
     </div>
   );
 };
