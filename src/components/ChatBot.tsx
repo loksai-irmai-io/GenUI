@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Minimize2, Loader2 } from "lucide-react";
-import { dataService } from '@/services/dataService';
+import { mockDataService } from '@/services/dataService';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,7 +36,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({ onDataReceived }) => {
 
   const handleSOPDeviation = async () => {
     try {
-      const data = await dataService.getSOPDeviationTableData();
+      const data = await mockDataService.getSOPDeviationTableData();
       onDataReceived('sop-table', data, 'SOP Deviation Analysis');
       
       const successMessage: Message = {
@@ -59,7 +60,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({ onDataReceived }) => {
 
   const handleIncompleteCases = async () => {
     try {
-      const data = await dataService.getIncompleteCasesChartData();
+      const data = await mockDataService.getIncompleteCasesChartData();
       onDataReceived('incomplete-bar', data, 'Incomplete Cases Analysis');
       
       const successMessage: Message = {
@@ -83,7 +84,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({ onDataReceived }) => {
 
   const handleLongRunningCases = async () => {
     try {
-      const data = await dataService.getLongRunningCasesChartData();
+      const data = await mockDataService.getLongRunningCasesChartData();
       onDataReceived('longrunning-bar', data, 'Long Running Cases Analysis');
       
       const successMessage: Message = {
