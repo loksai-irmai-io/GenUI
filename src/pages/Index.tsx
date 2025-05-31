@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import WidgetSelectionModal from '../components/WidgetSelectionModal';
@@ -7,7 +8,7 @@ import DataTable from '../components/widgets/DataTable';
 import DataVisualizationWidget from '../components/widgets/DataVisualizationWidget';
 import ChatBot from '../components/ChatBot';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { widgetService, UserWidgetPreference } from '@/services/widgetService';
 import { useToast } from '@/hooks/use-toast';
 
 // Sample data for widgets
@@ -48,24 +49,22 @@ const tableColumns = [
 
 const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedWidgets, setSelectedWidgets] = useState<string[]>([
-    'info-card-medium',
-    'line-chart',
-    'bar-chart',
-    'data-table'
-  ]);
+  const [userWidgetPreferences, setUserWidgetPreferences] = useState<UserWidgetPreference[]>([]);
   const [dataVisualizationWidgets, setDataVisualizationWidgets] = useState<Array<{
     id: string;
     type: string;
     data: any[];
     title: string;
   }>>([]);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
       loadUserWidgetPreferences();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -73,27 +72,23 @@ const Index = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('user_widget_preferences')
-        .select('*')
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const widgetIds = data.map(pref => pref.selected_module).filter(Boolean);
-        if (widgetIds.length > 0) {
-          setSelectedWidgets(widgetIds);
-        }
-      }
+      setLoading(true);
+      const preferences = await widgetService.getUserWidgetPreferences(user.id);
+      console.log('Loaded user preferences:', preferences);
+      setUserWidgetPreferences(preferences);
     } catch (error) {
       console.error('Error loading user preferences:', error);
+      toast({
+        title: "Error Loading Preferences",
+        description: "Failed to load your widget preferences.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSaveWidgets = async (widgets: string[]) => {
-    setSelectedWidgets(widgets);
-
+  const handleSaveWidgets = async (widgetNames: string[]) => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -104,23 +99,9 @@ const Index = () => {
     }
 
     try {
-      await supabase
-        .from('user_widget_preferences')
-        .delete()
-        .eq('user_id', user.id);
-
-      const preferences = widgets.map(widgetId => ({
-        user_id: user.id,
-        widget_id: crypto.randomUUID(),
-        selected_module: widgetId,
-      }));
-
-      const { error } = await supabase
-        .from('user_widget_preferences')
-        .insert(preferences);
-
-      if (error) throw error;
-
+      await widgetService.saveUserWidgetPreferences(user.id, widgetNames);
+      await loadUserWidgetPreferences();
+      
       toast({
         title: "Preferences Saved",
         description: "Your widget preferences have been saved successfully.",
@@ -145,22 +126,24 @@ const Index = () => {
     setDataVisualizationWidgets(prev => [...prev, newWidget]);
   };
 
-  const renderWidget = (widgetId: string) => {
-    switch (widgetId) {
+  const renderWidget = (widgetName: string, index: number) => {
+    const key = `${widgetName}-${index}`;
+    
+    switch (widgetName) {
       case 'info-card-small':
-        return <InfoCard key={widgetId} title="Revenue" value="$45,231" change={12} changeType="increase" size="small" />;
+        return <InfoCard key={key} title="Revenue" value="$45,231" change={12} changeType="increase" size="small" />;
       case 'info-card-medium':
-        return <InfoCard key={widgetId} title="Total Users" value="2,543" change={8} changeType="increase" size="medium" subtitle="Active this month" />;
+        return <InfoCard key={key} title="Total Users" value="2,543" change={8} changeType="increase" size="medium" subtitle="Active this month" />;
       case 'info-card-large':
-        return <InfoCard key={widgetId} title="Sales Performance" value="$123,456" change={-2} changeType="decrease" size="large" subtitle="Quarterly results" />;
+        return <InfoCard key={key} title="Sales Performance" value="$123,456" change={-2} changeType="decrease" size="large" subtitle="Quarterly results" />;
       case 'line-chart':
-        return <ChartWidget key={widgetId} type="line" title="Sales Trend" data={sampleLineData} />;
+        return <ChartWidget key={key} type="line" title="Sales Trend" data={sampleLineData} />;
       case 'bar-chart':
-        return <ChartWidget key={widgetId} type="bar" title="Product Performance" data={sampleBarData} />;
+        return <ChartWidget key={key} type="bar" title="Product Performance" data={sampleBarData} />;
       case 'pie-chart':
-        return <ChartWidget key={widgetId} type="pie" title="Traffic Sources" data={samplePieData} />;
+        return <ChartWidget key={key} type="pie" title="Traffic Sources" data={samplePieData} />;
       case 'data-table':
-        return <DataTable key={widgetId} title="User Management" data={sampleTableData} columns={tableColumns} />;
+        return <DataTable key={key} title="User Management" data={sampleTableData} columns={tableColumns} />;
       default:
         return null;
     }
@@ -177,10 +160,29 @@ const Index = () => {
     ));
   };
 
+  // Get selected widget names for the modal
+  const selectedWidgetNames = userWidgetPreferences.map(pref => pref.widget.widget_name);
+  
+  // Render widgets from user preferences
+  const userWidgets = userWidgetPreferences.map((pref, index) => 
+    renderWidget(pref.widget.widget_name, index)
+  ).filter(Boolean);
+
   const allWidgets = [
-    ...selectedWidgets.map(widgetId => renderWidget(widgetId)),
+    ...userWidgets,
     ...renderDataVisualizationWidgets()
-  ].filter(Boolean);
+  ];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -220,7 +222,7 @@ const Index = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveWidgets}
-        selectedWidgets={selectedWidgets}
+        selectedWidgets={selectedWidgetNames}
       />
       
       <ChatBot onDataReceived={handleDataReceived} />
