@@ -1,5 +1,10 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
+
+// Use the actual database types
+type DbWidget = Database['public']['Tables']['widgets']['Row'];
+type DbUserWidgetPreference = Database['public']['Tables']['user_widget_preferences']['Row'];
 
 export interface Widget {
   id: string;
@@ -12,10 +17,8 @@ export interface UserWidgetPreference {
   id: string;
   user_id: string;
   widget_id: string;
-  position: { x: number; y: number };
-  size: { width: number; height: number };
-  settings: Record<string, any>;
-  is_active: boolean;
+  saved_at: string;
+  selected_module: string | null;
   widget: Widget;
 }
 
@@ -41,8 +44,7 @@ class WidgetService {
         *,
         widget:widgets(*)
       `)
-      .eq('user_id', userId)
-      .eq('is_active', true);
+      .eq('user_id', userId);
 
     if (error) {
       console.error('Error fetching user widget preferences:', error);
@@ -71,33 +73,26 @@ class WidgetService {
       throw new Error('No widgets found');
     }
 
-    // Deactivate all current preferences
-    const { error: deactivateError } = await supabase
+    // Delete all current preferences for this user
+    const { error: deleteError } = await supabase
       .from('user_widget_preferences')
-      .update({ is_active: false })
+      .delete()
       .eq('user_id', userId);
 
-    if (deactivateError) {
-      console.error('Error deactivating preferences:', deactivateError);
-      throw deactivateError;
+    if (deleteError) {
+      console.error('Error deleting old preferences:', deleteError);
+      throw deleteError;
     }
 
     // Create new preferences for selected widgets
     const preferences = availableWidgets.map(widget => ({
       user_id: userId,
       widget_id: widget.id,
-      is_active: true,
-      position: { x: 0, y: 0 },
-      size: { width: 300, height: 200 },
-      settings: {}
     }));
 
     const { error: insertError } = await supabase
       .from('user_widget_preferences')
-      .upsert(preferences, {
-        onConflict: 'user_id,widget_id',
-        ignoreDuplicates: false
-      });
+      .insert(preferences);
 
     if (insertError) {
       console.error('Error saving preferences:', insertError);
