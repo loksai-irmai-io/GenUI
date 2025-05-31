@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import WidgetSelectionModal from '../components/WidgetSelectionModal';
@@ -7,6 +6,7 @@ import ChartWidget from '../components/widgets/ChartWidget';
 import DataTable from '../components/widgets/DataTable';
 import DataVisualizationWidget from '../components/widgets/DataVisualizationWidget';
 import ChatBot from '../components/ChatBot';
+import DynamicAPIWidget from '../components/widgets/DynamicAPIWidget';
 import { useAuth } from '@/hooks/useAuth';
 import { widgetService, UserWidgetPreference } from '@/services/widgetService';
 import { useToast } from '@/hooks/use-toast';
@@ -130,6 +130,7 @@ const Index = () => {
     const key = `${widgetName}-${index}`;
     
     switch (widgetName) {
+      // Legacy static widgets
       case 'info-card-small':
         return <InfoCard key={key} title="Revenue" value="$45,231" change={12} changeType="increase" size="small" />;
       case 'info-card-medium':
@@ -144,6 +145,29 @@ const Index = () => {
         return <ChartWidget key={key} type="pie" title="Traffic Sources" data={samplePieData} />;
       case 'data-table':
         return <DataTable key={key} title="User Management" data={sampleTableData} columns={tableColumns} />;
+      
+      // New dynamic API widgets - Bar Charts
+      case 'Object Type Metrics':
+        return <DynamicAPIWidget key={key} widgetType="sop-deviation-count" title="SOP Deviation Count" visualizationType="bar" />;
+      case 'Case Complexity Outliers (Z-Score & Event Count)':
+        return <DynamicAPIWidget key={key} widgetType="case-complexity" title="Case Complexity Analysis" visualizationType="table" />;
+      case 'Distribution of Time Gaps: Application Submission → Initial Assessment':
+        return <DynamicAPIWidget key={key} widgetType="timing-analysis" title="Timing Analysis" visualizationType="table" />;
+      case 'Rework Instances by Excess':
+        return <DynamicAPIWidget key={key} widgetType="rework-activities" title="Rework Activities Count" visualizationType="bar" />;
+      case 'Resource Summary Table':
+        return <DynamicAPIWidget key={key} widgetType="resource-performance" title="Resource Performance" visualizationType="table" />;
+      case 'Activity Duration Outliers (Based on Timing Violations)':
+        return <DynamicAPIWidget key={key} widgetType="timing-violations" title="Timing Violations Count" visualizationType="bar" />;
+      case 'Distribution of Gap Violation Severity (All Patterns)':
+        return <DynamicAPIWidget key={key} widgetType="sop-deviation-patterns" title="SOP Deviation Patterns" visualizationType="table" />;
+      case 'Overall Incomplete Cases by Time Since Last Event':
+        return <DynamicAPIWidget key={key} widgetType="incomplete-cases" title="Incomplete Cases Count" visualizationType="bar" />;
+      case 'Cases by Resource Switch Count (All Patterns)':
+        return <DynamicAPIWidget key={key} widgetType="resource-switches" title="Resource Switches Count" visualizationType="bar" />;
+      case 'Resource Performance (Avg Step Duration)':
+        return <DynamicAPIWidget key={key} widgetType="resource-performance" title="Resource Performance Summary" visualizationType="table" />;
+      
       default:
         return null;
     }

@@ -1,4 +1,3 @@
-
 export interface SOPCountData {
   count: number;
   percentage: number;
@@ -135,3 +134,5 @@ class DataService {
 }
 
 export const dataService = new DataService();
+
+console.warn('dataService.ts is deprecated. Please use apiService.ts with DynamicAPIWidget for new implementations.');
