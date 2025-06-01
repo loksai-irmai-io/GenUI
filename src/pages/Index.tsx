@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import WidgetSelectionModal from "../components/WidgetSelectionModal";
@@ -7,6 +6,7 @@ import ChartWidget from "../components/widgets/ChartWidget";
 import DataTable from "../components/widgets/DataTable";
 import DataVisualizationWidget from "../components/widgets/DataVisualizationWidget";
 import DynamicAPIWidget from "../components/widgets/DynamicAPIWidget";
+import AnalyticsDashboard from "../components/AnalyticsDashboard";
 import ChatBot from "../components/ChatBot";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -581,10 +581,11 @@ const Index = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <DataVisualizationWidget
-            type={widget.type as "sop-table" | "incomplete-bar" | "longrunning-bar"}
+          <DynamicAPIWidget
+            type={widget.type as any}
             data={widget.data}
-            title=""
+            title={widget.title}
+            id={widget.id}
           />
         </CardContent>
       </Card>
@@ -603,69 +604,8 @@ const Index = () => {
       <Header onSelectWidgets={() => setIsModalOpen(true)} />
       <main className="pt-20 p-6">
         <div className="max-w-7xl mx-auto">
-          {/* Enhanced Dashboard Header */}
-          <div className="mb-8 bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
-                  Enterprise Dashboard
-                </h2>
-                <p className="text-lg text-gray-600">
-                  Welcome back, <span className="font-semibold text-gray-800">{user?.email}</span>! 
-                  Monitor your business metrics and performance indicators
-                </p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div className="text-right">
-                  <div className="text-sm text-gray-500">Last Updated</div>
-                  <div className="font-semibold text-gray-800">{new Date().toLocaleTimeString()}</div>
-                </div>
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                  <Activity className="h-6 w-6 text-white" />
-                </div>
-              </div>
-            </div>
-            
-            {/* Quick Stats Bar */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
-              <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-4 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm opacity-90">System Status</div>
-                    <div className="text-xl font-bold">Operational</div>
-                  </div>
-                  <CheckCircle className="h-8 w-8 opacity-80" />
-                </div>
-              </div>
-              <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl p-4 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm opacity-90">Active Widgets</div>
-                    <div className="text-xl font-bold">{totalWidgets}</div>
-                  </div>
-                  <Activity className="h-8 w-8 opacity-80" />
-                </div>
-              </div>
-              <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-4 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm opacity-90">Data Sources</div>
-                    <div className="text-xl font-bold">Connected</div>
-                  </div>
-                  <TrendingUp className="h-8 w-8 opacity-80" />
-                </div>
-              </div>
-              <div className="bg-gradient-to-r from-orange-500 to-red-600 rounded-xl p-4 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm opacity-90">Alerts</div>
-                    <div className="text-xl font-bold">2 Active</div>
-                  </div>
-                  <AlertTriangle className="h-8 w-8 opacity-80" />
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Enhanced Analytics Dashboard */}
+          <AnalyticsDashboard />
 
           {totalWidgets === 0 ? (
             <div className="text-center py-16">

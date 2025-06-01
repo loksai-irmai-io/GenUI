@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { User, Grid3X3, LogOut, Bell, Settings, Search } from "lucide-react";
+import { User, Grid3X3, LogOut, Bell, Settings, Search, RefreshCw } from "lucide-react";
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from "@/components/ui/badge";
+import { useWidgetRefresh } from '@/contexts/WidgetRefreshContext';
 
 interface HeaderProps {
   onSelectWidgets: () => void;
@@ -13,6 +14,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const { refreshAll } = useWidgetRefresh();
 
   const handleSignOut = async () => {
     try {
@@ -28,6 +30,14 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleRefreshAll = () => {
+    refreshAll();
+    toast({
+      title: "Refreshing widgets",
+      description: "All widgets are being refreshed with latest data.",
+    });
   };
 
   return (
@@ -57,6 +67,15 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
           >
             <Grid3X3 className="w-4 h-4" />
             <span className="font-medium">Widgets</span>
+          </Button>
+          
+          <Button 
+            onClick={handleRefreshAll}
+            variant="ghost" 
+            className="flex items-center space-x-2 hover:bg-white hover:shadow-md transition-all duration-200 rounded-full px-4 py-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="font-medium">Refresh</span>
           </Button>
           
           <Button 

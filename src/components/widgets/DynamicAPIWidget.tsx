@@ -4,32 +4,57 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, TrendingUp, TrendingDown, Activity, Database, RefreshCw } from "lucide-react";
+import { AlertTriangle, TrendingUp, TrendingDown, Activity, Database, RefreshCw, Download, Maximize2 } from "lucide-react";
 import { apiService } from '@/services/apiService';
 import { mockDataService } from '@/services/dataService';
+import { Loading } from '@/components/ui/loading';
+import { useWidgetRefresh } from '@/contexts/WidgetRefreshContext';
 
 interface DynamicAPIWidgetProps {
   type: 'bar' | 'table' | 'sop-count' | 'sop-patterns' | 'incomplete-bar' | 'longrunning-bar' | 'resource-switches-bar' | 'rework-activities-bar' | 'timing-violations-bar' | 'case-complexity-bar' | 'resource-performance-table' | 'timing-analysis-table' | 'process-failure-patterns-bar';
   endpoint?: string;
   title: string;
   data?: any[];
+  id?: string;
 }
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
 
-const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({ type, endpoint, title, data: initialData }) => {
+const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({ type, endpoint, title, data: initialData, id }) => {
   const [data, setData] = useState<any[]>(initialData || []);
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [retryCount, setRetryCount] = useState(0);
+  const { refreshingWidgets } = useWidgetRefresh();
+
+  const widgetId = id || `${type}-${title.toLowerCase().replace(/\s+/g, '-')}`;
+  const isRefreshing = refreshingWidgets.has(widgetId);
 
   useEffect(() => {
     if (!initialData) {
       fetchData();
     }
   }, [endpoint, type, initialData]);
+
+  useEffect(() => {
+    const handleRefresh = (event: CustomEvent) => {
+      if (event.detail?.widgetId === widgetId || event.type === 'refreshAllWidgets') {
+        fetchData();
+      }
+    };
+
+    window.addEventListener('refreshWidget', handleRefresh as EventListener);
+    window.addEventListener('refreshAllWidgets', handleRefresh as EventListener);
+
+    return () => {
+      window.removeEventListener('refreshWidget', handleRefresh as EventListener);
+      window.removeEventListener('refreshAllWidgets', handleRefresh as EventListener);
+    };
+  }, [widgetId]);
 
   const fetchData = async () => {
     if (!endpoint && !type) return;
@@ -83,7 +108,7 @@ const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({ type, endpoint, tit
         }
       } catch (apiError) {
         console.warn('API fetch failed, using mock data:', apiError);
-        // Fall back to mock data
+        // Fall back to mock data with the same switch logic
         switch (type) {
           case 'sop-count':
             result = await mockDataService.getSOPDeviationCount();
@@ -122,12 +147,29 @@ const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({ type, endpoint, tit
       
       setData(Array.isArray(result) ? result : [result]);
       setLastUpdated(new Date());
+      setRetryCount(0);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
+      setRetryCount(prev => prev + 1);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    fetchData();
+  };
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${title.replace(/\s+/g, '_').toLowerCase()}_data.json`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const renderChart = () => {
@@ -137,6 +179,12 @@ const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({ type, endpoint, tit
           <div className="text-center">
             <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
             <p>No data available</p>
+            {error && (
+              <Button variant="outline" size="sm" onClick={handleRetry} className="mt-2">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            )}
           </div>
         </div>
       );
@@ -212,6 +260,12 @@ const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({ type, endpoint, tit
         <div className="p-6 text-center text-gray-500">
           <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
           <p>No data available</p>
+          {error && (
+            <Button variant="outline" size="sm" onClick={handleRetry} className="mt-2">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          )}
         </div>
       );
     }
@@ -274,7 +328,7 @@ const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({ type, endpoint, tit
   const isTableType = type.includes('table') || type === 'sop-patterns';
 
   return (
-    <Card className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
+    <Card className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 group">
       <CardHeader className="border-b border-gray-100 pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -290,9 +344,32 @@ const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({ type, endpoint, tit
           </div>
           
           <div className="flex items-center space-x-2">
-            {loading && <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />}
+            {(loading || isRefreshing) && <Loading size="sm" text="" />}
+            
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRetry}
+                disabled={loading || isRefreshing}
+                className="h-8 w-8 p-0"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleExport}
+                disabled={!data || data.length === 0}
+                className="h-8 w-8 p-0"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </div>
+            
             <Badge variant={error ? "destructive" : "default"} className="text-xs">
-              {error ? "Error" : endpoint ? "Live" : "Demo"}
+              {error ? `Error (${retryCount})` : endpoint ? "Live" : "Demo"}
             </Badge>
           </div>
         </div>
@@ -302,18 +379,19 @@ const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({ type, endpoint, tit
         {error && (
           <Alert variant="destructive" className="m-4">
             <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              {error}. Showing demo data instead.
+            <AlertDescription className="flex items-center justify-between">
+              <span>{error}</span>
+              <Button variant="outline" size="sm" onClick={handleRetry} className="ml-2">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
             </AlertDescription>
           </Alert>
         )}
         
-        {loading ? (
+        {loading || isRefreshing ? (
           <div className="h-64 flex items-center justify-center">
-            <div className="text-center">
-              <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
-              <p className="text-gray-500">Loading data...</p>
-            </div>
+            <Loading size="lg" text="Loading data..." />
           </div>
         ) : isTableType ? (
           renderTable()
