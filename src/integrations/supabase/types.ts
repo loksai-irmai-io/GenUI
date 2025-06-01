@@ -57,27 +57,27 @@ export type Database = {
       user_widget_preferences: {
         Row: {
           id: string
+          pinned: boolean | null
           saved_at: string
           selected_module: string | null
           user_id: string
           widget_id: string
-          pinned: boolean
         }
         Insert: {
           id?: string
+          pinned?: boolean | null
           saved_at?: string
           selected_module?: string | null
           user_id: string
           widget_id: string
-          pinned?: boolean
         }
         Update: {
           id?: string
+          pinned?: boolean | null
           saved_at?: string
           selected_module?: string | null
           user_id?: string
           widget_id?: string
-          pinned?: boolean
         }
         Relationships: [
           {
@@ -189,7 +189,7 @@ export type Tables<
   }
     ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {

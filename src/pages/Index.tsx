@@ -12,8 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import SOPWidget from "../components/widgets/SOPWidget";
 import ResourcePerformanceTable from "../components/widgets/ResourcePerformanceTable";
 import TimingAnalysisTable from "../components/widgets/TimingAnalysisTable";
-import { Pin, PinOff, Save } from "lucide-react";
+import AnalyticsDashboard from "../components/AnalyticsDashboard";
+import { Pin, PinOff, Save, TrendingUp, Users, Activity, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Sample data for widgets
 const sampleLineData = [
@@ -591,58 +593,168 @@ const Index = () => {
     .map((viz) => renderWidget(viz.id));
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header onSelectWidgets={() => setIsModalOpen(true)} />
-      <main className="pt-20 p-6">
+      
+      <main className="pt-24 px-8 pb-8">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Dashboard Overview
-            </h2>
-            <p className="text-gray-600">
-              Welcome back, {user?.email}! Customize your data visualization
-              experience
-            </p>
+          {/* Welcome Section */}
+          <div className="mb-8 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-enterprise p-8 border border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                    Welcome back, {user?.email?.split('@')[0] || 'User'}
+                  </h2>
+                  <p className="text-gray-600 text-lg">
+                    Monitor your business metrics and gain insights from your data
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-blue-600">{allWidgets.length}</div>
+                    <div className="text-sm text-gray-500">Active Widgets</div>
+                  </div>
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center">
+                    <BarChart3 className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex justify-end mb-4">
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 animate-slide-up">
+            <Card className="enterprise-card">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                    <p className="text-2xl font-bold text-gray-900">$124,563</p>
+                    <p className="text-sm text-green-600 flex items-center mt-1">
+                      <TrendingUp className="w-4 h-4 mr-1" />
+                      +12.5% from last month
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <TrendingUp className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="enterprise-card">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Active Users</p>
+                    <p className="text-2xl font-bold text-gray-900">8,549</p>
+                    <p className="text-sm text-blue-600 flex items-center mt-1">
+                      <Users className="w-4 h-4 mr-1" />
+                      +3.2% from last week
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Users className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="enterprise-card">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
+                    <p className="text-2xl font-bold text-gray-900">24.8%</p>
+                    <p className="text-sm text-green-600 flex items-center mt-1">
+                      <Activity className="w-4 h-4 mr-1" />
+                      +1.8% improvement
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Activity className="w-6 h-6 text-purple-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="enterprise-card">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">System Health</p>
+                    <p className="text-2xl font-bold text-gray-900">99.9%</p>
+                    <p className="text-sm text-green-600 flex items-center mt-1">
+                      <Activity className="w-4 h-4 mr-1" />
+                      All systems operational
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Activity className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Analytics Dashboard */}
+          <div className="mb-8">
+            <AnalyticsDashboard />
+          </div>
+
+          {/* Widget Management */}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900">Dashboard Widgets</h3>
+              <p className="text-gray-600">Customize your dashboard with the widgets that matter most</p>
+            </div>
             <Button
               onClick={handleSaveDashboardPrefs}
               disabled={!unsaved}
               className={`flex items-center gap-2 ${
                 unsaved
-                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  ? "bg-blue-600 hover:bg-blue-700 text-white shadow-md"
                   : "bg-gray-200 text-gray-500 cursor-not-allowed"
-              }`}
+              } transition-all duration-200`}
             >
               <Save className="w-4 h-4" />
-              Save
+              Save Changes
             </Button>
           </div>
+
+          {/* Widgets Grid */}
           {allWidgets.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 max-w-md mx-auto">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  No widgets selected
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Choose widgets to personalize your dashboard or ask the
-                  chatbot for data analysis
-                </p>
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                >
-                  Select Widgets
-                </button>
-              </div>
+            <div className="text-center py-20 animate-fade-in">
+              <Card className="enterprise-card max-w-md mx-auto">
+                <CardContent className="p-12">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <BarChart3 className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                    No widgets configured
+                  </h3>
+                  <p className="text-gray-600 mb-8">
+                    Start building your dashboard by selecting the widgets that provide the insights you need
+                  </p>
+                  <Button
+                    onClick={() => setIsModalOpen(true)}
+                    className="enterprise-button-primary"
+                  >
+                    Configure Dashboard
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-scale-in">
               {allWidgets}
             </div>
           )}
         </div>
       </main>
+
+      {/* Modals and Floating Elements */}
       <WidgetSelectionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -650,7 +762,8 @@ const Index = () => {
         selectedWidgets={selectedWidgets}
         pinnedWidgets={pinnedWidgets}
       />
-      <div className="fixed bottom-4 right-4 w-full max-w-3xl z-50">
+      
+      <div className="fixed bottom-6 right-6 z-50">
         <ChatBot
           onDataReceived={(type, data, title) =>
             handleDataReceived(type, data, title)
