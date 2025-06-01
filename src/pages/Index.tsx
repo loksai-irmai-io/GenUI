@@ -94,6 +94,10 @@ const Index = () => {
   }, [user]);
 
   useEffect(() => {
+    setLocalPinned(pinnedWidgets);
+  }, [pinnedWidgets]);
+
+  useEffect(() => {
     if (user && (selectedWidgets.length > 0 || pinnedWidgets.length > 0)) {
       (async () => {
         const dashboardVisualizations: Array<{
