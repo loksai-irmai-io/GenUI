@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import WidgetSelectionModal from "../components/WidgetSelectionModal";
@@ -76,19 +77,6 @@ const Index = () => {
   >([]);
   const { user } = useAuth();
   const { toast } = useToast();
-  // Track local pin state for immediate UI feedback
-  const [localPinned, setLocalPinned] = useState<string[]>([]);
-  // Track if there are unsaved changes
-  const [unsaved, setUnsaved] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      loadUserWidgetPreferences();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
-
   const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -306,17 +294,18 @@ const Index = () => {
   const loadPinnedWidgets = async () => {
     if (!user) return;
     try {
+      // Use the pinned column from user_widget_preferences instead of separate table
       const { data, error } = await supabase
-        .from("pinned_widgets")
+        .from("user_widget_preferences")
         .select("*")
-        .eq("user_id", user.id);
+        .eq("user_id", user.id)
+        .eq("pinned", true);
 
       if (error) throw error;
 
       if (data && data.length > 0) {
-        const widgetIds = data.map((pref) => pref.widget_id).filter(Boolean);
+        const widgetIds = data.map((pref) => pref.selected_module).filter(Boolean);
         setPinnedWidgets(widgetIds);
-        setLocalPinned(widgetIds); // Initialize localPinned with pinned widgets
       }
     } catch (error) {
       console.error("Error loading pinned widgets:", error);
@@ -335,30 +324,26 @@ const Index = () => {
       return;
     }
 
-    const isCurrentlyPinned = localPinned.includes(widgetId);
-    const updatedPinned = isCurrentlyPinned
-      ? localPinned.filter((id) => id !== widgetId)
-      : [...localPinned, widgetId];
-
-    setLocalPinned(updatedPinned);
-    setUnsaved(true); // Mark that there are unsaved changes
+    const isCurrentlyPinned = pinnedWidgets.includes(widgetId);
 
     try {
       if (isCurrentlyPinned) {
         // Unpin the widget
         const { error } = await supabase
-          .from("pinned_widgets")
-          .delete()
+          .from("user_widget_preferences")
+          .update({ pinned: false })
           .eq("user_id", user.id)
-          .eq("widget_id", widgetId);
+          .eq("selected_module", widgetId);
 
         if (error) throw error;
         setPinnedWidgets((prev) => prev.filter((id) => id !== widgetId));
       } else {
         // Pin the widget
         const { error } = await supabase
-          .from("pinned_widgets")
-          .insert([{ user_id: user.id, widget_id: widgetId }]);
+          .from("user_widget_preferences")
+          .update({ pinned: true })
+          .eq("user_id", user.id)
+          .eq("selected_module", widgetId);
 
         if (error) throw error;
         setPinnedWidgets((prev) => [...prev, widgetId]);
@@ -377,10 +362,6 @@ const Index = () => {
         description: "There was a problem pinning this widget.",
         variant: "destructive",
       });
-      // Revert local state on error
-      setLocalPinned(localPinned);
-    } finally {
-      setUnsaved(false); // Clear the unsaved changes flag
     }
   };
 
@@ -615,6 +596,8 @@ const Index = () => {
     ...renderDataVisualizationWidgets(),
   ].filter(Boolean);
 
+  const totalWidgets = userWidgets.length;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
       <Header onSelectWidgets={() => setIsModalOpen(true)} />
@@ -658,7 +641,7 @@ const Index = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-sm opacity-90">Active Widgets</div>
-                    <div className="text-xl font-bold">{allWidgets.length}</div>
+                    <div className="text-xl font-bold">{totalWidgets}</div>
                   </div>
                   <Activity className="h-8 w-8 opacity-80" />
                 </div>
@@ -684,7 +667,7 @@ const Index = () => {
             </div>
           </div>
 
-          {allWidgets.length === 0 ? (
+          {totalWidgets === 0 ? (
             <div className="text-center py-16">
               <Card className="bg-white rounded-2xl shadow-xl border border-gray-200 p-12 max-w-md mx-auto">
                 <CardContent className="text-center">
@@ -719,6 +702,7 @@ const Index = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveWidgets}
         selectedWidgets={selectedWidgets}
+        pinnedWidgets={pinnedWidgets}
       />
 
       <ChatBot onDataReceived={handleDataReceived} />

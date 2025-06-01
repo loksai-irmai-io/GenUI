@@ -1,4 +1,5 @@
-import { dataService } from "@/services/dataService";
+
+import { mockDataService } from "@/services/dataService";
 import React, { useEffect, useState } from "react";
 import DataTable from "./DataTable";
 
@@ -17,7 +18,7 @@ const TimingAnalysisTable: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const json = await dataService.getTimingAnalysisTable();
+        const json = await mockDataService.getTimingAnalysisData();
         if (Array.isArray(json) && json.length > 0) {
           setColumns(Object.keys(json[0]).map((key) => ({ key, label: key })));
           setData(json);

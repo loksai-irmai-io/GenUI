@@ -46,7 +46,7 @@ export interface TimingAnalysis {
 }
 
 class APIService {
-  private async fetchData<T>(endpoint: string): Promise<T> {
+  async fetchData<T>(endpoint: string): Promise<T> {
     console.log(`Fetching data from: ${API_BASE_URL}${endpoint}`);
     
     try {

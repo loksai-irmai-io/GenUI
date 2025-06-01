@@ -5,8 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Save } from "lucide-react";
-import { widgetService, Widget } from '@/services/widgetService';
 import { useToast } from '@/hooks/use-toast';
+
+interface LocalWidget {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+}
 
 interface WidgetSelectionModalProps {
   isOpen: boolean;
@@ -16,7 +22,7 @@ interface WidgetSelectionModalProps {
   pinnedWidgets: string[];
 }
 
-const availableWidgets: Widget[] = [
+const availableWidgets: LocalWidget[] = [
   { id: 'info-card-small', name: 'Small Info Card', category: 'Info Cards', description: 'Compact metric display' },
   { id: 'info-card-medium', name: 'Medium Info Card', category: 'Info Cards', description: 'Standard metric card' },
   { id: 'info-card-large', name: 'Large Info Card', category: 'Info Cards', description: 'Detailed metric overview' },

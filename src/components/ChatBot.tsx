@@ -1,11 +1,13 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Minimize2, Loader2 } from "lucide-react";
-import { dataService } from "@/services/dataService";
+import { mockDataService } from "@/services/dataService";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import DynamicAPIWidget from "@/components/widgets/DynamicAPIWidget";
 
 interface Message {
   id: number;
@@ -44,12 +46,12 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
 
   const handleSOPDeviation = async () => {
     try {
-      const data = await dataService.getSOPDeviationTableData();
+      const data = await mockDataService.getSOPDeviationTableData();
       onDataReceived("sop-table", data, "SOP Deviation Analysis");
 
       const successMessage: Message = {
         id: Date.now(),
-        text: `Loaded SOP deviation data! Percentage: ${countData.percentage}%. Found ${patternsData.length} patterns. Visualizations added to your chatbot.`,
+        text: `Loaded SOP deviation data! Found ${data.length} deviation records. Visualizations added to your dashboard.`,
         sender: "bot",
         timestamp: new Date(),
       };
@@ -68,12 +70,12 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
 
   const handleIncompleteCases = async () => {
     try {
-      const data = await dataService.getIncompleteCasesChartData();
+      const data = await mockDataService.getIncompleteCasesChartData();
       onDataReceived("incomplete-bar", data, "Incomplete Cases Analysis");
 
       const successMessage: Message = {
         id: Date.now(),
-        text: `Successfully loaded incomplete cases data from API! The analysis shows the distribution of complete vs incomplete cases. The data has been visualized as a bar chart on your chatbot.`,
+        text: `Successfully loaded incomplete cases data! The analysis shows the distribution of complete vs incomplete cases. The data has been visualized as a bar chart on your dashboard.`,
         sender: "bot",
         timestamp: new Date(),
       };
@@ -92,12 +94,156 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
 
   const handleLongRunningCases = async () => {
     try {
-      const data = await dataService.getLongRunningCasesChartData();
+      const data = await mockDataService.getLongRunningCasesChartData();
       onDataReceived("longrunning-bar", data, "Long Running Cases Analysis");
 
       const successMessage: Message = {
         id: Date.now(),
-        text: `Loaded timing analysis data! Visualized as a table on your chatbot.`,
+        text: `Loaded long running cases data! Visualized as a bar chart on your dashboard.`,
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, successMessage]);
+    } catch (error) {
+      console.error("Error fetching long running cases data:", error);
+      const errorMessage: Message = {
+        id: Date.now(),
+        text: "Sorry, I couldn't fetch the long running cases data from the API.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+  };
+
+  const handleResourceSwitches = async () => {
+    try {
+      const data = await mockDataService.getResourceSwitchesCount();
+      onDataReceived("resource-switches-bar", data, "Resource Switches Analysis");
+
+      const successMessage: Message = {
+        id: Date.now(),
+        text: "Loaded resource switches data! Visualized as a bar chart on your dashboard.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, successMessage]);
+    } catch (error) {
+      console.error("Error fetching resource switches data:", error);
+      const errorMessage: Message = {
+        id: Date.now(),
+        text: "Sorry, I couldn't fetch the resource switches data from the API.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+  };
+
+  const handleReworkActivities = async () => {
+    try {
+      const data = await mockDataService.getReworkActivitiesCount();
+      onDataReceived("rework-activities-bar", data, "Rework Activities Analysis");
+
+      const successMessage: Message = {
+        id: Date.now(),
+        text: "Loaded rework activities data! Visualized as a bar chart on your dashboard.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, successMessage]);
+    } catch (error) {
+      console.error("Error fetching rework activities data:", error);
+      const errorMessage: Message = {
+        id: Date.now(),
+        text: "Sorry, I couldn't fetch the rework activities data from the API.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+  };
+
+  const handleTimingViolations = async () => {
+    try {
+      const data = await mockDataService.getTimingViolationsCount();
+      onDataReceived("timing-violations-bar", data, "Timing Violations Analysis");
+
+      const successMessage: Message = {
+        id: Date.now(),
+        text: "Loaded timing violations data! Visualized as a bar chart on your dashboard.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, successMessage]);
+    } catch (error) {
+      console.error("Error fetching timing violations data:", error);
+      const errorMessage: Message = {
+        id: Date.now(),
+        text: "Sorry, I couldn't fetch the timing violations data from the API.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+  };
+
+  const handleCaseComplexityTable = async () => {
+    try {
+      const data = await mockDataService.getCaseComplexityData();
+      onDataReceived("case-complexity-bar", data, "Case Complexity Analysis");
+
+      const successMessage: Message = {
+        id: Date.now(),
+        text: "Loaded case complexity data! Visualized as a bar chart on your dashboard.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, successMessage]);
+    } catch (error) {
+      console.error("Error fetching case complexity data:", error);
+      const errorMessage: Message = {
+        id: Date.now(),
+        text: "Sorry, I couldn't fetch the case complexity data from the API.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+  };
+
+  const handleResourcePerformance = async () => {
+    try {
+      const data = await mockDataService.getResourcePerformanceData();
+      onDataReceived("resource-performance-table", data, "Resource Performance Analysis");
+
+      const successMessage: Message = {
+        id: Date.now(),
+        text: "Loaded resource performance data! Visualized as a table on your dashboard.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, successMessage]);
+    } catch (error) {
+      console.error("Error fetching resource performance data:", error);
+      const errorMessage: Message = {
+        id: Date.now(),
+        text: "Sorry, I couldn't fetch the resource performance data from the API.",
+        sender: "bot",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    }
+  };
+
+  const handleTimingAnalysis = async () => {
+    try {
+      const data = await mockDataService.getTimingAnalysisData();
+      onDataReceived("timing-analysis-table", data, "Timing Analysis");
+
+      const successMessage: Message = {
+        id: Date.now(),
+        text: "Loaded timing analysis data! Visualized as a table on your dashboard.",
         sender: "bot",
         timestamp: new Date(),
       };
@@ -132,7 +278,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         ...prev,
         {
           id: Date.now(),
-          text: "Loaded process failure patterns data! Visualized as a bar chart on your chatbot.",
+          text: "Loaded process failure patterns data! Visualized as a bar chart on your dashboard.",
           sender: "bot",
           timestamp: new Date(),
         },
@@ -280,29 +426,11 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                       key={viz.id}
                       className="bg-white border rounded-lg shadow p-4"
                     >
-                      {viz.type === "sop-count" ? (
-                        <SOPWidget
-                          type="count"
-                          data={
-                            Array.isArray(viz.data) ? viz.data[0] : viz.data
-                          }
-                          visualizationType="bar"
-                          title={viz.title}
-                        />
-                      ) : viz.type === "sop-patterns" ? (
-                        <SOPWidget
-                          type="patterns"
-                          data={viz.data}
-                          visualizationType="bar"
-                          title={viz.title}
-                        />
-                      ) : (
-                        <DataVisualizationWidget
-                          type={viz.type as any}
-                          data={viz.data}
-                          title={viz.title}
-                        />
-                      )}
+                      <DynamicAPIWidget
+                        type={viz.type as any}
+                        data={viz.data}
+                        title={viz.title}
+                      />
                     </div>
                   ))}
                 </div>
