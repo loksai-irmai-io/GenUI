@@ -2,6 +2,9 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { X, Save } from "lucide-react";
 import { widgetService, Widget } from '@/services/widgetService';
 import { useToast } from '@/hooks/use-toast';
 
@@ -43,7 +46,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   };
 
   const handleSave = () => {
-    onSave(localSelection);
+    onSave(localSelection, []);
     onClose();
   };
 
@@ -98,8 +101,8 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
             Save Preferences
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
