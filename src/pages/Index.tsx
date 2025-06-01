@@ -9,13 +9,8 @@ import ChatBot from "../components/ChatBot";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import SOPWidget from "../components/widgets/SOPWidget";
-import ResourcePerformanceTable from "../components/widgets/ResourcePerformanceTable";
-import TimingAnalysisTable from "../components/widgets/TimingAnalysisTable";
-import { Pin, PinOff, Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
-// Sample data for widgets
+// Sample data for legacy widgets
 const sampleLineData = [
   { name: "Jan", value: 4000 },
   { name: "Feb", value: 3000 },
@@ -60,17 +55,13 @@ const DEFAULT_WIDGETS = [
 
 const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
-  const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
+  const [selectedWidgets, setSelectedWidgets] = useState<string[]>([
+    "info-card-medium",
+    "line-chart",
+    "bar-chart",
+    "data-table",
+  ]);
   const [dataVisualizationWidgets, setDataVisualizationWidgets] = useState<
-    Array<{
-      id: string;
-      type: string;
-      data: any[];
-      title: string;
-    }>
-  >([]);
-  const [chatbotVisualizations, setChatbotVisualizations] = useState<
     Array<{
       id: string;
       type: string;
@@ -88,6 +79,8 @@ const Index = () => {
   useEffect(() => {
     if (user) {
       loadUserWidgetPreferences();
+    } else {
+      setLoading(false);
     }
   }, [user]);
 
@@ -277,40 +270,25 @@ const Index = () => {
         .from("user_widget_preferences")
         .select("*")
         .eq("user_id", user.id);
+
       if (error) throw error;
+
       if (data && data.length > 0) {
         const widgetIds = data
           .map((pref) => pref.selected_module)
           .filter(Boolean);
-        const pinnedIds = data
-          .filter((pref) => pref.pinned)
-          .map((pref) => pref.selected_module);
-        setSelectedWidgets(widgetIds.length > 0 ? widgetIds : DEFAULT_WIDGETS);
-        setPinnedWidgets(pinnedIds.length > 0 ? pinnedIds : DEFAULT_WIDGETS);
-      } else {
-        // No preferences: set defaults
-        setSelectedWidgets(DEFAULT_WIDGETS);
-        setPinnedWidgets(DEFAULT_WIDGETS);
-        // Insert default preferences for new user
-        const preferences = DEFAULT_WIDGETS.map((widgetId) => ({
-          user_id: user.id,
-          widget_id: widgetId,
-          selected_module: widgetId,
-          pinned: true,
-        }));
-        await supabase
-          .from("user_widget_preferences")
-          .upsert(preferences, { onConflict: "user_id,selected_module" });
+        if (widgetIds.length > 0) {
+          setSelectedWidgets(widgetIds);
+        }
       }
     } catch (error) {
       console.error("Error loading user preferences:", error);
     }
   };
 
-  // Save widgets: use the provided pinned list as the source of truth
-  const handleSaveWidgets = async (widgets: string[], pinned: string[]) => {
+  const handleSaveWidgets = async (widgets: string[]) => {
     setSelectedWidgets(widgets);
-    setPinnedWidgets(pinned);
+
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -320,38 +298,23 @@ const Index = () => {
       return;
     }
     try {
-      // Remove duplicates for this user (defensive, in case migration missed any)
-      await supabase.rpc("remove_duplicate_user_widget_preferences", {
-        user_id_param: user.id,
-      });
-      // Only keep the currently pinned widgets in the DB
       await supabase
         .from("user_widget_preferences")
         .delete()
-        .eq("user_id", user.id)
-        .not(
-          "selected_module",
-          "in",
-          `(${pinned.map((w) => `'${w}'`).join(",")})`
-        );
-      // Upsert only the currently pinned widgets
-      const preferences = pinned.map((widgetId) => ({
+        .eq("user_id", user.id);
+
+      const preferences = widgets.map((widgetId) => ({
         user_id: user.id,
-        widget_id: widgetId,
+        widget_id: crypto.randomUUID(),
         selected_module: widgetId,
-        pinned: true,
       }));
-      let error = null;
-      try {
-        const { error: upsertError } = await supabase
-          .from("user_widget_preferences")
-          .upsert(preferences, { onConflict: "user_id,selected_module" });
-        error = upsertError;
-      } catch (e) {
-        error = e;
-      }
+
+      const { error } = await supabase
+        .from("user_widget_preferences")
+        .insert(preferences);
+
       if (error) throw error;
-      await loadUserWidgetPreferences();
+
       toast({
         title: "Preferences Saved",
         description: "Your widget preferences have been saved successfully.",
@@ -366,229 +329,109 @@ const Index = () => {
     }
   };
 
-  const handleDataReceived = (
-    type: string,
-    data: any,
-    title: string,
-    widgetId?: string
-  ) => {
-    if (widgetId) {
-      // Replace (not append) dashboard data for this widgetId
-      setDataVisualizationWidgets((prev) => {
-        const filtered = prev.filter((w) => w.id !== widgetId);
-        return [
-          ...filtered,
-          {
-            id: widgetId,
-            type,
-            data,
-            title,
-          },
-        ];
-      });
-    } else {
-      // Chatbot visualization: always add a new one with a unique id
-      const id = `data-viz-${Date.now()}`;
-      setChatbotVisualizations((prev) => [
-        ...prev,
-        {
-          id,
-          type,
-          data,
-          title,
-        },
-      ]);
-    }
+  const handleDataReceived = (type: string, data: any[], title: string) => {
+    const newWidget = {
+      id: `data-viz-${Date.now()}`,
+      type,
+      data,
+      title,
+    };
+    setDataVisualizationWidgets((prev) => [...prev, newWidget]);
   };
 
-  // Pin/unpin handler for dashboard widgets
-  const handleTogglePinWidget = (widgetId: string) => {
-    setLocalPinned((prev) => {
-      const next = prev.includes(widgetId)
-        ? prev.filter((id) => id !== widgetId)
-        : [...prev, widgetId];
-      setUnsaved(true);
-      return next;
-    });
-  };
-
-  // Save button handler for dashboard
-  const handleSaveDashboardPrefs = async () => {
-    setPinnedWidgets(localPinned);
-    setUnsaved(false);
-    await handleSaveWidgets(selectedWidgets, localPinned);
-  };
-
-  // Enhanced widget renderer with pin/unpin icon
   const renderWidget = (widgetId: string) => {
-    const isPinned = localPinned.includes(widgetId);
-    const pinButton = (
-      <button
-        aria-label={isPinned ? "Unpin widget" : "Pin widget"}
-        className={`absolute top-2 right-2 z-10 rounded-full p-1 bg-white border shadow hover:bg-yellow-100 transition-colors ${
-          isPinned ? "text-yellow-500" : "text-gray-400"
-        }`}
-        onClick={() => handleTogglePinWidget(widgetId)}
-        type="button"
-      >
-        {isPinned ? (
-          <Pin className="w-4 h-4" fill="#fde68a" />
-        ) : (
-          <PinOff className="w-4 h-4" />
-        )}
-      </button>
-    );
-
-    // Try to find fetched data for this widget
-    const fetchedWidget = dataVisualizationWidgets.find(
-      (w) => w.id === widgetId
-    );
-    let widgetContent = null;
-    if (fetchedWidget) {
-      // Render with fetched data
-      if (fetchedWidget.type === "sop-count") {
-        widgetContent = (
-          <SOPWidget
-            key={fetchedWidget.id}
-            type="count"
-            data={
-              Array.isArray(fetchedWidget.data)
-                ? fetchedWidget.data[0]
-                : fetchedWidget.data
-            }
-            visualizationType="bar"
-            title={fetchedWidget.title}
+    switch (widgetId) {
+      case "info-card-small":
+        return (
+          <InfoCard
+            key={widgetId}
+            title="Revenue"
+            value="$45,231"
+            change={12}
+            changeType="increase"
+            size="small"
           />
         );
-      } else if (fetchedWidget.type === "sop-patterns") {
-        widgetContent = (
-          <SOPWidget
-            key={fetchedWidget.id}
-            type="patterns"
-            data={fetchedWidget.data}
-            visualizationType="bar"
-            title={fetchedWidget.title}
+      case "info-card-medium":
+        return (
+          <InfoCard
+            key={widgetId}
+            title="Total Users"
+            value="2,543"
+            change={8}
+            changeType="increase"
+            size="medium"
+            subtitle="Active this month"
           />
         );
-      } else {
-        widgetContent = (
-          <DataVisualizationWidget
-            key={fetchedWidget.id}
-            type={fetchedWidget.type as any}
-            data={fetchedWidget.data}
-            title={fetchedWidget.title}
+      case "info-card-large":
+        return (
+          <InfoCard
+            key={widgetId}
+            title="Sales Performance"
+            value="$123,456"
+            change={-2}
+            changeType="decrease"
+            size="large"
+            subtitle="Quarterly results"
           />
         );
-      }
-    } else {
-      // Fallback to static widgets for known IDs
-      switch (widgetId) {
-        case "info-card-small":
-          widgetContent = (
-            <InfoCard
-              key={widgetId}
-              title="Revenue"
-              value="$45,231"
-              change={12}
-              changeType="increase"
-              size="small"
-            />
-          );
-          break;
-        case "info-card-medium":
-          widgetContent = (
-            <InfoCard
-              key={widgetId}
-              title="Total Users"
-              value="2,543"
-              change={8}
-              changeType="increase"
-              size="medium"
-              subtitle="Active this month"
-            />
-          );
-          break;
-        case "info-card-large":
-          widgetContent = (
-            <InfoCard
-              key={widgetId}
-              title="Sales Performance"
-              value="$123,456"
-              change={-2}
-              changeType="decrease"
-              size="large"
-              subtitle="Quarterly results"
-            />
-          );
-          break;
-        case "line-chart":
-          widgetContent = (
-            <ChartWidget
-              key={widgetId}
-              type="line"
-              title="Sales Trend"
-              data={sampleLineData}
-            />
-          );
-          break;
-        case "bar-chart":
-          widgetContent = (
-            <ChartWidget
-              key={widgetId}
-              type="bar"
-              title="Product Performance"
-              data={sampleBarData}
-            />
-          );
-          break;
-        case "pie-chart":
-          widgetContent = (
-            <ChartWidget
-              key={widgetId}
-              type="pie"
-              title="Traffic Sources"
-              data={samplePieData}
-            />
-          );
-          break;
-        case "data-table":
-          widgetContent = (
-            <DataTable
-              key={widgetId}
-              title="User Management"
-              data={sampleTableData}
-              columns={tableColumns}
-            />
-          );
-          break;
-        case "resource-performance-table":
-          widgetContent = <ResourcePerformanceTable key={widgetId} />;
-          break;
-        case "timing-analysis-table":
-          widgetContent = <TimingAnalysisTable key={widgetId} />;
-          break;
-        default:
-          widgetContent = null;
-      }
+      case "line-chart":
+        return (
+          <ChartWidget
+            key={widgetId}
+            type="line"
+            title="Sales Trend"
+            data={sampleLineData}
+          />
+        );
+      case "bar-chart":
+        return (
+          <ChartWidget
+            key={widgetId}
+            type="bar"
+            title="Product Performance"
+            data={sampleBarData}
+          />
+        );
+      case "pie-chart":
+        return (
+          <ChartWidget
+            key={widgetId}
+            type="pie"
+            title="Traffic Sources"
+            data={samplePieData}
+          />
+        );
+      case "data-table":
+        return (
+          <DataTable
+            key={widgetId}
+            title="User Management"
+            data={sampleTableData}
+            columns={tableColumns}
+          />
+        );
+      default:
+        return null;
     }
-    return widgetContent ? (
-      <div key={widgetId} className="relative group">
-        {pinButton}
-        {widgetContent}
-      </div>
-    ) : null;
   };
 
-  // Only render visualizations for selected/pinned widgets (by matching prefix)
-  const widgetSet = new Set([...selectedWidgets, ...pinnedWidgets]);
-  const allWidgets = dataVisualizationWidgets
-    .filter((viz) => {
-      // Show if the visualization's id starts with any selected/pinned widget id
-      return Array.from(widgetSet).some(
-        (id) => viz.id === id || viz.id.startsWith(id)
-      );
-    })
-    .map((viz) => renderWidget(viz.id));
+  const renderDataVisualizationWidgets = () => {
+    return dataVisualizationWidgets.map((widget) => (
+      <DataVisualizationWidget
+        key={widget.id}
+        type={widget.type as "sop-table" | "incomplete-bar" | "longrunning-bar"}
+        data={widget.data}
+        title={widget.title}
+      />
+    ));
+  };
+
+  const allWidgets = [
+    ...selectedWidgets.map((widgetId) => renderWidget(widgetId)),
+    ...renderDataVisualizationWidgets(),
+  ].filter(Boolean);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -604,20 +447,7 @@ const Index = () => {
               experience
             </p>
           </div>
-          <div className="flex justify-end mb-4">
-            <Button
-              onClick={handleSaveDashboardPrefs}
-              disabled={!unsaved}
-              className={`flex items-center gap-2 ${
-                unsaved
-                  ? "bg-blue-600 hover:bg-blue-700 text-white"
-                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              <Save className="w-4 h-4" />
-              Save
-            </Button>
-          </div>
+
           {allWidgets.length === 0 ? (
             <div className="text-center py-16">
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 max-w-md mx-auto">
@@ -638,7 +468,7 @@ const Index = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {allWidgets}
+              {userWidgets}
             </div>
           )}
         </div>
@@ -648,16 +478,9 @@ const Index = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveWidgets}
         selectedWidgets={selectedWidgets}
-        pinnedWidgets={pinnedWidgets}
       />
-      <div className="fixed bottom-4 right-4 w-full max-w-3xl z-50">
-        <ChatBot
-          onDataReceived={(type, data, title) =>
-            handleDataReceived(type, data, title)
-          }
-          visualizations={chatbotVisualizations}
-        />
-      </div>
+
+      <ChatBot onDataReceived={handleDataReceived} />
     </div>
   );
 };
