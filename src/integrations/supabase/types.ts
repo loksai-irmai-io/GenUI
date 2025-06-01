@@ -61,6 +61,7 @@ export type Database = {
           selected_module: string | null
           user_id: string
           widget_id: string
+          pinned: boolean
         }
         Insert: {
           id?: string
@@ -68,6 +69,7 @@ export type Database = {
           selected_module?: string | null
           user_id: string
           widget_id: string
+          pinned?: boolean
         }
         Update: {
           id?: string
@@ -75,6 +77,7 @@ export type Database = {
           selected_module?: string | null
           user_id?: string
           widget_id?: string
+          pinned?: boolean
         }
         Relationships: [
           {
@@ -186,7 +189,7 @@ export type Tables<
   }
     ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {

@@ -1,4 +1,3 @@
-
 export interface SOPCountData {
   count: number;
   percentage: number;
@@ -60,13 +59,11 @@ class SOPDeviationService {
 
   async getSOPDeviationCount(): Promise<SOPCountData> {
     try {
-      console.log('Attempting to fetch from API...');
-      const response = await fetch(`${this.baseUrl}/sopdeviation/low-percentage/count`);
+      const response = await fetch('http://127.0.0.1:8001/sopdeviation/low-percentage/count');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log('API data received:', data);
       return data;
     } catch (error) {
       console.error('API call failed, using fallback data:', error);
@@ -89,14 +86,26 @@ class SOPDeviationService {
 
   async getSOPDeviationPatterns(): Promise<SOPPatternData[]> {
     try {
-      console.log('Attempting to fetch patterns from API...');
-      const response = await fetch(`${this.baseUrl}/sopdeviation/patterns`);
+      const response = await fetch('http://127.0.0.1:8001/sopdeviation/patterns');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log('API patterns data received:', data);
-      return data;
+      // The backend returns { patterns: [...] }, so extract the array
+      if (Array.isArray(data)) {
+        return data;
+      } else if (Array.isArray(data.patterns)) {
+        // Map backend fields to SOPPatternData
+        return data.patterns.map((item: any, idx: number) => ({
+          pattern_id: item.pattern_no ? String(item.pattern_no) : `pattern_${idx + 1}`,
+          pattern_name: item.pattern || `Pattern ${idx + 1}`,
+          frequency: item.frequency || item.count || 0,
+          severity: item.severity || 'unknown',
+          timestamp: item.timestamp || new Date().toISOString(),
+        }));
+      } else {
+        return [];
+      }
     } catch (error) {
       console.error('API call failed, using fallback data:', error);
       try {

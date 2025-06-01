@@ -1,6 +1,10 @@
-
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import React, { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -16,21 +20,72 @@ interface Widget {
 interface WidgetSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (selectedWidgets: string[]) => void;
+  onSave: (selectedWidgets: string[], pinnedWidgets: string[]) => void;
   selectedWidgets: string[];
+  pinnedWidgets: string[];
 }
 
 const availableWidgets: Widget[] = [
-  { id: 'info-card-small', name: 'Small Info Card', category: 'Info Cards', description: 'Compact metric display' },
-  { id: 'info-card-medium', name: 'Medium Info Card', category: 'Info Cards', description: 'Standard metric card' },
-  { id: 'info-card-large', name: 'Large Info Card', category: 'Info Cards', description: 'Detailed metric overview' },
-  { id: 'line-chart', name: 'Line Chart', category: 'Charts', description: 'Trend visualization' },
-  { id: 'bar-chart', name: 'Bar Chart', category: 'Charts', description: 'Comparative data display' },
-  { id: 'pie-chart', name: 'Pie Chart', category: 'Charts', description: 'Proportional data view' },
-  { id: 'data-table', name: 'Data Table', category: 'Tables', description: 'Tabular data presentation' },
-  { id: 'kpi-summary', name: 'KPI Summary', category: 'KPIs', description: 'Key performance indicators' },
-  { id: 'timeline', name: 'Timeline Widget', category: 'Timeline', description: 'Chronological events' },
-  { id: 'gauge', name: 'Gauge Widget', category: 'Gauges', description: 'Progress measurement' },
+  {
+    id: "sop-deviation",
+    name: "SOP Deviation",
+    category: "Process Analytics",
+    description: "Deviation from standard operating procedures",
+  },
+  {
+    id: "long-running-cases",
+    name: "Long Running Cases",
+    category: "Process Analytics",
+    description: "Cases exceeding expected duration",
+  },
+  {
+    id: "incomplete-cases",
+    name: "Incomplete Cases",
+    category: "Process Analytics",
+    description: "Cases not completed within timeframe",
+  },
+  {
+    id: "resource-switches",
+    name: "Resource Switches",
+    category: "Process Analytics",
+    description: "Number of resource switches in cases",
+  },
+  {
+    id: "rework-activities",
+    name: "Rework Activities",
+    category: "Process Analytics",
+    description: "Activities repeated within cases",
+  },
+  {
+    id: "timing-violations",
+    name: "Timing Violations",
+    category: "Process Analytics",
+    description: "Violations of timing constraints",
+  },
+  {
+    id: "case-complexity",
+    name: "Case Complexity",
+    category: "Process Analytics",
+    description: "Complexity levels of cases",
+  },
+  {
+    id: "resource-performance",
+    name: "Resource Performance",
+    category: "Process Analytics",
+    description: "Performance metrics for resources",
+  },
+  {
+    id: "timing-analysis",
+    name: "Timing Analysis",
+    category: "Process Analytics",
+    description: "Detailed timing analysis of cases",
+  },
+  {
+    id: "process-failure-patterns-distribution",
+    name: "Process failure patterns distribution",
+    category: "Process Analytics",
+    description: "Distribution of process failure patterns as a bar graph",
+  },
 ];
 
 const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
@@ -38,23 +93,27 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   onClose,
   onSave,
   selectedWidgets,
+  pinnedWidgets, // keep for prop compatibility, but do not use
 }) => {
-  const [localSelection, setLocalSelection] = useState<string[]>(selectedWidgets);
+  const [localSelection, setLocalSelection] =
+    useState<string[]>(selectedWidgets);
 
   const handleToggleWidget = (widgetId: string) => {
-    setLocalSelection(prev => 
-      prev.includes(widgetId) 
-        ? prev.filter(id => id !== widgetId)
+    setLocalSelection((prev) =>
+      prev.includes(widgetId)
+        ? prev.filter((id) => id !== widgetId)
         : [...prev, widgetId]
     );
   };
 
   const handleSave = () => {
-    onSave(localSelection);
+    onSave(localSelection, localSelection); // Treat all selected widgets as pinned
     onClose();
   };
 
-  const categories = Array.from(new Set(availableWidgets.map(w => w.category)));
+  const categories = Array.from(
+    new Set(availableWidgets.map((w) => w.category))
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -65,28 +124,34 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
             <Badge variant="outline">{localSelection.length} selected</Badge>
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
-          {categories.map(category => (
+          {categories.map((category) => (
             <div key={category} className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">{category}</h3>
+              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+                {category}
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {availableWidgets
-                  .filter(widget => widget.category === category)
-                  .map(widget => (
-                    <div 
+                  .filter((widget) => widget.category === category)
+                  .map((widget) => (
+                    <div
                       key={widget.id}
                       className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => handleToggleWidget(widget.id)}
                     >
-                      <Checkbox 
+                      <Checkbox
                         checked={localSelection.includes(widget.id)}
                         onCheckedChange={() => handleToggleWidget(widget.id)}
                         className="mt-1"
                       />
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{widget.name}</h4>
-                        <p className="text-sm text-gray-600">{widget.description}</p>
+                        <h4 className="font-medium text-gray-900 flex items-center">
+                          {widget.name}
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          {widget.description}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -94,13 +159,16 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
             </div>
           ))}
         </div>
-        
+
         <div className="flex justify-end space-x-3 pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
             <X className="w-4 h-4 mr-2" />
             Cancel
           </Button>
-          <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            onClick={handleSave}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
             <Save className="w-4 h-4 mr-2" />
             Save Preferences
           </Button>
