@@ -443,9 +443,7 @@ const Index = () => {
           
           <div className="fixed bottom-6 right-6 z-50">
             <ChatBot
-              onDataReceived={(type, data, title) =>
-                handleDataReceived(type, data, title)
-              }
+              onDataReceived={handleDataReceived}
               visualizations={chatbotVisualizations}
             />
           </div>
