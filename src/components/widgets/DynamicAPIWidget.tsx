@@ -1,348 +1,327 @@
 
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertTriangle, TrendingUp, TrendingDown, Activity, Database, RefreshCw } from "lucide-react";
 import { apiService } from '@/services/apiService';
 import { mockDataService } from '@/services/dataService';
 
 interface DynamicAPIWidgetProps {
-  widgetType: 'sop-deviation-count' | 'sop-deviation-patterns' | 'incomplete-cases' | 
-             'long-running-cases' | 'resource-switches' | 'rework-activities' | 
-             'timing-violations' | 'case-complexity' | 'resource-performance' | 'timing-analysis';
+  type: 'bar' | 'table' | 'sop-count' | 'sop-patterns' | 'incomplete-bar' | 'longrunning-bar' | 'resource-switches-bar' | 'rework-activities-bar' | 'timing-violations-bar' | 'case-complexity-bar' | 'resource-performance-table' | 'timing-analysis-table' | 'process-failure-patterns-bar';
+  endpoint?: string;
   title: string;
-  visualizationType: 'bar' | 'table';
+  data?: any[];
 }
 
-const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({ 
-  widgetType, 
-  title, 
-  visualizationType 
-}) => {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
+
+const DynamicAPIWidget: React.FC<DynamicAPIWidgetProps> = ({ type, endpoint, title, data: initialData }) => {
+  const [data, setData] = useState<any[]>(initialData || []);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
-  const [usingMockData, setUsingMockData] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (!initialData) {
+      fetchData();
+    }
+  }, [endpoint, type, initialData]);
+
+  const fetchData = async () => {
+    if (!endpoint && !type) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      let result;
+      
+      // Try API first, fall back to mock data
       try {
-        setLoading(true);
-        setError(null);
-        setUsingMockData(false);
-        
-        console.log(`Attempting to fetch data for widget type: ${widgetType}`);
-        
-        let fetchedData;
-        
-        // Try to fetch from real API first
-        try {
-          switch (widgetType) {
-            case 'sop-deviation-count':
-              fetchedData = await apiService.getSOPDeviationCount();
+        if (endpoint) {
+          result = await apiService.fetchData(endpoint);
+        } else {
+          // Use mock data based on type
+          switch (type) {
+            case 'sop-count':
+              result = await mockDataService.getSOPDeviationCount();
               break;
-            case 'sop-deviation-patterns':
-              fetchedData = await apiService.getSOPDeviationPatterns();
+            case 'sop-patterns':
+              result = await mockDataService.getSOPDeviationPatterns();
               break;
-            case 'incomplete-cases':
-              fetchedData = await apiService.getIncompleteCasesCount();
+            case 'incomplete-bar':
+              result = await mockDataService.getIncompleteCasesCount();
               break;
-            case 'long-running-cases':
-              fetchedData = await apiService.getLongRunningCasesCount();
+            case 'longrunning-bar':
+              result = await mockDataService.getLongRunningCasesCount();
               break;
-            case 'resource-switches':
-              fetchedData = await apiService.getResourceSwitchesCount();
+            case 'resource-switches-bar':
+              result = await mockDataService.getResourceSwitchesCount();
               break;
-            case 'rework-activities':
-              fetchedData = await apiService.getReworkActivitiesCount();
+            case 'rework-activities-bar':
+              result = await mockDataService.getReworkActivitiesCount();
               break;
-            case 'timing-violations':
-              fetchedData = await apiService.getTimingViolationsCount();
+            case 'timing-violations-bar':
+              result = await mockDataService.getTimingViolationsCount();
               break;
-            case 'case-complexity':
-              fetchedData = await apiService.getCaseComplexity();
+            case 'case-complexity-bar':
+              result = await mockDataService.getCaseComplexityData();
               break;
-            case 'resource-performance':
-              fetchedData = await apiService.getResourcePerformance();
+            case 'resource-performance-table':
+              result = await mockDataService.getResourcePerformanceData();
               break;
-            case 'timing-analysis':
-              fetchedData = await apiService.getTimingAnalysis();
+            case 'timing-analysis-table':
+              result = await mockDataService.getTimingAnalysisData();
               break;
             default:
-              throw new Error(`Unknown widget type: ${widgetType}`);
-          }
-        } catch (apiError) {
-          console.warn(`API fetch failed for ${widgetType}, falling back to mock data:`, apiError);
-          
-          // Fallback to mock data
-          setUsingMockData(true);
-          switch (widgetType) {
-            case 'sop-deviation-count':
-              fetchedData = await mockDataService.getSOPDeviationCount();
-              break;
-            case 'sop-deviation-patterns':
-              fetchedData = await mockDataService.getSOPDeviationPatterns();
-              break;
-            case 'incomplete-cases':
-              fetchedData = await mockDataService.getIncompleteCasesCount();
-              break;
-            case 'long-running-cases':
-              fetchedData = await mockDataService.getLongRunningCasesCount();
-              break;
-            case 'resource-switches':
-              fetchedData = await mockDataService.getResourceSwitchesCount();
-              break;
-            case 'rework-activities':
-              fetchedData = await mockDataService.getReworkActivitiesCount();
-              break;
-            case 'timing-violations':
-              fetchedData = await mockDataService.getTimingViolationsCount();
-              break;
-            case 'case-complexity':
-              fetchedData = await mockDataService.getCaseComplexity();
-              break;
-            case 'resource-performance':
-              fetchedData = await mockDataService.getResourcePerformance();
-              break;
-            case 'timing-analysis':
-              fetchedData = await mockDataService.getTimingAnalysis();
-              break;
-            default:
-              throw new Error(`Unknown widget type: ${widgetType}`);
+              result = [];
           }
         }
-        
-        console.log(`Successfully loaded data for ${widgetType}:`, fetchedData);
-        setData(fetchedData);
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
-        setError(errorMessage);
-        console.error('Error fetching widget data:', err);
-      } finally {
-        setLoading(false);
+      } catch (apiError) {
+        console.warn('API fetch failed, using mock data:', apiError);
+        // Fall back to mock data
+        switch (type) {
+          case 'sop-count':
+            result = await mockDataService.getSOPDeviationCount();
+            break;
+          case 'sop-patterns':
+            result = await mockDataService.getSOPDeviationPatterns();
+            break;
+          case 'incomplete-bar':
+            result = await mockDataService.getIncompleteCasesCount();
+            break;
+          case 'longrunning-bar':
+            result = await mockDataService.getLongRunningCasesCount();
+            break;
+          case 'resource-switches-bar':
+            result = await mockDataService.getResourceSwitchesCount();
+            break;
+          case 'rework-activities-bar':
+            result = await mockDataService.getReworkActivitiesCount();
+            break;
+          case 'timing-violations-bar':
+            result = await mockDataService.getTimingViolationsCount();
+            break;
+          case 'case-complexity-bar':
+            result = await mockDataService.getCaseComplexityData();
+            break;
+          case 'resource-performance-table':
+            result = await mockDataService.getResourcePerformanceData();
+            break;
+          case 'timing-analysis-table':
+            result = await mockDataService.getTimingAnalysisData();
+            break;
+          default:
+            result = [];
+        }
       }
-    };
+      
+      setData(Array.isArray(result) ? result : [result]);
+      setLastUpdated(new Date());
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchData();
-  }, [widgetType]);
-
-  const renderBarChart = () => {
-    if (!data) return null;
-
-    let chartData;
-    switch (widgetType) {
-      case 'sop-deviation-count':
-        chartData = [{ name: 'SOP Deviations', value: data.count, percentage: data.percentage }];
-        break;
-      case 'incomplete-cases':
-      case 'long-running-cases':
-      case 'resource-switches':
-      case 'rework-activities':
-      case 'timing-violations':
-        chartData = [
-          { name: 'Affected Cases', value: data.count },
-          { name: 'Normal Cases', value: data.total_cases - data.count }
-        ];
-        break;
-      default:
-        return <div className="text-center text-gray-500">Bar chart not available for this data type</div>;
+  const renderChart = () => {
+    if (!data || data.length === 0) {
+      return (
+        <div className="h-64 flex items-center justify-center text-gray-500">
+          <div className="text-center">
+            <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>No data available</p>
+          </div>
+        </div>
+      );
     }
 
-    return (
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="name" stroke="#6b7280" />
-          <YAxis stroke="#6b7280" />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'white', 
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }} 
-          />
-          <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    );
+    switch (type) {
+      case 'sop-count':
+        return (
+          <div className="p-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-blue-600 mb-2">{data[0]?.count || 0}</div>
+                <div className="text-sm text-gray-600">Total Deviations</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-orange-600 mb-2">{data[0]?.percentage || 0}%</div>
+                <div className="text-sm text-gray-600">Deviation Rate</div>
+                <Progress value={data[0]?.percentage || 0} className="mt-2" />
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 'bar':
+      case 'incomplete-bar':
+      case 'longrunning-bar':
+      case 'resource-switches-bar':
+      case 'rework-activities-bar':
+      case 'timing-violations-bar':
+      case 'case-complexity-bar':
+      case 'process-failure-patterns-bar':
+        return (
+          <div className="h-64 p-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 12 }} 
+                  stroke="#6b7280"
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }} 
+                  stroke="#6b7280"
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
+                <Bar 
+                  dataKey="value" 
+                  fill="#3B82F6"
+                  radius={[4, 4, 0, 0]}
+                  className="hover:opacity-80 transition-opacity"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        );
+      
+      default:
+        return null;
+    }
   };
 
   const renderTable = () => {
-    if (!data) return null;
-
-    switch (widgetType) {
-      case 'sop-deviation-patterns':
-        return (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Pattern ID</TableHead>
-                  <TableHead>Pattern Name</TableHead>
-                  <TableHead>Frequency</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>Timestamp</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((pattern: any, index: number) => (
-                  <TableRow key={index}>
-                    <TableCell>{pattern.pattern_id}</TableCell>
-                    <TableCell>{pattern.pattern_name}</TableCell>
-                    <TableCell>{pattern.frequency}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        pattern.severity === 'high' ? 'bg-red-100 text-red-800' :
-                        pattern.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {pattern.severity}
-                      </span>
-                    </TableCell>
-                    <TableCell>{new Date(pattern.timestamp).toLocaleString()}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        );
-
-      case 'case-complexity':
-        return (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Case ID</TableHead>
-                  <TableHead>Complexity Score</TableHead>
-                  <TableHead>Event Count</TableHead>
-                  <TableHead>Z-Score</TableHead>
-                  <TableHead>Classification</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((item: any, index: number) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.case_id}</TableCell>
-                    <TableCell>{item.complexity_score.toFixed(2)}</TableCell>
-                    <TableCell>{item.event_count}</TableCell>
-                    <TableCell>{item.z_score.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        item.classification === 'high' ? 'bg-red-100 text-red-800' :
-                        item.classification === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {item.classification}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        );
-
-      case 'resource-performance':
-        return (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Resource ID</TableHead>
-                  <TableHead>Resource Name</TableHead>
-                  <TableHead>Avg Duration (hrs)</TableHead>
-                  <TableHead>Total Activities</TableHead>
-                  <TableHead>Efficiency Score</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((resource: any, index: number) => (
-                  <TableRow key={index}>
-                    <TableCell>{resource.resource_id}</TableCell>
-                    <TableCell>{resource.resource_name}</TableCell>
-                    <TableCell>{resource.avg_duration.toFixed(2)}</TableCell>
-                    <TableCell>{resource.total_activities}</TableCell>
-                    <TableCell>{resource.efficiency_score.toFixed(2)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        );
-
-      case 'timing-analysis':
-        return (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Activity Pair</TableHead>
-                  <TableHead>Avg Gap (hrs)</TableHead>
-                  <TableHead>Max Gap (hrs)</TableHead>
-                  <TableHead>Min Gap (hrs)</TableHead>
-                  <TableHead>Violations Count</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map((timing: any, index: number) => (
-                  <TableRow key={index}>
-                    <TableCell>{timing.activity_pair}</TableCell>
-                    <TableCell>{timing.avg_gap.toFixed(2)}</TableCell>
-                    <TableCell>{timing.max_gap.toFixed(2)}</TableCell>
-                    <TableCell>{timing.min_gap.toFixed(2)}</TableCell>
-                    <TableCell>{timing.violations_count}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        );
-
-      default:
-        return <div className="text-center text-gray-500">Table view not available for this data type</div>;
-    }
-  };
-
-  const renderContent = () => {
-    if (loading) {
+    if (!data || data.length === 0) {
       return (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">Loading data...</span>
+        <div className="p-6 text-center text-gray-500">
+          <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <p>No data available</p>
         </div>
       );
     }
 
-    if (error && !usingMockData) {
-      return (
-        <div className="flex items-center justify-center h-64 text-center">
-          <div className="text-red-600">
-            <p className="font-semibold">API Connection Failed</p>
-            <p className="text-sm mt-1">{error}</p>
-            <p className="text-xs mt-2 text-gray-600">Displaying sample data instead</p>
-          </div>
-        </div>
-      );
-    }
+    const columns = Object.keys(data[0] || {});
 
     return (
-      <div>
-        {usingMockData && (
-          <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-            <span className="font-medium">Demo Mode:</span> Showing sample data (API server not available)
-          </div>
-        )}
-        {visualizationType === 'bar' ? renderBarChart() : renderTable()}
+      <div className="overflow-auto max-h-96">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50 hover:bg-gray-50">
+              {columns.map((column) => (
+                <TableHead key={column} className="font-semibold text-gray-700 capitalize">
+                  {column.replace(/([A-Z])/g, ' $1').trim()}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((row, index) => (
+              <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                {columns.map((column) => (
+                  <TableCell key={column} className="text-gray-700">
+                    {typeof row[column] === 'number' && column.includes('percentage') ? (
+                      <Badge variant="outline" className="font-mono">
+                        {row[column]}%
+                      </Badge>
+                    ) : typeof row[column] === 'number' && column.includes('efficiency') ? (
+                      <div className="flex items-center space-x-2">
+                        <span>{row[column]}%</span>
+                        <Progress value={row[column]} className="w-16" />
+                      </div>
+                    ) : (
+                      row[column]
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     );
   };
 
+  const getIcon = () => {
+    switch (type) {
+      case 'sop-count':
+      case 'sop-patterns':
+        return <AlertTriangle className="h-5 w-5 text-orange-600" />;
+      case 'incomplete-bar':
+        return <Activity className="h-5 w-5 text-blue-600" />;
+      case 'longrunning-bar':
+        return <TrendingUp className="h-5 w-5 text-purple-600" />;
+      default:
+        return <Database className="h-5 w-5 text-gray-600" />;
+    }
+  };
+
+  const isTableType = type.includes('table') || type === 'sop-patterns';
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-      {renderContent()}
-    </div>
+    <Card className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
+      <CardHeader className="border-b border-gray-100 pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            {getIcon()}
+            <div>
+              <CardTitle className="text-lg font-semibold text-gray-800">
+                {title}
+              </CardTitle>
+              <CardDescription className="text-sm text-gray-500">
+                Last updated: {lastUpdated.toLocaleTimeString()}
+              </CardDescription>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            {loading && <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />}
+            <Badge variant={error ? "destructive" : "default"} className="text-xs">
+              {error ? "Error" : endpoint ? "Live" : "Demo"}
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="p-0">
+        {error && (
+          <Alert variant="destructive" className="m-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              {error}. Showing demo data instead.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {loading ? (
+          <div className="h-64 flex items-center justify-center">
+            <div className="text-center">
+              <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
+              <p className="text-gray-500">Loading data...</p>
+            </div>
+          </div>
+        ) : isTableType ? (
+          renderTable()
+        ) : (
+          renderChart()
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

@@ -5,10 +5,15 @@ import InfoCard from "../components/widgets/InfoCard";
 import ChartWidget from "../components/widgets/ChartWidget";
 import DataTable from "../components/widgets/DataTable";
 import DataVisualizationWidget from "../components/widgets/DataVisualizationWidget";
+import DynamicAPIWidget from "../components/widgets/DynamicAPIWidget";
 import ChatBot from "../components/ChatBot";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { TrendingUp, TrendingDown, Activity, AlertTriangle, CheckCircle } from "lucide-react";
 
 // Sample data for legacy widgets
 const sampleLineData = [
@@ -79,6 +84,18 @@ const Index = () => {
   useEffect(() => {
     if (user) {
       loadUserWidgetPreferences();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      loadUserWidgetPreferences();
+      loadPinnedWidgets();
     } else {
       setLoading(false);
     }
@@ -286,6 +303,87 @@ const Index = () => {
     }
   };
 
+  const loadPinnedWidgets = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from("pinned_widgets")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const widgetIds = data.map((pref) => pref.widget_id).filter(Boolean);
+        setPinnedWidgets(widgetIds);
+        setLocalPinned(widgetIds); // Initialize localPinned with pinned widgets
+      }
+    } catch (error) {
+      console.error("Error loading pinned widgets:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePinWidget = async (widgetId: string) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to pin widgets.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const isCurrentlyPinned = localPinned.includes(widgetId);
+    const updatedPinned = isCurrentlyPinned
+      ? localPinned.filter((id) => id !== widgetId)
+      : [...localPinned, widgetId];
+
+    setLocalPinned(updatedPinned);
+    setUnsaved(true); // Mark that there are unsaved changes
+
+    try {
+      if (isCurrentlyPinned) {
+        // Unpin the widget
+        const { error } = await supabase
+          .from("pinned_widgets")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("widget_id", widgetId);
+
+        if (error) throw error;
+        setPinnedWidgets((prev) => prev.filter((id) => id !== widgetId));
+      } else {
+        // Pin the widget
+        const { error } = await supabase
+          .from("pinned_widgets")
+          .insert([{ user_id: user.id, widget_id: widgetId }]);
+
+        if (error) throw error;
+        setPinnedWidgets((prev) => [...prev, widgetId]);
+      }
+
+      toast({
+        title: "Widget Pinned",
+        description: `Widget ${
+          isCurrentlyPinned ? "unpinned" : "pinned"
+        } successfully.`,
+      });
+    } catch (error) {
+      console.error("Error pinning widget:", error);
+      toast({
+        title: "Error Pinning Widget",
+        description: "There was a problem pinning this widget.",
+        variant: "destructive",
+      });
+      // Revert local state on error
+      setLocalPinned(localPinned);
+    } finally {
+      setUnsaved(false); // Clear the unsaved changes flag
+    }
+  };
+
   const handleSaveWidgets = async (widgets: string[]) => {
     setSelectedWidgets(widgets);
 
@@ -343,74 +441,149 @@ const Index = () => {
     switch (widgetId) {
       case "info-card-small":
         return (
-          <InfoCard
-            key={widgetId}
-            title="Revenue"
-            value="$45,231"
-            change={12}
-            changeType="increase"
-            size="small"
-          />
+          <Card key={widgetId} className="bg-gradient-to-br from-blue-50 to-indigo-100 border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-blue-800">Revenue</CardTitle>
+                <TrendingUp className="h-4 w-4 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-900">$45,231</div>
+              <div className="flex items-center space-x-2 mt-2">
+                <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-200">
+                  +12%
+                </Badge>
+                <span className="text-xs text-blue-600">vs last month</span>
+              </div>
+            </CardContent>
+          </Card>
         );
       case "info-card-medium":
         return (
-          <InfoCard
-            key={widgetId}
-            title="Total Users"
-            value="2,543"
-            change={8}
-            changeType="increase"
-            size="medium"
-            subtitle="Active this month"
-          />
+          <Card key={widgetId} className="bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-200 shadow-lg hover:shadow-xl transition-all duration-300 col-span-2">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg font-semibold text-emerald-800">Total Users</CardTitle>
+                  <CardDescription className="text-emerald-600">Active this month</CardDescription>
+                </div>
+                <Activity className="h-6 w-6 text-emerald-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-emerald-900 mb-3">2,543</div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-200">
+                    +8%
+                  </Badge>
+                  <span className="text-sm text-emerald-600">growth</span>
+                </div>
+                <Progress value={85} className="w-20" />
+              </div>
+            </CardContent>
+          </Card>
         );
       case "info-card-large":
         return (
-          <InfoCard
-            key={widgetId}
-            title="Sales Performance"
-            value="$123,456"
-            change={-2}
-            changeType="decrease"
-            size="large"
-            subtitle="Quarterly results"
-          />
+          <Card key={widgetId} className="bg-gradient-to-br from-amber-50 to-orange-100 border-amber-200 shadow-lg hover:shadow-xl transition-all duration-300 col-span-3">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-semibold text-amber-800">Sales Performance</CardTitle>
+                  <CardDescription className="text-amber-600">Quarterly results</CardDescription>
+                </div>
+                <TrendingDown className="h-6 w-6 text-amber-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-4xl font-bold text-amber-900 mb-4">$123,456</div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="text-sm text-amber-600">Target</div>
+                  <div className="font-semibold text-amber-800">$125,000</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm text-amber-600">Variance</div>
+                  <Badge variant="destructive" className="bg-red-100 text-red-800">-2%</Badge>
+                </div>
+                <div className="text-center">
+                  <div className="text-sm text-amber-600">Progress</div>
+                  <Progress value={98} className="mt-1" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         );
       case "line-chart":
         return (
-          <ChartWidget
-            key={widgetId}
-            type="line"
-            title="Sales Trend"
-            data={sampleLineData}
-          />
+          <Card key={widgetId} className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 col-span-2">
+            <CardHeader className="border-b border-gray-100">
+              <CardTitle className="text-lg font-semibold text-gray-800 flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
+                Sales Trend
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ChartWidget
+                type="line"
+                title=""
+                data={sampleLineData}
+              />
+            </CardContent>
+          </Card>
         );
       case "bar-chart":
         return (
-          <ChartWidget
-            key={widgetId}
-            type="bar"
-            title="Product Performance"
-            data={sampleBarData}
-          />
+          <Card key={widgetId} className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 col-span-2">
+            <CardHeader className="border-b border-gray-100">
+              <CardTitle className="text-lg font-semibold text-gray-800 flex items-center">
+                <Activity className="h-5 w-5 mr-2 text-green-600" />
+                Product Performance
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ChartWidget
+                type="bar"
+                title=""
+                data={sampleBarData}
+              />
+            </CardContent>
+          </Card>
         );
       case "pie-chart":
         return (
-          <ChartWidget
-            key={widgetId}
-            type="pie"
-            title="Traffic Sources"
-            data={samplePieData}
-          />
+          <Card key={widgetId} className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300">
+            <CardHeader className="border-b border-gray-100">
+              <CardTitle className="text-lg font-semibold text-gray-800">Traffic Sources</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <ChartWidget
+                type="pie"
+                title=""
+                data={samplePieData}
+              />
+            </CardContent>
+          </Card>
         );
       case "data-table":
         return (
-          <DataTable
-            key={widgetId}
-            title="User Management"
-            data={sampleTableData}
-            columns={tableColumns}
-          />
+          <Card key={widgetId} className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 col-span-3">
+            <CardHeader className="border-b border-gray-100">
+              <CardTitle className="text-lg font-semibold text-gray-800 flex items-center">
+                <CheckCircle className="h-5 w-5 mr-2 text-indigo-600" />
+                User Management
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <DataTable
+                title=""
+                data={sampleTableData}
+                columns={tableColumns}
+              />
+            </CardContent>
+          </Card>
         );
       default:
         return null;
@@ -419,60 +592,128 @@ const Index = () => {
 
   const renderDataVisualizationWidgets = () => {
     return dataVisualizationWidgets.map((widget) => (
-      <DataVisualizationWidget
-        key={widget.id}
-        type={widget.type as "sop-table" | "incomplete-bar" | "longrunning-bar"}
-        data={widget.data}
-        title={widget.title}
-      />
+      <Card key={widget.id} className="bg-white border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 col-span-2">
+        <CardHeader className="border-b border-gray-100">
+          <CardTitle className="text-lg font-semibold text-gray-800 flex items-center">
+            <AlertTriangle className="h-5 w-5 mr-2 text-orange-600" />
+            {widget.title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <DataVisualizationWidget
+            type={widget.type as "sop-table" | "incomplete-bar" | "longrunning-bar"}
+            data={widget.data}
+            title=""
+          />
+        </CardContent>
+      </Card>
     ));
   };
 
-  const allWidgets = [
+  const userWidgets = [
     ...selectedWidgets.map((widgetId) => renderWidget(widgetId)),
     ...renderDataVisualizationWidgets(),
   ].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
       <Header onSelectWidgets={() => setIsModalOpen(true)} />
       <main className="pt-20 p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Dashboard Overview
-            </h2>
-            <p className="text-gray-600">
-              Welcome back, {user?.email}! Customize your data visualization
-              experience
-            </p>
+          {/* Enhanced Dashboard Header */}
+          <div className="mb-8 bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+                  Enterprise Dashboard
+                </h2>
+                <p className="text-lg text-gray-600">
+                  Welcome back, <span className="font-semibold text-gray-800">{user?.email}</span>! 
+                  Monitor your business metrics and performance indicators
+                </p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <div className="text-sm text-gray-500">Last Updated</div>
+                  <div className="font-semibold text-gray-800">{new Date().toLocaleTimeString()}</div>
+                </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                  <Activity className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+            
+            {/* Quick Stats Bar */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm opacity-90">System Status</div>
+                    <div className="text-xl font-bold">Operational</div>
+                  </div>
+                  <CheckCircle className="h-8 w-8 opacity-80" />
+                </div>
+              </div>
+              <div className="bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm opacity-90">Active Widgets</div>
+                    <div className="text-xl font-bold">{allWidgets.length}</div>
+                  </div>
+                  <Activity className="h-8 w-8 opacity-80" />
+                </div>
+              </div>
+              <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm opacity-90">Data Sources</div>
+                    <div className="text-xl font-bold">Connected</div>
+                  </div>
+                  <TrendingUp className="h-8 w-8 opacity-80" />
+                </div>
+              </div>
+              <div className="bg-gradient-to-r from-orange-500 to-red-600 rounded-xl p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm opacity-90">Alerts</div>
+                    <div className="text-xl font-bold">2 Active</div>
+                  </div>
+                  <AlertTriangle className="h-8 w-8 opacity-80" />
+                </div>
+              </div>
+            </div>
           </div>
 
           {allWidgets.length === 0 ? (
             <div className="text-center py-16">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 max-w-md mx-auto">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  No widgets selected
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Choose widgets to personalize your dashboard or ask the
-                  chatbot for data analysis
-                </p>
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                >
-                  Select Widgets
-                </button>
-              </div>
+              <Card className="bg-white rounded-2xl shadow-xl border border-gray-200 p-12 max-w-md mx-auto">
+                <CardContent className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <Activity className="h-8 w-8 text-white" />
+                  </div>
+                  <CardTitle className="text-2xl font-bold text-gray-900 mb-4">
+                    No Widgets Selected
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 mb-6">
+                    Choose widgets to personalize your dashboard or ask the chatbot for data analysis
+                  </CardDescription>
+                  <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  >
+                    Select Widgets
+                  </button>
+                </CardContent>
+              </Card>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-min">
               {userWidgets}
             </div>
           )}
         </div>
       </main>
+      
       <WidgetSelectionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
