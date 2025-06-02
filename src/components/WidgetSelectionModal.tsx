@@ -86,6 +86,12 @@ const availableWidgets: Widget[] = [
     category: "Process Analytics",
     description: "Distribution of process failure patterns as a bar graph",
   },
+  {
+    id: "object-lifecycle",
+    name: "Object Lifecycle",
+    category: "Process Analytics",
+    description: "Visualize the object lifecycle as a process flow graph",
+  },
 ];
 
 const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
@@ -117,7 +123,10 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent
+        className="max-w-4xl max-h-[80vh] overflow-y-auto"
+        aria-label="Widget Selection Modal"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Select Widgets for Your Dashboard</span>
@@ -137,13 +146,20 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
                   .map((widget) => (
                     <div
                       key={widget.id}
-                      className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-400 transition-colors cursor-pointer"
+                      tabIndex={0}
+                      aria-label={`Select widget: ${widget.name}`}
                       onClick={() => handleToggleWidget(widget.id)}
+                      onKeyDown={(e) =>
+                        (e.key === "Enter" || e.key === " ") &&
+                        handleToggleWidget(widget.id)
+                      }
                     >
                       <Checkbox
                         checked={localSelection.includes(widget.id)}
                         onCheckedChange={() => handleToggleWidget(widget.id)}
                         className="mt-1"
+                        aria-label={`Toggle ${widget.name}`}
                       />
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900 flex items-center">
@@ -161,13 +177,18 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
         </div>
 
         <div className="flex justify-end space-x-3 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            aria-label="Cancel widget selection"
+          >
             <X className="w-4 h-4 mr-2" />
             Cancel
           </Button>
           <Button
             onClick={handleSave}
             className="bg-blue-600 hover:bg-blue-700"
+            aria-label="Save widget preferences"
           >
             <Save className="w-4 h-4 mr-2" />
             Save Preferences

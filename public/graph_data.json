@@ -1,0 +1,251 @@
+{
+  "nodes": [
+    {
+      "id": "Application Submission",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Application Submission (6764)"
+      },
+      "position": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "id": "Initial Assessment",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Initial Assessment (3100)"
+      },
+      "position": {
+        "x": 0,
+        "y": 120
+      }
+    },
+    {
+      "id": "Rejected",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Rejected (2803)"
+      },
+      "position": {
+        "x": 0,
+        "y": 240
+      }
+    },
+    {
+      "id": "Initial Assessment",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Initial Assessment (2306)"
+      },
+      "position": {
+        "x": 0,
+        "y": 360
+      }
+    },
+    {
+      "id": "Rejected",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Rejected (1604)"
+      },
+      "position": {
+        "x": 0,
+        "y": 480
+      }
+    },
+    {
+      "id": "Pre-Approval",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Pre-Approval (1289)"
+      },
+      "position": {
+        "x": 0,
+        "y": 600
+      }
+    },
+    {
+      "id": "Appraisal Request",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Appraisal Request (1071)"
+      },
+      "position": {
+        "x": 0,
+        "y": 720
+      }
+    },
+    {
+      "id": "Valuation Accepted",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Valuation Accepted (876)"
+      },
+      "position": {
+        "x": 0,
+        "y": 840
+      }
+    },
+    {
+      "id": "Underwriting Approved",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Underwriting Approved (838)"
+      },
+      "position": {
+        "x": 0,
+        "y": 960
+      }
+    },
+    {
+      "id": "Final Approval",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Final Approval (580)"
+      },
+      "position": {
+        "x": 0,
+        "y": 1080
+      }
+    },
+    {
+      "id": "Signing of Loan Agreement",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Signing of Loan Agreement (1)"
+      },
+      "position": {
+        "x": 0,
+        "y": 1200
+      }
+    },
+    {
+      "id": "Loan Funding",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Loan Funding (1)"
+      },
+      "position": {
+        "x": 0,
+        "y": 1320
+      }
+    },
+    {
+      "id": "Disbursement of Funds",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Disbursement of Funds (1)"
+      },
+      "position": {
+        "x": 0,
+        "y": 1440
+      }
+    },
+    {
+      "id": "Loan Closure",
+      "type": "customCircleLabel",
+      "data": {
+        "label": "Loan Closure (1)"
+      },
+      "position": {
+        "x": 0,
+        "y": 1560
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "Application Submission->Initial Assessment",
+      "source": "Application Submission",
+      "target": "Initial Assessment",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Initial Assessment->Rejected",
+      "source": "Initial Assessment",
+      "target": "Rejected",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Rejected->Initial Assessment",
+      "source": "Rejected",
+      "target": "Initial Assessment",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Initial Assessment->Rejected",
+      "source": "Initial Assessment",
+      "target": "Rejected",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Rejected->Pre-Approval",
+      "source": "Rejected",
+      "target": "Pre-Approval",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Pre-Approval->Appraisal Request",
+      "source": "Pre-Approval",
+      "target": "Appraisal Request",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Appraisal Request->Valuation Accepted",
+      "source": "Appraisal Request",
+      "target": "Valuation Accepted",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Valuation Accepted->Underwriting Approved",
+      "source": "Valuation Accepted",
+      "target": "Underwriting Approved",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Underwriting Approved->Final Approval",
+      "source": "Underwriting Approved",
+      "target": "Final Approval",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Final Approval->Signing of Loan Agreement",
+      "source": "Final Approval",
+      "target": "Signing of Loan Agreement",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Signing of Loan Agreement->Loan Funding",
+      "source": "Signing of Loan Agreement",
+      "target": "Loan Funding",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Loan Funding->Disbursement of Funds",
+      "source": "Loan Funding",
+      "target": "Disbursement of Funds",
+      "label": "",
+      "type": "default"
+    },
+    {
+      "id": "Disbursement of Funds->Loan Closure",
+      "source": "Disbursement of Funds",
+      "target": "Loan Closure",
+      "label": "",
+      "type": "default"
+    }
+  ]
+}

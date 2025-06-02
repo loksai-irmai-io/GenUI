@@ -16,6 +16,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import DataVisualizationWidget from "./widgets/DataVisualizationWidget";
 import SOPWidget from "./widgets/SOPWidget";
+import { ConflictDialog } from "@/components/ui/alert-dialog";
+import ProcessFlowGraph from "./ProcessFlowGraph";
 
 interface Message {
   id: number;
@@ -49,6 +51,10 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
+  const [conflictMessage, setConflictMessage] = useState<string | undefined>(
+    undefined
+  );
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -78,15 +84,25 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, successMessage]);
-    } catch (error) {
-      console.error("Error fetching SOP deviation data:", error);
-      const errorMessage: Message = {
-        id: Date.now(),
-        text: "Sorry, I couldn't fetch the SOP deviation data from the API.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    } catch (error: any) {
+      if (
+        error?.message?.includes("409") ||
+        error?.toString().includes("409")
+      ) {
+        setConflictMessage(
+          "A conflict occurred while fetching SOP deviation data. Please try again."
+        );
+        setConflictOpen(true);
+      } else {
+        console.error("Error fetching SOP deviation data:", error);
+        const errorMessage: Message = {
+          id: Date.now(),
+          text: "Sorry, I couldn't fetch the SOP deviation data from the API.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     }
   };
 
@@ -102,15 +118,25 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, successMessage]);
-    } catch (error) {
-      console.error("Error fetching incomplete cases data:", error);
-      const errorMessage: Message = {
-        id: Date.now(),
-        text: "Sorry, I couldn't fetch the incomplete cases data from the API.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    } catch (error: any) {
+      if (
+        error?.message?.includes("409") ||
+        error?.toString().includes("409")
+      ) {
+        setConflictMessage(
+          "A conflict occurred while fetching incomplete cases data. Please try again."
+        );
+        setConflictOpen(true);
+      } else {
+        console.error("Error fetching incomplete cases data:", error);
+        const errorMessage: Message = {
+          id: Date.now(),
+          text: "Sorry, I couldn't fetch the incomplete cases data from the API.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     }
   };
 
@@ -127,15 +153,25 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, successMessage]);
-    } catch (error) {
-      console.error("Error fetching long running cases data:", error);
-      const errorMessage: Message = {
-        id: Date.now(),
-        text: "Sorry, I couldn't fetch the long running cases data from the API.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    } catch (error: any) {
+      if (
+        error?.message?.includes("409") ||
+        error?.toString().includes("409")
+      ) {
+        setConflictMessage(
+          "A conflict occurred while fetching long running cases data. Please try again."
+        );
+        setConflictOpen(true);
+      } else {
+        console.error("Error fetching long running cases data:", error);
+        const errorMessage: Message = {
+          id: Date.now(),
+          text: "Sorry, I couldn't fetch the long running cases data from the API.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     }
   };
 
@@ -150,15 +186,25 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, successMessage]);
-    } catch (error) {
-      console.error("Error fetching resource switches data:", error);
-      const errorMessage: Message = {
-        id: Date.now(),
-        text: "Sorry, I couldn't fetch the resource switches data from the API.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    } catch (error: any) {
+      if (
+        error?.message?.includes("409") ||
+        error?.toString().includes("409")
+      ) {
+        setConflictMessage(
+          "A conflict occurred while fetching resource switches data. Please try again."
+        );
+        setConflictOpen(true);
+      } else {
+        console.error("Error fetching resource switches data:", error);
+        const errorMessage: Message = {
+          id: Date.now(),
+          text: "Sorry, I couldn't fetch the resource switches data from the API.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     }
   };
 
@@ -173,15 +219,25 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, successMessage]);
-    } catch (error) {
-      console.error("Error fetching rework activities data:", error);
-      const errorMessage: Message = {
-        id: Date.now(),
-        text: "Sorry, I couldn't fetch the rework activities data from the API.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    } catch (error: any) {
+      if (
+        error?.message?.includes("409") ||
+        error?.toString().includes("409")
+      ) {
+        setConflictMessage(
+          "A conflict occurred while fetching rework activities data. Please try again."
+        );
+        setConflictOpen(true);
+      } else {
+        console.error("Error fetching rework activities data:", error);
+        const errorMessage: Message = {
+          id: Date.now(),
+          text: "Sorry, I couldn't fetch the rework activities data from the API.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     }
   };
 
@@ -196,15 +252,25 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, successMessage]);
-    } catch (error) {
-      console.error("Error fetching timing violations data:", error);
-      const errorMessage: Message = {
-        id: Date.now(),
-        text: "Sorry, I couldn't fetch the timing violations data from the API.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    } catch (error: any) {
+      if (
+        error?.message?.includes("409") ||
+        error?.toString().includes("409")
+      ) {
+        setConflictMessage(
+          "A conflict occurred while fetching timing violations data. Please try again."
+        );
+        setConflictOpen(true);
+      } else {
+        console.error("Error fetching timing violations data:", error);
+        const errorMessage: Message = {
+          id: Date.now(),
+          text: "Sorry, I couldn't fetch the timing violations data from the API.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     }
   };
 
@@ -223,15 +289,25 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, successMessage]);
-    } catch (error) {
-      console.error("Error fetching case complexity table data:", error);
-      const errorMessage: Message = {
-        id: Date.now(),
-        text: "Sorry, I couldn't fetch the case complexity table data from the API.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    } catch (error: any) {
+      if (
+        error?.message?.includes("409") ||
+        error?.toString().includes("409")
+      ) {
+        setConflictMessage(
+          "A conflict occurred while fetching case complexity data. Please try again."
+        );
+        setConflictOpen(true);
+      } else {
+        console.error("Error fetching case complexity table data:", error);
+        const errorMessage: Message = {
+          id: Date.now(),
+          text: "Sorry, I couldn't fetch the case complexity table data from the API.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     }
   };
 
@@ -250,15 +326,25 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, successMessage]);
-    } catch (error) {
-      console.error("Error fetching resource performance data:", error);
-      const errorMessage: Message = {
-        id: Date.now(),
-        text: "Sorry, I couldn't fetch the resource performance data from the API.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    } catch (error: any) {
+      if (
+        error?.message?.includes("409") ||
+        error?.toString().includes("409")
+      ) {
+        setConflictMessage(
+          "A conflict occurred while fetching resource performance data. Please try again."
+        );
+        setConflictOpen(true);
+      } else {
+        console.error("Error fetching resource performance data:", error);
+        const errorMessage: Message = {
+          id: Date.now(),
+          text: "Sorry, I couldn't fetch the resource performance data from the API.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     }
   };
 
@@ -273,15 +359,25 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, successMessage]);
-    } catch (error) {
-      console.error("Error fetching timing analysis data:", error);
-      const errorMessage: Message = {
-        id: Date.now(),
-        text: "Sorry, I couldn't fetch the timing analysis data from the API.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    } catch (error: any) {
+      if (
+        error?.message?.includes("409") ||
+        error?.toString().includes("409")
+      ) {
+        setConflictMessage(
+          "A conflict occurred while fetching timing analysis data. Please try again."
+        );
+        setConflictOpen(true);
+      } else {
+        console.error("Error fetching timing analysis data:", error);
+        const errorMessage: Message = {
+          id: Date.now(),
+          text: "Sorry, I couldn't fetch the timing analysis data from the API.",
+          sender: "bot",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     }
   };
 
@@ -308,16 +404,26 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
           timestamp: new Date(),
         },
       ]);
-    } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "Sorry, I couldn't fetch the process failure patterns data from the API.",
-          sender: "bot",
-          timestamp: new Date(),
-        },
-      ]);
+    } catch (error: any) {
+      if (
+        error?.message?.includes("409") ||
+        error?.toString().includes("409")
+      ) {
+        setConflictMessage(
+          "A conflict occurred while fetching process failure patterns data. Please try again."
+        );
+        setConflictOpen(true);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            text: "Sorry, I couldn't fetch the process failure patterns data from the API.",
+            sender: "bot",
+            timestamp: new Date(),
+          },
+        ]);
+      }
     }
   };
 
@@ -366,6 +472,17 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         await handleTimingAnalysis();
       } else if (lowerMessage.includes("process failure patterns")) {
         await handleProcessFailurePatterns();
+      } else if (lowerMessage.includes("object lifecycle")) {
+        onDataReceived("object-lifecycle", [], "Object Lifecycle");
+        setTimeout(() => {
+          const botResponse: Message = {
+            id: Date.now() + 1,
+            text: "Here is the Object Lifecycle process flow graph!",
+            sender: "bot",
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, botResponse]);
+        }, 500);
       } else {
         // Default bot response for other queries
         setTimeout(() => {
@@ -467,6 +584,8 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                           visualizationType="bar"
                           title={viz.title}
                         />
+                      ) : viz.type === "object-lifecycle" ? (
+                        <ProcessFlowGraph />
                       ) : (
                         <DataVisualizationWidget
                           type={viz.type as any}
@@ -504,6 +623,11 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
           </CardContent>
         </Card>
       )}
+      <ConflictDialog
+        open={conflictOpen}
+        onOpenChange={setConflictOpen}
+        message={conflictMessage}
+      />
     </div>
   );
 };

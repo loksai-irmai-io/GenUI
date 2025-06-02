@@ -14,6 +14,9 @@ import ResourcePerformanceTable from "../components/widgets/ResourcePerformanceT
 import TimingAnalysisTable from "../components/widgets/TimingAnalysisTable";
 import { Pin, PinOff, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BarChart3 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import ProcessFlowGraph from "../components/ProcessFlowGraph";
 
 // Sample data for widgets
 const sampleLineData = [
@@ -260,6 +263,15 @@ const Index = () => {
               }
               break;
             }
+            case "object-lifecycle": {
+              dashboardVisualizations.push({
+                id: "object-lifecycle",
+                type: "object-lifecycle",
+                data: [],
+                title: "Object Lifecycle",
+              });
+              break;
+            }
             default:
               break;
           }
@@ -321,6 +333,7 @@ const Index = () => {
     }
     try {
       // Remove duplicates for this user (defensive, in case migration missed any)
+      // @ts-expect-error: Supabase typegen does not include this RPC, but it exists in the DB
       await supabase.rpc("remove_duplicate_user_widget_preferences", {
         user_id_param: user.id,
       });
@@ -419,8 +432,8 @@ const Index = () => {
     await handleSaveWidgets(selectedWidgets, localPinned);
   };
 
-  // Enhanced widget renderer with pin/unpin icon
-  const renderWidget = (widgetId: string) => {
+  // Widget renderer
+  const renderWidget = (widgetId: string, opts?: { forOverlay?: boolean }) => {
     const isPinned = localPinned.includes(widgetId);
     const pinButton = (
       <button
@@ -445,11 +458,10 @@ const Index = () => {
     );
     let widgetContent = null;
     if (fetchedWidget) {
-      // Render with fetched data
       if (fetchedWidget.type === "sop-count") {
         widgetContent = (
           <SOPWidget
-            key={fetchedWidget.id}
+            key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
             type="count"
             data={
               Array.isArray(fetchedWidget.data)
@@ -458,25 +470,35 @@ const Index = () => {
             }
             visualizationType="bar"
             title={fetchedWidget.title}
+            maximized={!!opts?.forOverlay}
           />
         );
       } else if (fetchedWidget.type === "sop-patterns") {
         widgetContent = (
           <SOPWidget
-            key={fetchedWidget.id}
+            key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
             type="patterns"
             data={fetchedWidget.data}
             visualizationType="bar"
             title={fetchedWidget.title}
+            maximized={!!opts?.forOverlay}
+          />
+        );
+      } else if (fetchedWidget.type === "object-lifecycle") {
+        widgetContent = (
+          <ProcessFlowGraph
+            key="object-lifecycle-graph"
+            maximized={!!opts?.forOverlay}
           />
         );
       } else {
         widgetContent = (
           <DataVisualizationWidget
-            key={fetchedWidget.id}
+            key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
             type={fetchedWidget.type as any}
             data={fetchedWidget.data}
             title={fetchedWidget.title}
+            maximized={!!opts?.forOverlay}
           />
         );
       }
@@ -486,97 +508,128 @@ const Index = () => {
         case "info-card-small":
           widgetContent = (
             <InfoCard
-              key={widgetId}
+              key={widgetId + (opts?.forOverlay ? "-max" : "")}
               title="Revenue"
               value="$45,231"
               change={12}
               changeType="increase"
-              size="small"
+              size={opts?.forOverlay ? "large" : "small"}
+              maximized={!!opts?.forOverlay}
             />
           );
           break;
         case "info-card-medium":
           widgetContent = (
             <InfoCard
-              key={widgetId}
+              key={widgetId + (opts?.forOverlay ? "-max" : "")}
               title="Total Users"
               value="2,543"
               change={8}
               changeType="increase"
-              size="medium"
+              size={opts?.forOverlay ? "large" : "medium"}
               subtitle="Active this month"
+              maximized={!!opts?.forOverlay}
             />
           );
           break;
         case "info-card-large":
           widgetContent = (
             <InfoCard
-              key={widgetId}
+              key={widgetId + (opts?.forOverlay ? "-max" : "")}
               title="Sales Performance"
               value="$123,456"
               change={-2}
               changeType="decrease"
               size="large"
               subtitle="Quarterly results"
+              maximized={!!opts?.forOverlay}
             />
           );
           break;
         case "line-chart":
           widgetContent = (
             <ChartWidget
-              key={widgetId}
+              key={widgetId + (opts?.forOverlay ? "-max" : "")}
               type="line"
               title="Sales Trend"
               data={sampleLineData}
+              maximized={!!opts?.forOverlay}
             />
           );
           break;
         case "bar-chart":
           widgetContent = (
             <ChartWidget
-              key={widgetId}
+              key={widgetId + (opts?.forOverlay ? "-max" : "")}
               type="bar"
               title="Product Performance"
               data={sampleBarData}
+              maximized={!!opts?.forOverlay}
             />
           );
           break;
         case "pie-chart":
           widgetContent = (
             <ChartWidget
-              key={widgetId}
+              key={widgetId + (opts?.forOverlay ? "-max" : "")}
               type="pie"
               title="Traffic Sources"
               data={samplePieData}
+              maximized={!!opts?.forOverlay}
             />
           );
           break;
         case "data-table":
           widgetContent = (
             <DataTable
-              key={widgetId}
+              key={widgetId + (opts?.forOverlay ? "-max" : "")}
               title="User Management"
               data={sampleTableData}
               columns={tableColumns}
+              maximized={!!opts?.forOverlay}
             />
           );
           break;
         case "resource-performance-table":
-          widgetContent = <ResourcePerformanceTable key={widgetId} />;
+          widgetContent = (
+            <ResourcePerformanceTable
+              key={widgetId + (opts?.forOverlay ? "-max" : "")}
+            />
+          );
           break;
         case "timing-analysis-table":
-          widgetContent = <TimingAnalysisTable key={widgetId} />;
+          widgetContent = (
+            <TimingAnalysisTable
+              key={widgetId + (opts?.forOverlay ? "-max" : "")}
+            />
+          );
+          break;
+        case "object-lifecycle":
+          widgetContent = (
+            <ProcessFlowGraph
+              key="object-lifecycle-graph"
+              maximized={!!opts?.forOverlay}
+            />
+          );
           break;
         default:
           widgetContent = null;
       }
     }
-    return widgetContent ? (
-      <div key={widgetId} className="relative group">
+    if (opts?.forOverlay) {
+      return widgetContent;
+    }
+    return (
+      <div
+        key={widgetId}
+        className="relative process-widget"
+        tabIndex={0}
+        aria-label="Widget preview"
+      >
         {pinButton}
         {widgetContent}
       </div>
-    ) : null;
+    );
   };
 
   // Only render visualizations for selected/pinned widgets (by matching prefix)
@@ -591,72 +644,104 @@ const Index = () => {
     .map((viz) => renderWidget(viz.id));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header onSelectWidgets={() => setIsModalOpen(true)} />
-      <main className="pt-20 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Dashboard Overview
-            </h2>
-            <p className="text-gray-600">
-              Welcome back, {user?.email}! Customize your data visualization
-              experience
-            </p>
-          </div>
-          <div className="flex justify-end mb-4">
-            <Button
-              onClick={handleSaveDashboardPrefs}
-              disabled={!unsaved}
-              className={`flex items-center gap-2 ${
-                unsaved
-                  ? "bg-blue-600 hover:bg-blue-700 text-white"
-                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              <Save className="w-4 h-4" />
-              Save
-            </Button>
-          </div>
-          {allWidgets.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 max-w-md mx-auto">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                  No widgets selected
+    <div className="min-h-screen flex w-full bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="flex-1 flex flex-col">
+        <Header onSelectWidgets={() => setIsModalOpen(true)} />
+        <main className="flex-1 pt-16 px-8 pb-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-8" aria-label="Dashboard Overview Section">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                Dashboard Overview
+              </h2>
+              <p className="text-gray-600">
+                Welcome back, {user?.email}! Customize your data visualization
+                experience
+              </p>
+            </div>
+
+            <div className="mb-8"></div>
+
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Process Widgets
                 </h3>
-                <p className="text-gray-600 mb-6">
-                  Choose widgets to personalize your dashboard or ask the
-                  chatbot for data analysis
+                <p className="text-gray-600">
+                  Monitor key process metrics and deviations
                 </p>
-                <button
-                  onClick={() => setIsModalOpen(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-                >
-                  Select Widgets
-                </button>
               </div>
+              <Button
+                aria-label="Save dashboard widget preferences"
+                onClick={handleSaveDashboardPrefs}
+                disabled={!unsaved}
+                className={`flex items-center gap-2 ${
+                  unsaved
+                    ? "lovable-button-primary shadow-lovable-lg"
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                } transition-all duration-200`}
+              >
+                <Save className="w-4 h-4" />
+                Save Changes
+              </Button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {allWidgets}
-            </div>
-          )}
-        </div>
-      </main>
-      <WidgetSelectionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveWidgets}
-        selectedWidgets={selectedWidgets}
-        pinnedWidgets={pinnedWidgets}
-      />
-      <div className="fixed bottom-4 right-4 w-full max-w-3xl z-50">
-        <ChatBot
-          onDataReceived={(type, data, title) =>
-            handleDataReceived(type, data, title)
-          }
-          visualizations={chatbotVisualizations}
+
+            {allWidgets.length === 0 ? (
+              <div
+                className="text-center py-20 animate-fade-in"
+                role="status"
+                aria-live="polite"
+              >
+                <Card
+                  className="max-w-md mx-auto bg-white border-blue-100 shadow-lg focus-within:ring-2 focus-within:ring-blue-400"
+                  tabIndex={0}
+                  aria-label="No widgets configured"
+                >
+                  <CardContent className="p-12">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <BarChart3 className="w-8 h-8 text-blue-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                      No process widgets configured
+                    </h3>
+                    <p className="text-gray-600 mb-8">
+                      Start monitoring your processes by configuring the
+                      available widgets
+                    </p>
+                    <Button
+                      aria-label="Configure Widgets"
+                      onClick={() => setIsModalOpen(true)}
+                      className="lovable-button-primary"
+                    >
+                      Configure Widgets
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-scale-in"
+                aria-label="Widget Grid"
+              >
+                {allWidgets}
+              </div>
+            )}
+          </div>
+        </main>
+
+        <WidgetSelectionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveWidgets}
+          selectedWidgets={selectedWidgets}
+          pinnedWidgets={pinnedWidgets}
         />
+
+        <div className="fixed bottom-6 right-6 z-50">
+          <ChatBot
+            onDataReceived={handleDataReceived}
+            visualizations={chatbotVisualizations}
+          />
+        </div>
       </div>
     </div>
   );

@@ -33,6 +33,7 @@ interface DataVisualizationWidgetProps {
   title: string;
   data: any[];
   className?: string;
+  maximized?: boolean;
 }
 
 const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
@@ -40,12 +41,19 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
   title,
   data,
   className = "",
+  maximized = false,
 }) => {
   const renderVisualization = () => {
     switch (type) {
       case "sop-table":
         return (
-          <div className="w-full overflow-x-auto">
+          <div
+            className={
+              maximized
+                ? "w-full overflow-x-auto max-w-full"
+                : "w-full overflow-x-auto max-w-[32rem]"
+            }
+          >
             <Table className="w-full">
               <TableHeader className="bg-gray-50 dark:bg-gray-800">
                 <TableRow>
@@ -108,7 +116,13 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
         }
         const columns = Object.keys(data[0] || {});
         return (
-          <div className="w-full overflow-x-auto">
+          <div
+            className={
+              maximized
+                ? "w-full overflow-x-auto max-w-full"
+                : "w-full overflow-x-auto max-w-[32rem]"
+            }
+          >
             <Table className="w-full">
               <TableHeader className="bg-gray-50 dark:bg-gray-800">
                 <TableRow>
@@ -219,20 +233,14 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col ${
-        type.includes("table")
-          ? ""
-          : type.includes("bar") || type === "process-failure-patterns-bar"
-          ? "h-[400px]"
-          : "h-[250px]"
-      } ${className}`}
+      className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 focus-visible:ring-2 focus-visible:ring-blue-400 outline-none ${className}${
+        maximized ? " max-w-4xl" : ""
+      }`}
+      tabIndex={0}
+      aria-label={title}
     >
-      <div className="px-3 py-2 border-b border-gray-200">
-        <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-      </div>
-      <div className={`flex-1 ${type.includes("table") ? "min-h-0" : ""}`}>
-        {renderVisualization()}
-      </div>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+      {renderVisualization()}
     </div>
   );
 };

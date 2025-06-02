@@ -15,6 +15,7 @@ interface SOPWidgetProps {
   data: SOPCountData | SOPPatternData[];
   visualizationType: "bar" | "line" | "pie";
   title: string;
+  maximized?: boolean;
 }
 
 const COLORS = [
@@ -31,6 +32,7 @@ const SOPWidget: React.FC<SOPWidgetProps> = ({
   data,
   visualizationType,
   title,
+  maximized = false,
 }) => {
   // DEBUG: Log props on every render
   // eslint-disable-next-line no-console
@@ -113,7 +115,13 @@ const SOPWidget: React.FC<SOPWidgetProps> = ({
   // Always render table for patterns
   const renderPatternsVisualization = (patternsData: SOPPatternData[]) => {
     return (
-      <div className="overflow-x-auto">
+      <div
+        className={
+          maximized
+            ? "overflow-x-auto max-w-full"
+            : "overflow-x-auto max-w-[32rem]"
+        }
+      >
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b">
@@ -148,12 +156,24 @@ const SOPWidget: React.FC<SOPWidgetProps> = ({
     );
   };
 
+  const renderVisualization = () => {
+    if (type === "count") {
+      return renderCountVisualization(data as SOPCountData);
+    } else {
+      return renderPatternsVisualization(data as SOPPatternData[]);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200">
+    <div
+      className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6${
+        maximized ? " max-w-4xl" : ""
+      } focus-visible:ring-2 focus-visible:ring-blue-400 outline-none`}
+      tabIndex={0}
+      aria-label={title}
+    >
       <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-      {type === "count"
-        ? renderCountVisualization(data as SOPCountData)
-        : renderPatternsVisualization(data as SOPPatternData[])}
+      {renderVisualization()}
     </div>
   );
 };

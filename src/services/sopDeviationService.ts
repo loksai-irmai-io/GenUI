@@ -59,87 +59,57 @@ class SOPDeviationService {
 
   async getSOPDeviationCount(): Promise<SOPCountData> {
     try {
-      const response = await fetch('http://127.0.0.1:8001/sopdeviation/low-percentage/count');
+      const response = await fetch('/sopdeviation.json');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      return data;
+      const fallbackData = await response.json();
+      return this.convertFallbackToCountData(fallbackData.data);
     } catch (error) {
-      console.error('API call failed, using fallback data:', error);
-      try {
-        const fallbackData = await this.loadFallbackData();
-        const countData = this.convertFallbackToCountData(fallbackData.data);
-        console.log('Fallback count data:', countData);
-        return countData;
-      } catch (fallbackError) {
-        console.error('Fallback data loading failed:', fallbackError);
-        // Last resort fallback
-        return {
-          count: 9520,
-          percentage: 44.84,
-          threshold: "30%"
-        };
-      }
+      console.error('Fallback data loading failed:', error);
+      // Last resort fallback
+      return {
+        count: 9520,
+        percentage: 44.84,
+        threshold: "30%"
+      };
     }
   }
 
   async getSOPDeviationPatterns(): Promise<SOPPatternData[]> {
     try {
-      const response = await fetch('http://127.0.0.1:8001/sopdeviation/patterns');
+      const response = await fetch('/sopdeviation.json');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json();
-      // The backend returns { patterns: [...] }, so extract the array
-      if (Array.isArray(data)) {
-        return data;
-      } else if (Array.isArray(data.patterns)) {
-        // Map backend fields to SOPPatternData
-        return data.patterns.map((item: any, idx: number) => ({
-          pattern_id: item.pattern_no ? String(item.pattern_no) : `pattern_${idx + 1}`,
-          pattern_name: item.pattern || `Pattern ${idx + 1}`,
-          frequency: item.frequency || item.count || 0,
-          severity: item.severity || 'unknown',
-          timestamp: item.timestamp || new Date().toISOString(),
-        }));
-      } else {
-        return [];
-      }
+      const fallbackData = await response.json();
+      return this.convertFallbackToPatternsData(fallbackData.data);
     } catch (error) {
-      console.error('API call failed, using fallback data:', error);
-      try {
-        const fallbackData = await this.loadFallbackData();
-        const patternsData = this.convertFallbackToPatternsData(fallbackData.data);
-        console.log('Fallback patterns data:', patternsData);
-        return patternsData;
-      } catch (fallbackError) {
-        console.error('Fallback data loading failed:', fallbackError);
-        // Last resort fallback
-        return [
-          {
-            pattern_id: "pattern_1",
-            pattern_name: "Standard Process Flow",
-            frequency: 6764,
-            severity: "low",
-            timestamp: new Date().toISOString()
-          },
-          {
-            pattern_id: "pattern_2", 
-            pattern_name: "Early Rejection Pattern",
-            frequency: 3100,
-            severity: "high",
-            timestamp: new Date().toISOString()
-          },
-          {
-            pattern_id: "pattern_3",
-            pattern_name: "Re-assessment Flow",
-            frequency: 2803,
-            severity: "medium",
-            timestamp: new Date().toISOString()
-          }
-        ];
-      }
+      console.error('Fallback data loading failed:', error);
+      // Last resort fallback
+      return [
+        {
+          pattern_id: "pattern_1",
+          pattern_name: "Standard Process Flow",
+          frequency: 6764,
+          severity: "low",
+          timestamp: new Date().toISOString()
+        },
+        {
+          pattern_id: "pattern_2", 
+          pattern_name: "Early Rejection Pattern",
+          frequency: 3100,
+          severity: "high",
+          timestamp: new Date().toISOString()
+        },
+        {
+          pattern_id: "pattern_3",
+          pattern_name: "Re-assessment Flow",
+          frequency: 2803,
+          severity: "medium",
+          timestamp: new Date().toISOString()
+        }
+      ];
     }
   }
 }
