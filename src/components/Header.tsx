@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { User, Grid3X3, LogOut, Settings } from "lucide-react";
@@ -29,16 +30,13 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <header className="bg-white border-b border-gray-200 shadow-sm">
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
             <Grid3X3 className="w-5 h-5 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">GenUI</h1>
-          <span className="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-            Dashboard Platform
-          </span>
         </div>
 
         <div className="flex items-center space-x-3">

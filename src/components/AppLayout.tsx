@@ -12,7 +12,6 @@ import {
   SidebarInset,
 } from "../components/ui/sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 
 const sidebarTabs = [
   { label: "Dashboard", path: "/", icon: "📊" },
@@ -68,11 +67,8 @@ const AppLayout = ({
                   </svg>
                 </div>
                 <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  ProcessIQ
+                  GenUI
                 </h2>
-                <Badge variant="secondary" className="mt-2 text-xs bg-blue-100 text-blue-700">
-                  Enterprise Edition
-                </Badge>
               </div>
 
               <SidebarMenu className="space-y-2">
