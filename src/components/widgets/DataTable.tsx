@@ -59,7 +59,10 @@ const DataTable: React.FC<DataTableProps> = ({
               <TableRow key={index} className="hover:bg-gray-50">
                 {columns.map((column) => (
                   <TableCell key={column.key} className="text-gray-900">
-                    {row[column.key]}
+                    {typeof row[column.key] === "object" &&
+                    row[column.key] !== null
+                      ? JSON.stringify(row[column.key])
+                      : String(row[column.key])}
                   </TableCell>
                 ))}
               </TableRow>

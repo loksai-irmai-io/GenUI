@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,11 +34,13 @@ interface DataVisualizationProps {
     data: any[];
     title: string;
   }>;
+  clearVisualizations?: () => void;
 }
 
 const ChatBot: React.FC<DataVisualizationProps> = ({
   onDataReceived,
   visualizations = [],
+  clearVisualizations,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [message, setMessage] = useState("");
@@ -56,7 +58,161 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
     undefined
   );
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { toast } = useToast(); // Debug visualizations state changes
+  useEffect(() => {
+    console.log(
+      "[ChatBot] Visualizations updated:",
+      JSON.stringify(visualizations)
+    );
+
+    // Alert for debugging - remove in production
+    if (visualizations && visualizations.length > 0) {
+      console.log("DEBUG - Visualization data structure:", {
+        type: visualizations[0].type,
+        data: JSON.stringify(visualizations[0].data).substring(0, 100) + "...",
+        isArray: Array.isArray(visualizations[0].data),
+        dataLength: Array.isArray(visualizations[0].data)
+          ? visualizations[0].data.length
+          : "not an array",
+        hasCorrectProps:
+          Array.isArray(visualizations[0].data) &&
+          visualizations[0].data.length > 0
+            ? "First item props: " +
+              Object.keys(visualizations[0].data[0]).join(", ")
+            : "No items or not array",
+      });
+    }
+  }, [visualizations]);
+
+  // Direct endpoint fetchers for chatbot visualizations
+  const fetchVisualizationData = async (type: string) => {
+    switch (type) {
+      case "incomplete-bar": {
+        const res = await fetch("http://127.0.0.1:8001/incompletecases/count");
+        if (!res.ok) throw new Error("Failed to fetch incomplete cases");
+        const data = await res.json();
+        // API returns { incomplete: number, complete: number }
+        if (Array.isArray(data)) return data;
+        if (typeof data === "object" && data !== null) {
+          // Normalize to [{ name, value }]
+          return Object.entries(data).map(([name, value]) => ({ name, value }));
+        }
+        return [];
+      }
+      case "longrunning-bar": {
+        const res = await fetch("http://127.0.0.1:8001/longrunningcases/count");
+        if (!res.ok) throw new Error("Failed to fetch long running cases");
+        const data = await res.json();
+        // API returns { long_running: number, regular: number }
+        if (Array.isArray(data)) return data;
+        if (typeof data === "object" && data !== null) {
+          return Object.entries(data).map(([name, value]) => ({ name, value }));
+        }
+        return [];
+      }
+      case "rework-activities-bar": {
+        const res = await fetch("http://127.0.0.1:8001/reworkactivities/count");
+        if (!res.ok) throw new Error("Failed to fetch rework activities");
+        const data = await res.json();
+        // API returns { rework_activities: number }
+        if (Array.isArray(data)) return data;
+        if (typeof data === "object" && data !== null) {
+          return Object.entries(data).map(([name, value]) => ({ name, value }));
+        }
+        return [];
+      }
+      case "resource-switches-bar": {
+        const res = await fetch("http://127.0.0.1:8001/resourceswitches/count");
+        if (!res.ok) throw new Error("Failed to fetch resource switches");
+        const data = await res.json();
+        // API returns { resource_switches: number }
+        if (Array.isArray(data)) return data;
+        if (typeof data === "object" && data !== null) {
+          return Object.entries(data).map(([name, value]) => ({ name, value }));
+        }
+        return [];
+      }
+      case "timing-violations-bar": {
+        const res = await fetch("http://127.0.0.1:8001/timingviolations/count");
+        if (!res.ok) throw new Error("Failed to fetch timing violations");
+        const data = await res.json();
+        // API returns { timing_violations: number }
+        if (Array.isArray(data)) return data;
+        if (typeof data === "object" && data !== null) {
+          return Object.entries(data).map(([name, value]) => ({ name, value }));
+        }
+        return [];
+      }
+      case "sop-count":
+      case "sop-patterns": {
+        const res = await fetch("http://127.0.0.1:8001/sopdeviation");
+        if (!res.ok) throw new Error("Failed to fetch sop deviation");
+        const data = await res.json();
+        if (!data || !Array.isArray(data.data)) return [];
+        if (type === "sop-count") {
+          const total = data.data.reduce(
+            (sum, row) => sum + parseInt(row.pattern_count),
+            0
+          );
+          const deviation = data.data
+            .filter((row) => row.is_sop_deviation === 1)
+            .reduce((sum, row) => sum + parseInt(row.pattern_count), 0);
+          const percentage = total ? (deviation / total) * 100 : 0;
+          return [
+            {
+              count: deviation,
+              percentage: Math.round(percentage * 100) / 100,
+              threshold: "30%",
+            },
+          ];
+        } else {
+          return data.data.map((row, idx) => ({
+            pattern_no: idx + 1,
+            pattern:
+              Array.isArray(row.sop_deviation_sequence_preview) &&
+              row.sop_deviation_sequence_preview.length > 0
+                ? row.sop_deviation_sequence_preview.slice(0, 5).join(" → ") +
+                  (row.sop_deviation_sequence_preview.length > 5 ? " ..." : "")
+                : "",
+            count: row.pattern_count,
+            percentage: row.percentage,
+          }));
+        }
+      }
+      case "case-complexity-table": {
+        const res = await fetch(
+          "http://127.0.0.1:8001/casecomplexity?page=1&size=100"
+        );
+        if (!res.ok) throw new Error("Failed to fetch case complexity");
+        const data = await res.json();
+        return Array.isArray(data) ? data : data.data || [];
+      }
+      case "resource-performance-table": {
+        const res = await fetch("http://127.0.0.1:8001/resourceperformance");
+        if (!res.ok) throw new Error("Failed to fetch resource performance");
+        const data = await res.json();
+        return Array.isArray(data) ? data : data.data || [];
+      }
+      case "timing-analysis-table": {
+        const res = await fetch("http://127.0.0.1:8001/timinganalysis");
+        if (!res.ok) throw new Error("Failed to fetch timing analysis");
+        const data = await res.json();
+        return Array.isArray(data) ? data : data.data || [];
+      }
+      case "process-failure-patterns-bar": {
+        const res = await fetch("http://127.0.0.1:8001/allcounts");
+        if (!res.ok)
+          throw new Error("Failed to fetch process failure patterns");
+        let data = await res.json();
+        if (data && !Array.isArray(data)) {
+          data = Object.entries(data).map(([name, value]) => ({ name, value }));
+        }
+        return Array.isArray(data) ? data : [];
+      }
+      default:
+        return null;
+    }
+  };
 
   const handleSOPDeviation = async () => {
     try {
@@ -65,18 +221,22 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         sopDeviationService.getSOPDeviationCount(),
         sopDeviationService.getSOPDeviationPatterns(),
       ]);
-      // Show count as a pie chart
-      onDataReceived("sop-count", [countData], "SOP Deviation Count");
-      // Show patterns as a bar chart
-      onDataReceived(
-        "sop-patterns",
-        Array.isArray(patternsData)
-          ? patternsData
-          : patternsData
-          ? [patternsData]
-          : [],
-        "SOP Deviation Patterns"
-      );
+      // Add a delay to ensure visualizations render after messages
+      setTimeout(() => {
+        // Show count as a pie chart
+        onDataReceived("sop-count", [countData], "SOP Deviation Count");
+        // Show patterns as a bar chart
+        onDataReceived(
+          "sop-patterns",
+          Array.isArray(patternsData)
+            ? patternsData
+            : patternsData
+            ? [patternsData]
+            : [],
+          "SOP Deviation Patterns"
+        );
+      }, 100);
+
       const successMessage: Message = {
         id: Date.now(),
         text: `Loaded SOP deviation data! Percentage: ${countData.percentage}%. Found ${patternsData.length} patterns. Visualizations added to your chatbot.`,
@@ -110,7 +270,11 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
     try {
       const data = await incompleteCasesService.getCountBar();
       console.log("[ChatBot] incompleteCasesService.getCountBar result:", data);
-      onDataReceived("incomplete-bar", data, "Incomplete Cases Analysis");
+      // Add a delay to ensure visualization renders after messages
+      setTimeout(() => {
+        onDataReceived("incomplete-bar", data, "Incomplete Cases Analysis");
+      }, 100);
+
       const successMessage: Message = {
         id: Date.now(),
         text: `Successfully loaded incomplete cases data from API! The analysis shows the distribution of complete vs incomplete cases. The data has been visualized as a bar chart on your chatbot.`,
@@ -143,7 +307,11 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
   const handleLongRunningCases = async () => {
     try {
       const data = await longRunningCasesService.getCountBar();
-      onDataReceived("longrunning-bar", data, "Long Running Cases Analysis");
+      // Add a delay to ensure visualization renders after messages
+      setTimeout(() => {
+        onDataReceived("longrunning-bar", data, "Long Running Cases Analysis");
+      }, 100);
+
       const successMessage: Message = {
         id: Date.now(),
         text: `Successfully loaded long running cases data from API! Found ${
@@ -427,8 +595,65 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
     }
   };
 
+  // Placeholder: Replace with your real LLM API call
+  async function fetchAIAnalysis(question: string): Promise<string> {
+    // Example: Call your backend or OpenAI API here
+    // For now, just echo the question
+    return `AI Analysis: Sorry, I can't answer this yet. (You asked: "${question}")`;
+  }
+
+  // Helper: determine if the last user message was a visualization request
+  const isLastUserMessageVisualization = () => {
+    if (messages.length === 0) return false;
+    const lastUserMsg = [...messages]
+      .reverse()
+      .find((m) => m.sender === "user");
+    if (!lastUserMsg) return false;
+    const lower = lastUserMsg.text.toLowerCase();
+    return (
+      lower.includes("sop deviation") ||
+      lower.includes("incomplete cases") ||
+      lower.includes("long running cases") ||
+      lower.includes("resource switches") ||
+      lower.includes("rework activities") ||
+      lower.includes("timing violations") ||
+      lower.includes("case complexity") ||
+      lower.includes("resource performance") ||
+      lower.includes("timing analysis") ||
+      lower.includes("process failure patterns") ||
+      lower.includes("object lifecycle")
+    );
+  };
+
+  // Helper: get the most recent visualization type from the last user message
+  const getLastVisualizationType = () => {
+    if (messages.length === 0) return null;
+    const lastUserMsg = [...messages]
+      .reverse()
+      .find((m) => m.sender === "user");
+    if (!lastUserMsg) return null;
+    const lower = lastUserMsg.text.toLowerCase();
+    if (lower.includes("sop deviation")) return "sop-patterns";
+    if (lower.includes("incomplete cases")) return "incomplete-bar";
+    if (lower.includes("long running cases")) return "longrunning-bar";
+    if (lower.includes("resource switches")) return "resource-switches-bar";
+    if (lower.includes("rework activities")) return "rework-activities-bar";
+    if (lower.includes("timing violations")) return "timing-violations-bar";
+    if (lower.includes("case complexity")) return "case-complexity-table";
+    if (lower.includes("resource performance"))
+      return "resource-performance-table";
+    if (lower.includes("timing analysis")) return "timing-analysis-table";
+    if (lower.includes("process failure patterns"))
+      return "process-failure-patterns-bar";
+    if (lower.includes("object lifecycle")) return "object-lifecycle";
+    return null;
+  };
+
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
+
+    // Clear previous visualizations before adding new ones
+    if (clearVisualizations) clearVisualizations();
 
     if (!user) {
       toast({
@@ -452,6 +677,73 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
     const lowerMessage = message.toLowerCase();
 
     try {
+      if (lowerMessage.includes("incomplete cases")) {
+        const data = await fetchVisualizationData("incomplete-bar");
+        if (data) {
+          // Direct call - no delay
+          console.log("Got incomplete cases data:", data);
+          onDataReceived("incomplete-bar", data, "Incomplete Cases Analysis");
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now(),
+              text: `Successfully loaded incomplete cases data from endpoint! The analysis shows the distribution of complete vs incomplete cases. The data has been visualized as a bar chart on your chatbot.`,
+              sender: "bot",
+              timestamp: new Date(),
+            },
+          ]);
+          return;
+        }
+      } else if (lowerMessage.includes("long running cases")) {
+        const data = await fetchVisualizationData("longrunning-bar");
+        if (data) {
+          // Direct call - no delay
+          console.log("Got long running cases data:", data);
+          onDataReceived(
+            "longrunning-bar",
+            data,
+            "Long Running Cases Analysis"
+          );
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now(),
+              text: `Successfully loaded long running cases data from endpoint! The data has been visualized as a bar chart on your chatbot.`,
+              sender: "bot",
+              timestamp: new Date(),
+            },
+          ]);
+          return;
+        }
+      } else if (lowerMessage.includes("sop deviation")) {
+        const countData = await fetchVisualizationData("sop-count");
+        const patternsData = await fetchVisualizationData("sop-patterns");
+        if (countData && patternsData) {
+          // Add a small delay to ensure visualizations render after messages
+          setTimeout(() => {
+            onDataReceived("sop-count", countData, "SOP Deviation Count");
+            onDataReceived(
+              "sop-patterns",
+              patternsData,
+              "SOP Deviation Patterns"
+            );
+          }, 100);
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now(),
+              text: `Loaded SOP deviation data from endpoint! Visualizations added to your chatbot.`,
+              sender: "bot",
+              timestamp: new Date(),
+            },
+          ]);
+          return;
+        }
+      }
+      // fallback to original logic for other types and AI analysis
       if (lowerMessage.includes("sop deviation")) {
         await handleSOPDeviation();
       } else if (lowerMessage.includes("incomplete cases")) {
@@ -484,16 +776,17 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
           setMessages((prev) => [...prev, botResponse]);
         }, 500);
       } else {
-        // Default bot response for other queries
-        setTimeout(() => {
-          const botResponse: Message = {
+        // AI analysis for general questions
+        const aiResponse = await fetchAIAnalysis(message);
+        setMessages((prev) => [
+          ...prev,
+          {
             id: Date.now() + 1,
-            text: "I can help you visualize data! Try asking about:\n• 'SOP deviation' – for detailed pattern analysis\n• 'Incomplete cases' – for case completion status\n• 'Long running cases' – for case duration analysis\n• 'Resource performance' – for resource metrics table\n• 'Timing analysis' – for timing analysis table\n• 'Process failure patterns' – for failure pattern distribution",
+            text: aiResponse,
             sender: "bot",
             timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, botResponse]);
-        }, 1000);
+          },
+        ]);
       }
     } finally {
       setIsLoading(false);
@@ -559,44 +852,98 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                     <span className="text-sm">Loading data...</span>
                   </div>
                 </div>
-              )}
-              {/* Render chatbot visualizations below messages */}
-              {visualizations.length > 0 && (
-                <div className="mt-6 space-y-6">
-                  {visualizations.map((viz) => (
-                    <div
-                      key={viz.id}
-                      className="bg-white border rounded-lg shadow p-4"
-                    >
-                      {viz.type === "sop-count" ? (
-                        <SOPWidget
-                          type="count"
-                          data={
-                            Array.isArray(viz.data) ? viz.data[0] : viz.data
+              )}{" "}
+              {/* VISUALIZATIONS SECTION */}
+              <div className="mt-6 space-y-6 visualization-container">
+                {/* Dynamic visualization from props */}
+                {visualizations && visualizations.length > 0 && (
+                  <>
+                    {visualizations.map((viz, idx) => (
+                      <div
+                        className="bg-white border rounded-lg shadow p-4 mb-4"
+                        key={
+                          viz.id +
+                          "-" +
+                          viz.type +
+                          "-" +
+                          (viz.title || "") +
+                          "-" +
+                          idx
+                        }
+                      >
+                        <h3 className="text-lg font-bold mb-2">
+                          {viz.title || "Data Visualization"}
+                        </h3>
+                        {/* Visualization renderer with proper type checking and data handling */}
+                        {(() => {
+                          // Explicit SOPWidget types
+                          if (viz.type === "sop-count") {
+                            return (
+                              <SOPWidget
+                                type="count"
+                                data={
+                                  Array.isArray(viz.data) && viz.data.length > 0
+                                    ? viz.data[0]
+                                    : {
+                                        count: 0,
+                                        percentage: 0,
+                                        threshold: "30%",
+                                      }
+                                }
+                                visualizationType="bar"
+                                title={viz.title || "SOP Count"}
+                              />
+                            );
                           }
-                          visualizationType="bar"
-                          title={viz.title}
-                        />
-                      ) : viz.type === "sop-patterns" ? (
-                        <SOPWidget
-                          type="patterns"
-                          data={viz.data}
-                          visualizationType="bar"
-                          title={viz.title}
-                        />
-                      ) : viz.type === "object-lifecycle" ? (
-                        <ProcessFlowGraph />
-                      ) : (
-                        <DataVisualizationWidget
-                          type={viz.type as any}
-                          data={viz.data}
-                          title={viz.title}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                          if (viz.type === "sop-patterns") {
+                            return (
+                              <SOPWidget
+                                type="patterns"
+                                data={Array.isArray(viz.data) ? viz.data : []}
+                                visualizationType="bar"
+                                title={viz.title || "SOP Patterns"}
+                              />
+                            );
+                          }
+                          // All other supported DataVisualizationWidget types
+                          const supportedTypes = [
+                            "incomplete-bar",
+                            "longrunning-bar",
+                            "resource-switches-bar",
+                            "rework-activities-bar",
+                            "timing-violations-bar",
+                            "case-complexity-bar",
+                            "case-complexity-table",
+                            "resource-performance-table",
+                            "timing-analysis-table",
+                            "process-failure-patterns-bar",
+                            "sop-table",
+                          ];
+                          if (supportedTypes.includes(viz.type)) {
+                            return (
+                              <DataVisualizationWidget
+                                type={viz.type as any}
+                                data={
+                                  Array.isArray(viz.data) && viz.data.length > 0
+                                    ? viz.data
+                                    : [{ name: "No Data", value: 0 }]
+                                }
+                                title={viz.title || "Data Visualization"}
+                              />
+                            );
+                          }
+                          // Fallback for unknown types
+                          return (
+                            <div className="text-gray-500 text-center">
+                              Unsupported visualization type: {viz.type}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
             </div>
             <div className="border-t p-3 flex space-x-2">
               <Input

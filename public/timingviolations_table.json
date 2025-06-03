@@ -1,0 +1,27 @@
+{
+  "data": [
+    {
+      "Case_ID": "MORT_0088",
+      "Pattern_Index": 12,
+      "From_Activity": "Valuation Accepted",
+      "To_Activity": "Appraisal Request",
+      "Gap__h": 219.2,
+      "Threshold__h": 95.7,
+      "Exceeded_By__h": 123.5,
+      "Violation_Time": "2020-01-20T03:08:00.000"
+    },
+    {
+      "Case_ID": "MORT_0049",
+      "Pattern_Index": 11,
+      "From_Activity": "Valuation Accepted",
+      "To_Activity": "Appraisal Request",
+      "Gap__h": 218.5,
+      "Threshold__h": 95.7,
+      "Exceeded_By__h": 122.8,
+      "Violation_Time": "2022-01-14T22:29:00.000"
+    }
+  ],
+  "total": 2,
+  "page": 1,
+  "size": 100
+}

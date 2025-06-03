@@ -94,6 +94,116 @@ const availableWidgets: Widget[] = [
   },
 ];
 
+// Add new widgets for all dashboard visualizations, including those from Process Discovery, Outlier Analysis, and CCM
+const extendedWidgets: Widget[] = [
+  ...availableWidgets,
+  // Outlier Analysis widgets (add all from OutlierAnalysis.tsx)
+  {
+    id: "all-counts",
+    name: "All Failure Pattern Counts",
+    category: "Outlier Analysis",
+    description: "Bar chart of all failure pattern counts",
+  },
+  {
+    id: "sop-patterns",
+    name: "SOP Deviation Patterns",
+    category: "Outlier Analysis",
+    description: "Table of SOP deviation patterns",
+  },
+  {
+    id: "sop-low-percentage-count-bar",
+    name: "SOP Deviation Low Percentage Count",
+    category: "Outlier Analysis",
+    description: "Bar chart of low percentage SOP deviations",
+  },
+  {
+    id: "sop-low-percentage-patterns-table",
+    name: "SOP Deviation Low Percentage Patterns",
+    category: "Outlier Analysis",
+    description: "Table of low percentage SOP deviation patterns",
+  },
+  {
+    id: "incomplete-cases-count",
+    name: "Incomplete Cases Count",
+    category: "Outlier Analysis",
+    description: "Bar chart of incomplete cases count",
+  },
+  {
+    id: "incomplete-case-table",
+    name: "Incomplete Case Table",
+    category: "Outlier Analysis",
+    description: "Table of incomplete cases",
+  },
+  {
+    id: "long-running-cases-count",
+    name: "Long Running Cases Count",
+    category: "Outlier Analysis",
+    description: "Bar chart of long running cases count",
+  },
+  {
+    id: "long-running-table",
+    name: "Long Running Table",
+    category: "Outlier Analysis",
+    description: "Table of long running cases",
+  },
+  {
+    id: "resource-switches-count",
+    name: "Resource Switches Count",
+    category: "Outlier Analysis",
+    description: "Bar chart of resource switches count",
+  },
+  {
+    id: "resource-switches-count-table",
+    name: "Resource Switches Count Table",
+    category: "Outlier Analysis",
+    description: "Table of resource switches count",
+  },
+  {
+    id: "resource-switches-table",
+    name: "Resource Switches Table",
+    category: "Outlier Analysis",
+    description: "Table of resource switches",
+  },
+  // Process Discovery
+  {
+    id: "object-lifecycle",
+    name: "Object Lifecycle (Process Flow)",
+    category: "Process Discovery",
+    description: "Visualize the object lifecycle as a process flow graph",
+  },
+  // CCM widgets
+  {
+    id: "controls-identified-count",
+    name: "Controls Identified Count",
+    category: "CCM",
+    description: "Bar chart of controls identified",
+  },
+  {
+    id: "controls-description",
+    name: "Controls Description",
+    category: "CCM",
+    description: "Table of controls description",
+  },
+  {
+    id: "controls-definition",
+    name: "Controls Definition",
+    category: "CCM",
+    description: "Table of controls definition",
+  },
+  {
+    id: "sla-analysis",
+    name: "SLA Analysis",
+    category: "CCM",
+    description: "Table of SLA analysis",
+  },
+  {
+    id: "kpi",
+    name: "KPI",
+    category: "CCM",
+    description: "Table of KPIs",
+  },
+];
+
 const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   isOpen,
   onClose,
@@ -113,12 +223,14 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   };
 
   const handleSave = () => {
-    onSave(localSelection, localSelection); // Treat all selected widgets as pinned
+    // Deduplicate before saving to avoid 409 errors
+    const deduped = Array.from(new Set(localSelection));
+    onSave(deduped, deduped); // Treat all selected widgets as pinned
     onClose();
   };
 
   const categories = Array.from(
-    new Set(availableWidgets.map((w) => w.category))
+    new Set(extendedWidgets.map((w) => w.category))
   );
 
   return (
@@ -141,7 +253,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
                 {category}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {availableWidgets
+                {extendedWidgets
                   .filter((widget) => widget.category === category)
                   .map((widget) => (
                     <div

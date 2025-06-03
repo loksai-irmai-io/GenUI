@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import MainRoutes from "./MainRoutes";
 
 const queryClient = new QueryClient();
 
@@ -21,10 +22,10 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route
-              path="/"
+              path="/*"
               element={
                 <ProtectedRoute>
-                  <Index />
+                  <MainRoutes />
                 </ProtectedRoute>
               }
             />

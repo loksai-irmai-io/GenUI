@@ -56,9 +56,9 @@ const tableColumns = [
 
 // Default widgets for all users
 const DEFAULT_WIDGETS = [
-  "sop-deviation",
-  "resource-switches",
-  "incomplete-cases",
+  "resource-performance",
+  "long-running-cases-count",
+  "process-failure-patterns-distribution",
 ];
 
 const Index = () => {
@@ -90,7 +90,7 @@ const Index = () => {
 
   useEffect(() => {
     if (user) {
-      loadUserWidgetPreferences();
+      loadUserWidgetPreferences(true); // force default on first load
     }
   }, [user]);
 
@@ -272,6 +272,441 @@ const Index = () => {
               });
               break;
             }
+            // Outlier Analysis widgets
+            case "all-counts": {
+              try {
+                const res = await fetch("http://127.0.0.1:8001/allcounts");
+                const data = await res.json();
+                const arr = Object.entries(data).map(([name, value]) => ({
+                  name,
+                  value,
+                }));
+                dashboardVisualizations.push({
+                  id: "all-counts",
+                  type: "process-failure-patterns-bar",
+                  data: arr,
+                  title: "All Failure Pattern Counts",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "all-counts",
+                  type: "process-failure-patterns-bar",
+                  data: [],
+                  title: "All Failure Pattern Counts (Error)",
+                });
+              }
+              break;
+            }
+            case "sop-patterns": {
+              try {
+                const res = await fetch("/sopdeviation.json");
+                let data = await res.json();
+                if (data && data.data && Array.isArray(data.data))
+                  data = data.data;
+                if (
+                  !Array.isArray(data) &&
+                  typeof data === "object" &&
+                  data !== null
+                )
+                  data = Object.values(data);
+                data = Array.isArray(data)
+                  ? data.map((row, idx) => ({
+                      pattern_no: idx + 1,
+                      pattern: Array.isArray(row.sop_deviation_sequence_preview)
+                        ? row.sop_deviation_sequence_preview
+                            .slice(0, 5)
+                            .join(" → ") +
+                          (row.sop_deviation_sequence_preview.length > 5
+                            ? " ..."
+                            : "")
+                        : "",
+                      count: row.pattern_count,
+                      percentage: row.percentage,
+                    }))
+                  : [];
+                dashboardVisualizations.push({
+                  id: "sop-patterns",
+                  type: "sop-patterns-table",
+                  data,
+                  title: "SOP Deviation Patterns",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "sop-patterns",
+                  type: "sop-patterns-table",
+                  data: [],
+                  title: "SOP Deviation Patterns (Error)",
+                });
+              }
+              break;
+            }
+            case "sop-low-percentage-count-bar": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/sopdeviation/low-percentage/count"
+                );
+                let data = await res.json();
+                let arr = [];
+                if (data && typeof data.count === "number") {
+                  arr = [{ name: "Low Percentage Count", value: data.count }];
+                }
+                dashboardVisualizations.push({
+                  id: "sop-low-percentage-count-bar",
+                  type: "incomplete-bar",
+                  data: arr,
+                  title: "SOP Deviation Low Percentage Count",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "sop-low-percentage-count-bar",
+                  type: "incomplete-bar",
+                  data: [],
+                  title: "SOP Deviation Low Percentage Count (Error)",
+                });
+              }
+              break;
+            }
+            case "sop-low-percentage-patterns-table": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/sopdeviation/patterns"
+                );
+                let data = await res.json();
+                if (data && data.data && Array.isArray(data.data))
+                  data = data.data;
+                if (
+                  !Array.isArray(data) &&
+                  typeof data === "object" &&
+                  data !== null
+                )
+                  data = Object.values(data);
+                data = Array.isArray(data)
+                  ? data.map((row) => ({
+                      pattern_no: row.pattern_no,
+                      pattern: row.pattern,
+                      count: row.count,
+                      percentage: row.percentage,
+                    }))
+                  : [];
+                dashboardVisualizations.push({
+                  id: "sop-low-percentage-patterns-table",
+                  type: "sop-patterns-table",
+                  data,
+                  title: "SOP Deviation Low Percentage Patterns",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "sop-low-percentage-patterns-table",
+                  type: "sop-patterns-table",
+                  data: [],
+                  title: "SOP Deviation Low Percentage Patterns (Error)",
+                });
+              }
+              break;
+            }
+            case "incomplete-cases-count": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/incompletecases/count"
+                );
+                const data = await res.json();
+                dashboardVisualizations.push({
+                  id: "incomplete-cases-count",
+                  type: "incomplete-bar",
+                  data: [{ name: "Incomplete Cases", value: data.count }],
+                  title: "Incomplete Cases Count",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "incomplete-cases-count",
+                  type: "incomplete-bar",
+                  data: [],
+                  title: "Incomplete Cases Count (Error)",
+                });
+              }
+              break;
+            }
+            case "incomplete-case-table": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/incompletecase_table"
+                );
+                let data = await res.json();
+                if (data && data.data && Array.isArray(data.data))
+                  data = data.data;
+                if (
+                  !Array.isArray(data) &&
+                  typeof data === "object" &&
+                  data !== null
+                )
+                  data = Object.values(data);
+                dashboardVisualizations.push({
+                  id: "incomplete-case-table",
+                  type: "incomplete-case-table",
+                  data,
+                  title: "Incomplete Case Table",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "incomplete-case-table",
+                  type: "incomplete-case-table",
+                  data: [],
+                  title: "Incomplete Case Table (Error)",
+                });
+              }
+              break;
+            }
+            case "long-running-cases-count": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/longrunningcases/count"
+                );
+                const data = await res.json();
+                dashboardVisualizations.push({
+                  id: "long-running-cases-count",
+                  type: "longrunning-bar",
+                  data: [{ name: "Long Running Cases", value: data.count }],
+                  title: "Long Running Cases Count",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "long-running-cases-count",
+                  type: "longrunning-bar",
+                  data: [],
+                  title: "Long Running Cases Count (Error)",
+                });
+              }
+              break;
+            }
+            case "long-running-table": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/longrunning_table?page=1&size=100"
+                );
+                let data = await res.json();
+                if (data && data.data && Array.isArray(data.data))
+                  data = data.data;
+                if (
+                  !Array.isArray(data) &&
+                  typeof data === "object" &&
+                  data !== null
+                )
+                  data = Object.values(data);
+                dashboardVisualizations.push({
+                  id: "long-running-table",
+                  type: "long-running-table",
+                  data,
+                  title: "Long Running Table",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "long-running-table",
+                  type: "long-running-table",
+                  data: [],
+                  title: "Long Running Table (Error)",
+                });
+              }
+              break;
+            }
+            case "resource-switches-count": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/resourceswitches/count"
+                );
+                const data = await res.json();
+                dashboardVisualizations.push({
+                  id: "resource-switches-count",
+                  type: "resource-switches-bar",
+                  data: [{ name: "Resource Switches", value: data.count }],
+                  title: "Resource Switches Count",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "resource-switches-count",
+                  type: "resource-switches-bar",
+                  data: [],
+                  title: "Resource Switches Count (Error)",
+                });
+              }
+              break;
+            }
+            case "resource-switches-count-table": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/resourceswitches_count_table"
+                );
+                let data = await res.json();
+                if (data && data.data && Array.isArray(data.data))
+                  data = data.data;
+                if (
+                  !Array.isArray(data) &&
+                  typeof data === "object" &&
+                  data !== null
+                )
+                  data = Object.values(data);
+                dashboardVisualizations.push({
+                  id: "resource-switches-count-table",
+                  type: "resource-switches-count-table",
+                  data,
+                  title: "Resource Switches Count Table",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "resource-switches-count-table",
+                  type: "resource-switches-count-table",
+                  data: [],
+                  title: "Resource Switches Count Table (Error)",
+                });
+              }
+              break;
+            }
+            case "resource-switches-table": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/resourceswitchestable_table?page=1&size=100"
+                );
+                let data = await res.json();
+                if (data && data.data && Array.isArray(data.data))
+                  data = data.data;
+                if (
+                  !Array.isArray(data) &&
+                  typeof data === "object" &&
+                  data !== null
+                )
+                  data = Object.values(data);
+                dashboardVisualizations.push({
+                  id: "resource-switches-table",
+                  type: "resource-switches-table",
+                  data,
+                  title: "Resource Switches Table",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "resource-switches-table",
+                  type: "resource-switches-table",
+                  data: [],
+                  title: "Resource Switches Table (Error)",
+                });
+              }
+              break;
+            }
+            // CCM widgets
+            case "controls-identified-count": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/controls_identified_count"
+                );
+                let data = await res.json();
+                let arr = Array.isArray(data)
+                  ? data
+                  : Object.entries(data).map(([name, value]) => ({
+                      name,
+                      value,
+                    }));
+                dashboardVisualizations.push({
+                  id: "controls-identified-count",
+                  type: "incomplete-bar",
+                  data: arr,
+                  title: "Controls Identified Count",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "controls-identified-count",
+                  type: "incomplete-bar",
+                  data: [],
+                  title: "Controls Identified Count (Error)",
+                });
+              }
+              break;
+            }
+            case "controls-description": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/control_description?page=1&size=100"
+                );
+                let data = await res.json();
+                data = Array.isArray(data) ? data : data.data || [];
+                dashboardVisualizations.push({
+                  id: "controls-description",
+                  type: "controls-description-table",
+                  data,
+                  title: "Controls Description",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "controls-description",
+                  type: "controls-description-table",
+                  data: [],
+                  title: "Controls Description (Error)",
+                });
+              }
+              break;
+            }
+            case "controls-definition": {
+              try {
+                const res = await fetch(
+                  "http://127.0.0.1:8001/control_defination?page=1&size=100"
+                );
+                let data = await res.json();
+                data = Array.isArray(data) ? data : data.data || [];
+                dashboardVisualizations.push({
+                  id: "controls-definition",
+                  type: "controls-definition-table",
+                  data,
+                  title: "Controls Definition",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "controls-definition",
+                  type: "controls-definition-table",
+                  data: [],
+                  title: "Controls Definition (Error)",
+                });
+              }
+              break;
+            }
+            case "sla-analysis": {
+              try {
+                const res = await fetch("http://127.0.0.1:8001/sla_analysis");
+                let data = await res.json();
+                data = Array.isArray(data) ? data : data.data || [];
+                dashboardVisualizations.push({
+                  id: "sla-analysis",
+                  type: "sla-analysis-table",
+                  data,
+                  title: "SLA Analysis",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "sla-analysis",
+                  type: "sla-analysis-table",
+                  data: [],
+                  title: "SLA Analysis (Error)",
+                });
+              }
+              break;
+            }
+            case "kpi": {
+              try {
+                const res = await fetch("http://127.0.0.1:8001/kpi");
+                let data = await res.json();
+                data = Array.isArray(data) ? data : data.data || [];
+                dashboardVisualizations.push({
+                  id: "kpi",
+                  type: "kpi-table",
+                  data,
+                  title: "KPI",
+                });
+              } catch (err) {
+                dashboardVisualizations.push({
+                  id: "kpi",
+                  type: "kpi-table",
+                  data: [],
+                  title: "KPI (Error)",
+                });
+              }
+              break;
+            }
             default:
               break;
           }
@@ -282,7 +717,7 @@ const Index = () => {
   }, [user, selectedWidgets, pinnedWidgets]);
 
   // Load user widget preferences, or set defaults for new users
-  const loadUserWidgetPreferences = async () => {
+  const loadUserWidgetPreferences = async (forceDefault = false) => {
     if (!user) return;
     try {
       const { data, error } = await supabase
@@ -290,7 +725,7 @@ const Index = () => {
         .select("*")
         .eq("user_id", user.id);
       if (error) throw error;
-      if (data && data.length > 0) {
+      if (data && data.length > 0 && !forceDefault) {
         const widgetIds = data
           .map((pref) => pref.selected_module)
           .filter(Boolean);
@@ -300,7 +735,7 @@ const Index = () => {
         setSelectedWidgets(widgetIds.length > 0 ? widgetIds : DEFAULT_WIDGETS);
         setPinnedWidgets(pinnedIds.length > 0 ? pinnedIds : DEFAULT_WIDGETS);
       } else {
-        // No preferences: set defaults
+        // No preferences or force default: set defaults
         setSelectedWidgets(DEFAULT_WIDGETS);
         setPinnedWidgets(DEFAULT_WIDGETS);
         // Insert default preferences for new user
@@ -377,14 +812,61 @@ const Index = () => {
         variant: "destructive",
       });
     }
-  };
-
+  }; // Handle visualization data received from any source
   const handleDataReceived = (
     type: string,
     data: any,
     title: string,
     widgetId?: string
   ) => {
+    console.log("handleDataReceived called with:", {
+      type,
+      title,
+      widgetId,
+      dataType: typeof data,
+      isArray: Array.isArray(data),
+      dataIsEmpty: Array.isArray(data)
+        ? data.length === 0
+        : data === null || data === undefined,
+      dataPreview: JSON.stringify(data).substring(0, 100) + "...",
+    });
+
+    // Input validation and data normalization
+    if (!type) {
+      console.error("Missing type for visualization data");
+      return;
+    }
+
+    // Ensure data is in the correct format for charting
+    let normalizedData = data;
+
+    // If data is not an array but should be, convert it
+    if (
+      !Array.isArray(normalizedData) &&
+      typeof normalizedData === "object" &&
+      normalizedData !== null
+    ) {
+      if (type === "incomplete-bar" || type === "longrunning-bar") {
+        normalizedData = Object.entries(normalizedData).map(
+          ([name, value]) => ({ name, value })
+        );
+        console.log("Converted object to array:", normalizedData);
+      }
+    }
+
+    // Fallback for empty data
+    if (
+      !normalizedData ||
+      (Array.isArray(normalizedData) && normalizedData.length === 0)
+    ) {
+      console.warn("Empty data for visualization type:", type);
+      if (type === "incomplete-bar") {
+        normalizedData = [{ name: "No Data", value: 0 }];
+      } else if (type === "longrunning-bar") {
+        normalizedData = [{ name: "No Data", value: 0 }];
+      }
+    }
+
     if (widgetId) {
       // Replace (not append) dashboard data for this widgetId
       setDataVisualizationWidgets((prev) => {
@@ -394,20 +876,22 @@ const Index = () => {
           {
             id: widgetId,
             type,
-            data,
+            data: normalizedData,
             title,
           },
         ];
       });
     } else {
-      // Chatbot visualization: always add a new one with a unique id
-      const id = `data-viz-${Date.now()}`;
+      // Chatbot visualization: append instead of replace
+      const id = `data-viz-${type}-${Date.now()}-${Math.floor(
+        Math.random() * 100000
+      )}`;
       setChatbotVisualizations((prev) => [
         ...prev,
         {
           id,
           type,
-          data,
+          data: normalizedData,
           title,
         },
       ]);
@@ -458,7 +942,24 @@ const Index = () => {
     );
     let widgetContent = null;
     if (fetchedWidget) {
-      if (fetchedWidget.type === "sop-count") {
+      // Outlier Analysis and CCM widget rendering
+      // --- PATCH: Always render table-based widgets with DataTable ---
+      const tableWidgetTypes = [
+        "sop-patterns-table",
+        "sop-low-percentage-patterns-table",
+        "incomplete-case-table",
+        "long-running-table",
+        "resource-switches-count-table",
+        "resource-switches-table",
+        "controls-description-table",
+        "controls-definition-table",
+        "sla-analysis-table",
+        "kpi-table",
+      ];
+      if (fetchedWidget.type === "object-lifecycle") {
+        widgetContent = <ProcessFlowGraph key="object-lifecycle-graph" />;
+      } else if (fetchedWidget.type === "sop-count") {
+        // SOP Deviation Count (single value bar)
         widgetContent = (
           <SOPWidget
             key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
@@ -474,6 +975,7 @@ const Index = () => {
           />
         );
       } else if (fetchedWidget.type === "sop-patterns") {
+        // SOP Deviation Patterns (table)
         widgetContent = (
           <SOPWidget
             key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
@@ -484,21 +986,46 @@ const Index = () => {
             maximized={!!opts?.forOverlay}
           />
         );
-      } else if (fetchedWidget.type === "object-lifecycle") {
+      } else if (tableWidgetTypes.includes(fetchedWidget.type)) {
+        // Use custom columns for known types, else auto-generate
+        let columns;
+        if (
+          ["sop-patterns-table", "sop-low-percentage-patterns-table"].includes(
+            fetchedWidget.type
+          )
+        ) {
+          columns = [
+            { key: "pattern_no", label: "Pattern No" },
+            { key: "pattern", label: "Pattern" },
+            { key: "count", label: "Count" },
+            { key: "percentage", label: "Percentage (%)" },
+          ];
+        } else {
+          columns = Object.keys(fetchedWidget.data[0] || {}).map((key) => ({
+            key,
+            label: key
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (l) => l.toUpperCase()),
+          }));
+        }
         widgetContent = (
-          <ProcessFlowGraph
-            key="object-lifecycle-graph"
-            maximized={!!opts?.forOverlay}
+          <DataTable
+            key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
+            title={fetchedWidget.title}
+            data={fetchedWidget.data}
+            columns={columns}
+            {...(opts?.forOverlay ? { maximized: true } : {})}
           />
         );
       } else {
+        // Fallback to DataVisualizationWidget for all other types
         widgetContent = (
           <DataVisualizationWidget
             key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
             type={fetchedWidget.type as any}
             data={fetchedWidget.data}
             title={fetchedWidget.title}
-            maximized={!!opts?.forOverlay}
+            {...(opts?.forOverlay ? { maximized: true } : {})}
           />
         );
       }
@@ -514,7 +1041,6 @@ const Index = () => {
               change={12}
               changeType="increase"
               size={opts?.forOverlay ? "large" : "small"}
-              maximized={!!opts?.forOverlay}
             />
           );
           break;
@@ -528,7 +1054,6 @@ const Index = () => {
               changeType="increase"
               size={opts?.forOverlay ? "large" : "medium"}
               subtitle="Active this month"
-              maximized={!!opts?.forOverlay}
             />
           );
           break;
@@ -542,7 +1067,6 @@ const Index = () => {
               changeType="decrease"
               size="large"
               subtitle="Quarterly results"
-              maximized={!!opts?.forOverlay}
             />
           );
           break;
@@ -586,7 +1110,6 @@ const Index = () => {
               title="User Management"
               data={sampleTableData}
               columns={tableColumns}
-              maximized={!!opts?.forOverlay}
             />
           );
           break;
@@ -642,6 +1165,8 @@ const Index = () => {
       );
     })
     .map((viz) => renderWidget(viz.id));
+
+  const clearChatbotVisualizations = () => setChatbotVisualizations([]);
 
   return (
     <div className="min-h-screen flex w-full bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -740,6 +1265,7 @@ const Index = () => {
           <ChatBot
             onDataReceived={handleDataReceived}
             visualizations={chatbotVisualizations}
+            clearVisualizations={clearChatbotVisualizations}
           />
         </div>
       </div>

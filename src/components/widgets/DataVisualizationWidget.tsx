@@ -155,7 +155,6 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
             </Table>
           </div>
         );
-
       case "incomplete-bar":
       case "longrunning-bar":
       case "resource-switches-bar":
@@ -163,8 +162,47 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
       case "timing-violations-bar":
       case "case-complexity-bar":
       case "process-failure-patterns-bar": {
-        // Always show all categories/labels, but only render bars for nonzero values (for process-failure-patterns-bar)
-        const allData = Array.isArray(data) ? data : [];
+        console.log(
+          `[DataVisualizationWidget] Rendering ${type} chart with data:`,
+          data
+        );
+
+        // Handle and normalize data
+        let processedData = data;
+
+        // Handle empty or invalid data
+        if (!Array.isArray(data)) {
+          console.warn(
+            `[DataVisualizationWidget] Expected array for ${type} but got:`,
+            typeof data
+          );
+          processedData = [];
+        }
+
+        // Convert object to array if needed (for compatibility)
+        if (
+          !Array.isArray(processedData) &&
+          typeof processedData === "object" &&
+          processedData !== null
+        ) {
+          processedData = Object.entries(processedData).map(
+            ([name, value]) => ({ name, value })
+          );
+          console.log(
+            "[DataVisualizationWidget] Converted object to array:",
+            processedData
+          );
+        }
+
+        // Always show all categories/labels, but only render bars for nonzero values
+        const allData = Array.isArray(processedData) ? processedData : [];
+
+        // For empty data, show a placeholder
+        if (allData.length === 0) {
+          console.warn(`[DataVisualizationWidget] No data for ${type}`);
+          allData.push({ name: "No Data", value: 0 });
+        }
+
         // For process-failure-patterns-bar, only render bars for nonzero values, but always show all labels
         const isProcessFailure = type === "process-failure-patterns-bar";
         // For process-failure-patterns-bar, create a separate array for bars (nonzero) and for x-axis (all)
