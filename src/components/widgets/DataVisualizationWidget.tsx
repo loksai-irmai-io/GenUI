@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -49,20 +50,20 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
     switch (type) {
       case "sop-table":
         return (
-          <div className={maximized ? "w-full overflow-x-auto" : "w-full overflow-x-auto"}>
+          <ScrollArea className="w-full h-[400px] rounded-lg border">
             <Table className="w-full">
-              <TableHeader className="bg-gradient-to-r from-slate-50 to-gray-50">
+              <TableHeader className="bg-gradient-to-r from-slate-50 to-gray-50 sticky top-0 z-10">
                 <TableRow className="border-b border-gray-200">
-                  <TableHead className="px-4 py-3 text-sm font-semibold text-gray-700">
+                  <TableHead className="px-6 py-4 text-sm font-semibold text-gray-700">
                     Pattern Count
                   </TableHead>
-                  <TableHead className="px-4 py-3 text-sm font-semibold text-gray-700">
+                  <TableHead className="px-6 py-4 text-sm font-semibold text-gray-700">
                     Percentage
                   </TableHead>
-                  <TableHead className="px-4 py-3 text-sm font-semibold text-gray-700">
+                  <TableHead className="px-6 py-4 text-sm font-semibold text-gray-700">
                     Status
                   </TableHead>
-                  <TableHead className="px-4 py-3 text-sm font-semibold text-gray-700">
+                  <TableHead className="px-6 py-4 text-sm font-semibold text-gray-700">
                     Sequence Preview
                   </TableHead>
                 </TableRow>
@@ -73,13 +74,13 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
                     key={index}
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                   >
-                    <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">
+                    <TableCell className="px-6 py-4 text-sm font-medium text-gray-900">
                       {row.pattern_count}
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-700">
+                    <TableCell className="px-6 py-4 text-sm text-gray-700">
                       {row.percentage}%
                     </TableCell>
-                    <TableCell className="px-4 py-3">
+                    <TableCell className="px-6 py-4">
                       <Badge
                         variant={row.deviation_status === "Deviation" ? "destructive" : "secondary"}
                         className={
@@ -91,14 +92,14 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
                         {row.deviation_status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-700">
+                    <TableCell className="px-6 py-4 text-sm text-gray-700">
                       {row.sequence_preview}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </ScrollArea>
         );
 
       case "resource-performance-table":
@@ -121,14 +122,14 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
         }
         const columns = Object.keys(data[0] || {});
         return (
-          <div className={maximized ? "w-full overflow-x-auto" : "w-full overflow-x-auto"}>
+          <ScrollArea className="w-full h-[400px] rounded-lg border">
             <Table className="w-full">
-              <TableHeader className="bg-gradient-to-r from-slate-50 to-gray-50">
+              <TableHeader className="bg-gradient-to-r from-slate-50 to-gray-50 sticky top-0 z-10">
                 <TableRow className="border-b border-gray-200">
                   {columns.map((col) => (
                     <TableHead
                       key={col}
-                      className="px-4 py-3 text-sm font-semibold text-gray-700"
+                      className="px-6 py-4 text-sm font-semibold text-gray-700"
                     >
                       {col.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </TableHead>
@@ -142,7 +143,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                   >
                     {columns.map((col) => (
-                      <TableCell key={col} className="px-4 py-3 text-sm text-gray-700">
+                      <TableCell key={col} className="px-6 py-4 text-sm text-gray-700">
                         {typeof row[col] === "object" && row[col] !== null
                           ? JSON.stringify(row[col])
                           : String(row[col])}
@@ -152,7 +153,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </ScrollArea>
         );
 
       case "incomplete-bar":
@@ -329,16 +330,14 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
 
   return (
     <Card
-      className={`shadow-lg border-0 bg-white hover:shadow-xl transition-all duration-300 ${className}${
-        maximized ? " max-w-6xl" : ""
-      }`}
+      className={`shadow-lg border-0 bg-white hover:shadow-xl transition-all duration-300 w-full ${className}`}
       tabIndex={0}
       aria-label={title}
     >
       <CardHeader className="bg-gradient-to-r from-gray-50 to-slate-50 border-b border-gray-100">
         <CardTitle className="text-xl font-bold text-gray-900">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-6 w-full">
         {renderVisualization()}
       </CardContent>
     </Card>
