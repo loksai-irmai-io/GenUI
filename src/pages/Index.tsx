@@ -74,11 +74,11 @@ const Index = () => {
   };
 
   return (
-    <div className="w-full h-full space-y-6">
+    <div className="space-y-8">
       {/* Visualizations Section */}
       {visualizations.length > 0 && (
-        <div className="w-full">
-          <Card className="border-0 shadow-xl bg-white/95 backdrop-blur-sm w-full">
+        <div>
+          <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
             <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-gray-50 to-blue-50">
               <div className="flex justify-between items-center">
                 <div>
@@ -97,12 +97,12 @@ const Index = () => {
                 </button>
               </div>
             </CardHeader>
-            <CardContent className="p-6 w-full">
-              <div className="space-y-6 w-full">
+            <CardContent className="p-8">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                 {visualizations.map((viz) => (
                   <Card
                     key={viz.id}
-                    className="border-0 shadow-lg bg-white hover:shadow-xl transition-all duration-300 w-full"
+                    className="border-0 shadow-lg bg-white hover:shadow-xl transition-all duration-300"
                   >
                     <CardHeader className="bg-gradient-to-r from-gray-50 to-slate-50 border-b border-gray-100">
                       <CardTitle className="text-lg font-semibold text-gray-900">
@@ -117,13 +117,11 @@ const Index = () => {
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-6 w-full">
-                      <div className="bg-gray-50 rounded-lg border border-gray-200 w-full overflow-auto">
-                        <div className="p-4 max-h-96 overflow-auto">
-                          <pre className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">
-                            {JSON.stringify(viz.data, null, 2)}
-                          </pre>
-                        </div>
+                    <CardContent className="p-6">
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <pre className="text-xs text-gray-700 overflow-auto max-h-40 leading-relaxed">
+                          {JSON.stringify(viz.data, null, 2)}
+                        </pre>
                       </div>
                     </CardContent>
                   </Card>
