@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   LineChart,
@@ -13,6 +14,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ChartData {
   name: string;
@@ -30,12 +32,8 @@ interface ChartWidgetProps {
 }
 
 const COLORS = [
-  "#3B82F6",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#8B5CF6",
-  "#06B6D4",
+  "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#06B6D4",
+  "#84CC16", "#F97316", "#EC4899", "#6366F1", "#14B8A6", "#F472B6"
 ];
 
 const ChartWidget: React.FC<ChartWidgetProps> = ({
@@ -50,17 +48,38 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({
     switch (type) {
       case "line":
         return (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey={xAxisKey} stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <defs>
+                <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.1}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis 
+                dataKey={xAxisKey} 
+                stroke="#64748b" 
+                fontSize={12}
+                fontWeight={500}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={{ stroke: '#e2e8f0' }}
+              />
+              <YAxis 
+                stroke="#64748b" 
+                fontSize={12}
+                fontWeight={500}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={{ stroke: '#e2e8f0' }}
+              />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "white",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "12px",
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                  fontSize: "14px",
+                  fontWeight: "500"
                 }}
               />
               <Line
@@ -68,8 +87,10 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({
                 dataKey={dataKey}
                 stroke="#3B82F6"
                 strokeWidth={3}
-                dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
-                activeDot={{ r: 6, stroke: "#3B82F6", strokeWidth: 2 }}
+                fill="url(#lineGradient)"
+                dot={{ fill: "#3B82F6", strokeWidth: 2, r: 6 }}
+                activeDot={{ r: 8, stroke: "#3B82F6", strokeWidth: 2, fill: "white" }}
+                animationDuration={800}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -77,38 +98,67 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({
 
       case "bar":
         return (
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey={xAxisKey} stroke="#6b7280" />
-              <YAxis stroke="#6b7280" />
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+              <defs>
+                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.8}/>
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity={0.6}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis 
+                dataKey={xAxisKey} 
+                stroke="#64748b" 
+                fontSize={12}
+                fontWeight={500}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={{ stroke: '#e2e8f0' }}
+              />
+              <YAxis 
+                stroke="#64748b" 
+                fontSize={12}
+                fontWeight={500}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={{ stroke: '#e2e8f0' }}
+              />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "white",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "12px",
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                  fontSize: "14px",
+                  fontWeight: "500"
                 }}
               />
-              <Bar dataKey={dataKey} fill="#3B82F6" radius={[4, 4, 0, 0]} />
+              <Bar 
+                dataKey={dataKey} 
+                fill="url(#barGradient)" 
+                radius={[6, 6, 0, 0]}
+                animationDuration={800}
+              />
             </BarChart>
           </ResponsiveContainer>
         );
 
       case "pie":
         return (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={350}>
             <PieChart>
               <Pie
                 data={data}
                 cx="50%"
                 cy="50%"
-                outerRadius={100}
+                outerRadius={120}
+                innerRadius={40}
                 fill="#8884d8"
                 dataKey={dataKey}
                 label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
+                  `${name} ${(percent * 100).toFixed(1)}%`
                 }
+                labelLine={false}
+                animationDuration={800}
               >
                 {data.map((entry, index) => (
                   <Cell
@@ -117,7 +167,16 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({
                   />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "white",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "12px",
+                  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                  fontSize: "14px",
+                  fontWeight: "500"
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         );
@@ -132,16 +191,20 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({
   };
 
   return (
-    <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6${
-        maximized ? " max-w-4xl" : ""
-      } focus-visible:ring-2 focus-visible:ring-blue-400 outline-none`}
+    <Card
+      className={`shadow-lg border-0 bg-white hover:shadow-xl transition-all duration-300${
+        maximized ? " max-w-6xl" : ""
+      }`}
       tabIndex={0}
       aria-label={title}
     >
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-      {renderChart()}
-    </div>
+      <CardHeader className="bg-gradient-to-r from-gray-50 to-slate-50 border-b border-gray-100">
+        <CardTitle className="text-xl font-bold text-gray-900">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-6">
+        {renderChart()}
+      </CardContent>
+    </Card>
   );
 };
 
