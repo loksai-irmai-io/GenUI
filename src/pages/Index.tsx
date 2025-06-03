@@ -17,6 +17,8 @@ interface Visualization {
 const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [visualizations, setVisualizations] = useState<Visualization[]>([]);
+  const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
+  const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -48,7 +50,7 @@ const Index = () => {
     setVisualizations([]);
   };
 
-  const handleAddWidget = () => {
+  const handleSelectWidgets = () => {
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -60,19 +62,21 @@ const Index = () => {
     setIsModalOpen(true);
   };
 
-  const handleWidgetAdded = async (widgetType: string) => {
-    console.log("[Index] Widget added:", widgetType);
+  const handleSaveWidgets = async (selectedWidgetIds: string[], pinnedWidgetIds: string[]) => {
+    console.log("[Index] Widgets saved:", { selectedWidgetIds, pinnedWidgetIds });
+    setSelectedWidgets(selectedWidgetIds);
+    setPinnedWidgets(pinnedWidgetIds);
     setIsModalOpen(false);
     
     toast({
-      title: "Widget Added",
-      description: `${widgetType} widget has been added to your dashboard.`,
+      title: "Widgets Updated",
+      description: `${selectedWidgetIds.length} widgets have been saved to your dashboard.`,
     });
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onAddWidget={handleAddWidget} />
+      <Header onSelectWidgets={handleSelectWidgets} />
       
       <main className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
@@ -136,7 +140,9 @@ const Index = () => {
       <WidgetSelectionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onWidgetSelect={handleWidgetAdded}
+        onSave={handleSaveWidgets}
+        selectedWidgets={selectedWidgets}
+        pinnedWidgets={pinnedWidgets}
       />
     </div>
   );
