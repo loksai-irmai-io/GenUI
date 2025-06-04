@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Header from "../components/Header";
 import WidgetSelectionModal from "../components/WidgetSelectionModal";
 import InfoCard from "../components/widgets/InfoCard";
 import ChartWidget from "../components/widgets/ChartWidget";
@@ -1142,105 +1141,102 @@ const Index = () => {
     .map((viz) => renderWidget(viz.id));
 
   return (
-    <div className="min-h-screen flex w-full bg-gradient-to-br from-blue-50 to-indigo-50">
-      <div className="flex-1 flex flex-col">
-        <Header onSelectWidgets={() => setIsModalOpen(true)} />
-        <main className="flex-1 pt-16 px-8 pb-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-8" aria-label="Dashboard Overview Section">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                Dashboard Overview
-              </h2>
+    <div className="min-h-screen w-full">
+      <main className="px-8 pb-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8" aria-label="Dashboard Overview Section">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Dashboard Overview
+            </h2>
+            <p className="text-gray-600">
+              Welcome back, {user?.email}! Customize your data visualization
+              experience
+            </p>
+          </div>
+
+          <div className="mb-8"></div>
+
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900">
+                Process Widgets
+              </h3>
               <p className="text-gray-600">
-                Welcome back, {user?.email}! Customize your data visualization
-                experience
+                Monitor key process metrics and deviations
               </p>
             </div>
-
-            <div className="mb-8"></div>
-
-            <div className="flex justify-between items-center mb-6">
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900">
-                  Process Widgets
-                </h3>
-                <p className="text-gray-600">
-                  Monitor key process metrics and deviations
-                </p>
-              </div>
-              <Button
-                aria-label="Save dashboard widget preferences"
-                onClick={handleSaveDashboardPrefs}
-                disabled={!unsaved}
-                className={`flex items-center gap-2 ${
-                  unsaved
-                    ? "lovable-button-primary shadow-lovable-lg"
-                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                } transition-all duration-200`}
-              >
-                <Save className="w-4 h-4" />
-                Save Changes
-              </Button>
-            </div>
-
-            {allWidgets.length === 0 ? (
-              <div
-                className="text-center py-20 animate-fade-in"
-                role="status"
-                aria-live="polite"
-              >
-                <Card
-                  className="max-w-md mx-auto bg-white border-blue-100 shadow-lg focus-within:ring-2 focus-within:ring-blue-400"
-                  tabIndex={0}
-                  aria-label="No widgets configured"
-                >
-                  <CardContent className="p-12">
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <BarChart3 className="w-8 h-8 text-blue-500" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                      No process widgets configured
-                    </h3>
-                    <p className="text-gray-600 mb-8">
-                      Start monitoring your processes by configuring the
-                      available widgets
-                    </p>
-                    <Button
-                      aria-label="Configure Widgets"
-                      onClick={() => setIsModalOpen(true)}
-                      className="lovable-button-primary"
-                    >
-                      Configure Widgets
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            ) : (
-              <div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-scale-in"
-                aria-label="Widget Grid"
-              >
-                {allWidgets}
-              </div>
-            )}
+            <Button
+              aria-label="Save dashboard widget preferences"
+              onClick={handleSaveDashboardPrefs}
+              disabled={!unsaved}
+              className={`flex items-center gap-2 ${
+                unsaved
+                  ? "lovable-button-primary shadow-lovable-lg"
+                  : "bg-gray-200 text-gray-500 cursor-not-allowed"
+              } transition-all duration-200`}
+            >
+              <Save className="w-4 h-4" />
+              Save Changes
+            </Button>
           </div>
-        </main>
 
-        <WidgetSelectionModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleSaveWidgets}
-          selectedWidgets={selectedWidgets}
-          pinnedWidgets={pinnedWidgets}
-        />
-
-        <div className="fixed bottom-6 right-6 z-50">
-          <ChatBot
-            onDataReceived={() => {}}
-            visualizations={[]}
-            clearVisualizations={() => {}}
-          />
+          {allWidgets.length === 0 ? (
+            <div
+              className="text-center py-20 animate-fade-in"
+              role="status"
+              aria-live="polite"
+            >
+              <Card
+                className="max-w-md mx-auto bg-white border-blue-100 shadow-lg focus-within:ring-2 focus-within:ring-blue-400"
+                tabIndex={0}
+                aria-label="No widgets configured"
+              >
+                <CardContent className="p-12">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <BarChart3 className="w-8 h-8 text-blue-500" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                    No process widgets configured
+                  </h3>
+                  <p className="text-gray-600 mb-8">
+                    Start monitoring your processes by configuring the
+                    available widgets
+                  </p>
+                  <Button
+                    aria-label="Configure Widgets"
+                    onClick={() => setIsModalOpen(true)}
+                    className="lovable-button-primary"
+                  >
+                    Configure Widgets
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-scale-in"
+              aria-label="Widget Grid"
+            >
+              {allWidgets}
+            </div>
+          )}
         </div>
+      </main>
+
+      <WidgetSelectionModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveWidgets}
+        selectedWidgets={selectedWidgets}
+        pinnedWidgets={pinnedWidgets}
+      />
+
+      <div className="fixed bottom-6 right-6 z-50">
+        <ChatBot
+          onDataReceived={() => {}}
+          visualizations={[]}
+          clearVisualizations={() => {}}
+        />
       </div>
     </div>
   );
