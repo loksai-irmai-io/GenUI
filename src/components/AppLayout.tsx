@@ -13,20 +13,13 @@ import {
 } from "../components/ui/sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { 
-  LayoutDashboard, 
-  Search, 
-  AlertTriangle, 
-  GitBranch, 
-  Brain 
-} from "lucide-react";
 
 const sidebarTabs = [
-  { label: "Dashboard", path: "/", icon: LayoutDashboard },
-  { label: "Process Discovery", path: "/process-discovery", icon: Search },
-  { label: "Outlier Analysis", path: "/outlier-analysis", icon: AlertTriangle },
-  { label: "CCM", path: "/ccm", icon: GitBranch },
-  { label: "Overall AI Insights", path: "/ai-insights", icon: Brain },
+  { label: "Dashboard", path: "/" },
+  { label: "Process Discovery", path: "/process-discovery" },
+  { label: "Outlier Analysis", path: "/outlier-analysis" },
+  { label: "CCM", path: "/ccm" },
+  { label: "Overall AI Insights", path: "/ai-insights" },
 ];
 
 interface AppLayoutProps {
@@ -68,67 +61,75 @@ const AppLayout = ({
   }, []);
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      {/* Single Global Header */}
-      <Header onSelectWidgets={onSelectWidgets} />
-      
-      <SidebarProvider>
-        <div className="flex w-full" style={{ height: 'calc(100vh - 80px)' }}>
-          <Sidebar className="border-r border-gray-200/60 bg-white/95 backdrop-blur-sm shadow-lg">
-            <SidebarContent className="pt-6">
-              <div className="px-4">
-                <SidebarMenu className="space-y-2">
-                  {sidebarTabs.map((tab) => {
-                    const IconComponent = tab.icon;
-                    const isActive = location.pathname === tab.path || 
-                      (tab.path === "/" && location.pathname === "");
-                    
-                    return (
-                      <SidebarMenuItem key={tab.path}>
-                        <SidebarMenuButton
-                          isActive={isActive}
-                          onClick={() => navigate(tab.path)}
-                          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 text-sm font-medium group ${
-                            isActive
-                              ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25"
-                              : "hover:bg-blue-50/80 text-gray-700 hover:text-blue-600 hover:shadow-sm"
-                          }`}
-                        >
-                          <IconComponent 
-                            className={`w-5 h-5 transition-colors duration-300 ${
-                              isActive ? "text-white" : "text-gray-400 group-hover:text-blue-500"
-                            }`} 
-                          />
-                          <span className={`transition-colors duration-300 ${isMobile ? "text-xs" : ""}`}>
-                            {tab.label}
-                          </span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        <Sidebar className="border-r border-gray-200/80 bg-white/80 backdrop-blur-sm">
+          <SidebarContent className="py-6 md:py-8">
+            <div className="px-4 md:px-6">
+              <div className="text-xl md:text-2xl font-bold text-center mb-6 md:mb-8 tracking-tight text-blue-700">
+                <span className="inline-flex items-center gap-2 justify-center">
+                  <span className="bg-gradient-to-br from-blue-600 to-blue-700 p-2 md:p-2.5 rounded-xl shadow-lg">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5 md:w-6 md:h-6 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <rect
+                        width="18"
+                        height="18"
+                        x="3"
+                        y="3"
+                        rx="4"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </span>
+                  <span className="hidden md:inline">GenUI</span>
+                </span>
               </div>
-            </SidebarContent>
-          </Sidebar>
-          
-          <SidebarInset className="flex-1 flex flex-col min-w-0">
-            <main className="flex-1 overflow-auto bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30">
-              <div className="p-8 max-w-7xl mx-auto">
-                {children}
-              </div>
-            </main>
-          </SidebarInset>
-        </div>
-        
-        <div className="fixed bottom-6 right-6 z-50">
+              <SidebarMenu className="space-y-2">
+                {sidebarTabs.map((tab) => (
+                  <SidebarMenuItem key={tab.path}>
+                    <SidebarMenuButton
+                      isActive={
+                        location.pathname === tab.path ||
+                        (tab.path === "/" && location.pathname === "")
+                      }
+                      onClick={() => navigate(tab.path)}
+                      className={`w-full flex items-center px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all duration-200 text-sm md:text-base font-medium ${
+                        location.pathname === tab.path ||
+                        (tab.path === "/" && location.pathname === "")
+                          ? "bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 font-semibold shadow-sm border border-blue-200/50"
+                          : "hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent text-gray-700 hover:text-blue-600"
+                      }`}
+                    >
+                      <span className={isMobile ? "text-xs" : ""}>{tab.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </div>
+          </SidebarContent>
+        </Sidebar>
+        <SidebarInset className="flex-1 flex flex-col min-w-0 bg-transparent">
+          <Header onSelectWidgets={onSelectWidgets} />
+          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto min-w-0 bg-white/60 backdrop-blur-sm rounded-tl-3xl shadow-inner border-l border-t border-gray-200/50 mt-16 md:mt-20">
+            <div className="max-w-7xl mx-auto">
+              {children}
+            </div>
+          </main>
+        </SidebarInset>
+        <div className="fixed bottom-4 right-4 z-50">
           <ChatBot
             onDataReceived={handleChatbotDataReceived}
             visualizations={chatbotVisualizations}
             clearVisualizations={clearChatbotVisualizations}
           />
         </div>
-      </SidebarProvider>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
