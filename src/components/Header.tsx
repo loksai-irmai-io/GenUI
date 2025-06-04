@@ -35,7 +35,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
         <div className="flex items-center space-x-4">
           <div className="w-10 h-10 rounded-xl overflow-hidden bg-white shadow-md flex items-center justify-center border border-gray-100">
             <img 
-              src="/lovable-uploads/d5c7649c-9487-4c95-b678-691482751d56.png" 
+              src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
               alt="GenUI Logo" 
               className="w-8 h-8 object-contain"
             />
