@@ -751,18 +751,44 @@ const Index = () => {
         setSelectedWidgets(DEFAULT_WIDGETS);
         setPinnedWidgets(DEFAULT_WIDGETS);
         // Insert default preferences for new user
-        const preferences = DEFAULT_WIDGETS.map((widgetId) => ({
+        await insertDefaultWidgetPreferences();
+      }
+    } catch (error) {
+      console.error("Error loading user preferences:", error);
+    }
+  };
+
+  const insertDefaultWidgetPreferences = async () => {
+    if (!user) return;
+    
+    try {
+      // First, ensure the widget entries exist in the widgets table
+      const { data: existingWidgets } = await supabase
+        .from("widgets")
+        .select("id")
+        .in("id", DEFAULT_WIDGETS);
+
+      const existingWidgetIds = (existingWidgets || []).map(w => w.id);
+      const validDefaultWidgets = DEFAULT_WIDGETS.filter(id => existingWidgetIds.includes(id));
+
+      if (validDefaultWidgets.length > 0) {
+        const preferences = validDefaultWidgets.map((widgetId) => ({
           user_id: user.id,
           widget_id: widgetId,
           selected_module: widgetId,
           pinned: true,
         }));
-        await supabase
+
+        const { error } = await supabase
           .from("user_widget_preferences")
-          .upsert(preferences, { onConflict: "user_id,selected_module" });
+          .upsert(preferences, { onConflict: "user_id,widget_id" });
+
+        if (error) {
+          console.error("Error inserting default preferences:", error);
+        }
       }
     } catch (error) {
-      console.error("Error loading user preferences:", error);
+      console.error("Error inserting default widget preferences:", error);
     }
   };
 
@@ -788,28 +814,37 @@ const Index = () => {
         console.error("Error deleting previous preferences:", deleteError);
         throw deleteError;
       }
-      // Upsert all selected widgets, marking pinned as true if in pinned array
-      const preferences = widgets.map((widgetId) => ({
-        user_id: user.id,
-        widget_id: widgetId,
-        selected_module: widgetId || "", // Ensure not null/undefined
-        pinned: pinned.includes(widgetId),
-      }));
-      console.log("Saving widget preferences:", preferences); // DEBUG LOG
-      let error = null;
-      try {
+
+      // First, ensure all widget entries exist in the widgets table
+      const { data: existingWidgets } = await supabase
+        .from("widgets")
+        .select("id")
+        .in("id", widgets);
+
+      const existingWidgetIds = (existingWidgets || []).map(w => w.id);
+      const validWidgets = widgets.filter(id => existingWidgetIds.includes(id));
+
+      if (validWidgets.length > 0) {
+        // Upsert all selected widgets, marking pinned as true if in pinned array
+        const preferences = validWidgets.map((widgetId) => ({
+          user_id: user.id,
+          widget_id: widgetId,
+          selected_module: widgetId || "", // Ensure not null/undefined
+          pinned: pinned.includes(widgetId),
+        }));
+        
+        console.log("Saving widget preferences:", preferences); // DEBUG LOG
+        
         const { error: upsertError } = await supabase
           .from("user_widget_preferences")
-          .upsert(preferences, { onConflict: "user_id,selected_module" });
+          .upsert(preferences, { onConflict: "user_id,widget_id" });
+        
         if (upsertError) {
           console.error("Error upserting preferences:", upsertError);
+          throw upsertError;
         }
-        error = upsertError;
-      } catch (e) {
-        error = e;
-        console.error("Exception during upsert:", e);
       }
-      if (error) throw error;
+
       await loadUserWidgetPreferences();
       toast({
         title: "Preferences Saved",
@@ -825,7 +860,8 @@ const Index = () => {
         variant: "destructive",
       });
     }
-  }; // Handle visualization data received from any source
+  };
+
   // Pin/unpin handler for dashboard widgets
   const handleTogglePinWidget = (widgetId: string) => {
     setLocalPinned((prev) => {
