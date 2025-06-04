@@ -70,21 +70,24 @@ const AppLayout = ({
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50">
-        <Sidebar className="border-r border-gray-200 bg-white shadow-sm">
-          <SidebarContent className="py-6">
-            <div className="px-4 mb-6">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 rounded-lg overflow-hidden bg-white shadow-md flex items-center justify-center border border-gray-100">
+        <Sidebar className="border-r border-gray-200/60 bg-white/95 backdrop-blur-sm shadow-lg">
+          <SidebarContent className="py-8">
+            <div className="px-6 mb-8">
+              <div className="flex items-center space-x-4 mb-8 pb-6 border-b border-gray-100">
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-white shadow-lg flex items-center justify-center border border-gray-100">
                   <img 
                     src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
                     alt="GenUI Logo" 
-                    className="w-8 h-8 object-contain"
+                    className="w-9 h-9 object-contain"
                   />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900 tracking-tight">GenUI</h2>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 tracking-tight">GenUI</h2>
+                  <p className="text-sm text-gray-500 font-medium">Process Intelligence</p>
+                </div>
               </div>
               
-              <SidebarMenu className="space-y-2">
+              <SidebarMenu className="space-y-3">
                 {sidebarTabs.map((tab) => {
                   const IconComponent = tab.icon;
                   const isActive = location.pathname === tab.path || 
@@ -95,18 +98,20 @@ const AppLayout = ({
                       <SidebarMenuButton
                         isActive={isActive}
                         onClick={() => navigate(tab.path)}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${
+                        className={`w-full flex items-center space-x-4 px-4 py-3.5 rounded-xl transition-all duration-300 text-sm font-medium group ${
                           isActive
-                            ? "bg-blue-600 text-white shadow-lg transform scale-[1.02]"
-                            : "hover:bg-blue-50 text-gray-700 hover:text-blue-600 hover:scale-[1.01]"
+                            ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 transform scale-[1.02]"
+                            : "hover:bg-blue-50/80 text-gray-700 hover:text-blue-600 hover:scale-[1.01] hover:shadow-sm"
                         }`}
                       >
                         <IconComponent 
-                          className={`w-5 h-5 ${
-                            isActive ? "text-white" : "text-gray-500"
+                          className={`w-5 h-5 transition-colors duration-300 ${
+                            isActive ? "text-white" : "text-gray-400 group-hover:text-blue-500"
                           }`} 
                         />
-                        <span className={isMobile ? "text-xs" : ""}>{tab.label}</span>
+                        <span className={`transition-colors duration-300 ${isMobile ? "text-xs" : ""}`}>
+                          {tab.label}
+                        </span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
@@ -118,8 +123,8 @@ const AppLayout = ({
         
         <SidebarInset className="flex-1 flex flex-col min-w-0">
           <Header onSelectWidgets={onSelectWidgets} />
-          <main className="flex-1 overflow-auto bg-gray-50">
-            <div className="p-8 max-w-7xl mx-auto">
+          <main className="flex-1 overflow-auto bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30">
+            <div className="p-6 lg:p-8 max-w-7xl mx-auto">
               {children}
             </div>
           </main>

@@ -11,7 +11,7 @@ const Card = React.forwardRef<
     ref={ref}
     tabIndex={0}
     className={cn(
-      "rounded-2xl border bg-white text-card-foreground shadow-lg transition-all duration-300 hover:shadow-xl border-gray-100 focus-visible:ring-2 focus-visible:ring-blue-400 outline-none hover:border-blue-200 hover:-translate-y-1",
+      "rounded-2xl border bg-white/95 backdrop-blur-sm text-card-foreground shadow-lg transition-all duration-300 hover:shadow-xl border-gray-100/80 focus-visible:ring-2 focus-visible:ring-blue-400/60 outline-none hover:border-blue-200/60 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/10",
       className
     )}
     {...props}
