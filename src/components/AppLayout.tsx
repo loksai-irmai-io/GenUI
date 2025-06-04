@@ -62,34 +62,24 @@ const AppLayout = ({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <Sidebar className="border-r border-gray-200/80 bg-white/80 backdrop-blur-sm">
-          <SidebarContent className="py-6 md:py-8">
-            <div className="px-4 md:px-6">
-              <div className="text-xl md:text-2xl font-bold text-center mb-6 md:mb-8 tracking-tight text-blue-700">
-                <span className="inline-flex items-center gap-2 justify-center">
-                  <span className="bg-gradient-to-br from-blue-600 to-blue-700 p-2 md:p-2.5 rounded-xl shadow-lg">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 md:w-6 md:h-6 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <rect
-                        width="18"
-                        height="18"
-                        x="3"
-                        y="3"
-                        rx="4"
-                        fill="currentColor"
-                      />
-                    </svg>
-                  </span>
-                  <span className="hidden md:inline">GenUI</span>
-                </span>
+      <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50">
+        <Sidebar className="border-r border-gray-200 bg-white shadow-sm">
+          <SidebarContent className="py-8">
+            <div className="px-6">
+              <div className="flex items-center justify-center mb-8">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-white shadow-md flex items-center justify-center border border-gray-100">
+                    <img 
+                      src="/lovable-uploads/d5c7649c-9487-4c95-b678-691482751d56.png" 
+                      alt="GenUI Logo" 
+                      className="w-8 h-8 object-contain"
+                    />
+                  </div>
+                  <h1 className="text-2xl font-bold text-gray-900 tracking-tight">GenUI</h1>
+                </div>
               </div>
-              <SidebarMenu className="space-y-2">
+              
+              <SidebarMenu className="space-y-3">
                 {sidebarTabs.map((tab) => (
                   <SidebarMenuItem key={tab.path}>
                     <SidebarMenuButton
@@ -98,14 +88,14 @@ const AppLayout = ({
                         (tab.path === "/" && location.pathname === "")
                       }
                       onClick={() => navigate(tab.path)}
-                      className={`w-full flex items-center px-3 md:px-4 py-2.5 md:py-3 rounded-xl transition-all duration-200 text-sm md:text-base font-medium ${
+                      className={`w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-base font-medium ${
                         location.pathname === tab.path ||
                         (tab.path === "/" && location.pathname === "")
-                          ? "bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 font-semibold shadow-sm border border-blue-200/50"
-                          : "hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent text-gray-700 hover:text-blue-600"
+                          ? "bg-blue-600 text-white shadow-lg transform scale-[1.02]"
+                          : "hover:bg-blue-50 text-gray-700 hover:text-blue-600 hover:scale-[1.01]"
                       }`}
                     >
-                      <span className={isMobile ? "text-xs" : ""}>{tab.label}</span>
+                      <span className={isMobile ? "text-sm" : ""}>{tab.label}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
@@ -113,15 +103,17 @@ const AppLayout = ({
             </div>
           </SidebarContent>
         </Sidebar>
-        <SidebarInset className="flex-1 flex flex-col min-w-0 bg-transparent">
+        
+        <SidebarInset className="flex-1 flex flex-col min-w-0">
           <Header onSelectWidgets={onSelectWidgets} />
-          <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto min-w-0 bg-white/60 backdrop-blur-sm rounded-tl-3xl shadow-inner border-l border-t border-gray-200/50 mt-16 md:mt-20">
-            <div className="max-w-7xl mx-auto">
+          <main className="flex-1 overflow-auto bg-gray-50">
+            <div className="p-8 max-w-7xl mx-auto">
               {children}
             </div>
           </main>
         </SidebarInset>
-        <div className="fixed bottom-4 right-4 z-50">
+        
+        <div className="fixed bottom-6 right-6 z-50">
           <ChatBot
             onDataReceived={handleChatbotDataReceived}
             visualizations={chatbotVisualizations}
