@@ -31,18 +31,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
 
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm backdrop-blur-md bg-white/95">
-      <div className="flex items-center justify-between px-8 py-4">
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 rounded-xl overflow-hidden bg-white shadow-lg flex items-center justify-center border border-gray-100">
-            <img 
-              src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
-              alt="GenUI Logo" 
-              className="w-10 h-10 object-contain"
-            />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">GenUI</h1>
-        </div>
-
+      <div className="flex items-center justify-end px-8 py-4">
         <div className="flex items-center space-x-4">
           <Button
             variant="outline"

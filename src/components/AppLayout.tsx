@@ -13,13 +13,20 @@ import {
 } from "../components/ui/sidebar";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { 
+  LayoutDashboard, 
+  Search, 
+  AlertTriangle, 
+  GitBranch, 
+  Brain 
+} from "lucide-react";
 
 const sidebarTabs = [
-  { label: "Dashboard", path: "/" },
-  { label: "Process Discovery", path: "/process-discovery" },
-  { label: "Outlier Analysis", path: "/outlier-analysis" },
-  { label: "CCM", path: "/ccm" },
-  { label: "Overall AI Insights", path: "/ai-insights" },
+  { label: "Dashboard", path: "/", icon: LayoutDashboard },
+  { label: "Process Discovery", path: "/process-discovery", icon: Search },
+  { label: "Outlier Analysis", path: "/outlier-analysis", icon: AlertTriangle },
+  { label: "CCM", path: "/ccm", icon: GitBranch },
+  { label: "Overall AI Insights", path: "/ai-insights", icon: Brain },
 ];
 
 interface AppLayoutProps {
@@ -65,27 +72,45 @@ const AppLayout = ({
       <div className="flex min-h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50">
         <Sidebar className="border-r border-gray-200 bg-white shadow-sm">
           <SidebarContent className="py-6">
-            <div className="px-4">
+            <div className="px-4 mb-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 rounded-lg overflow-hidden bg-white shadow-md flex items-center justify-center border border-gray-100">
+                  <img 
+                    src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
+                    alt="GenUI Logo" 
+                    className="w-8 h-8 object-contain"
+                  />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 tracking-tight">GenUI</h2>
+              </div>
+              
               <SidebarMenu className="space-y-2">
-                {sidebarTabs.map((tab) => (
-                  <SidebarMenuItem key={tab.path}>
-                    <SidebarMenuButton
-                      isActive={
-                        location.pathname === tab.path ||
-                        (tab.path === "/" && location.pathname === "")
-                      }
-                      onClick={() => navigate(tab.path)}
-                      className={`w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${
-                        location.pathname === tab.path ||
-                        (tab.path === "/" && location.pathname === "")
-                          ? "bg-blue-600 text-white shadow-lg transform scale-[1.02]"
-                          : "hover:bg-blue-50 text-gray-700 hover:text-blue-600 hover:scale-[1.01]"
-                      }`}
-                    >
-                      <span className={isMobile ? "text-xs" : ""}>{tab.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {sidebarTabs.map((tab) => {
+                  const IconComponent = tab.icon;
+                  const isActive = location.pathname === tab.path || 
+                    (tab.path === "/" && location.pathname === "");
+                  
+                  return (
+                    <SidebarMenuItem key={tab.path}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => navigate(tab.path)}
+                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium ${
+                          isActive
+                            ? "bg-blue-600 text-white shadow-lg transform scale-[1.02]"
+                            : "hover:bg-blue-50 text-gray-700 hover:text-blue-600 hover:scale-[1.01]"
+                        }`}
+                      >
+                        <IconComponent 
+                          className={`w-5 h-5 ${
+                            isActive ? "text-white" : "text-gray-500"
+                          }`} 
+                        />
+                        <span className={isMobile ? "text-xs" : ""}>{tab.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </div>
           </SidebarContent>
