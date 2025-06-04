@@ -134,7 +134,7 @@ class DataService {
 
   // --- API-based methods for new categories ---
   async getIncompleteCasesCountBar(): Promise<Array<{ name: string; value: number }>> {
-    const response = await fetch('http://127.0.0.1:8001/incompletecases/count');
+    const response = await fetch('http://34.60.217.109/incompletecases/count');
     const data = await response.json();
     // Defensive logging for debugging blank chart issue
     console.log('[DataService] getIncompleteCasesCountBar API response:', data);
@@ -146,7 +146,7 @@ class DataService {
   }
 
   async getLongRunningCasesCountBar(): Promise<Array<{ name: string; value: number }>> {
-    const response = await fetch('http://127.0.0.1:8001/longrunningcases/count');
+    const response = await fetch('http://34.60.217.109/longrunningcases/count');
     const data = await response.json();
     console.log('[DataService] getLongRunningCasesCountBar API response:', data);
     // Expecting { long_running: number, regular: number }
@@ -157,7 +157,7 @@ class DataService {
   }
 
   async getResourceSwitchesCountBar(): Promise<Array<{ name: string; value: number }>> {
-    const response = await fetch('http://127.0.0.1:8001/resourceswitches/count');
+    const response = await fetch('http://34.60.217.109/resourceswitches/count');
     const data = await response.json();
     console.log('[DataService] getResourceSwitchesCountBar API response:', data);
     // Expecting { resource_switches: number }
@@ -167,7 +167,7 @@ class DataService {
   }
 
   async getReworkActivitiesCountBar(): Promise<Array<{ name: string; value: number }>> {
-    const response = await fetch('http://127.0.0.1:8001/reworkactivities/count');
+    const response = await fetch('http://34.60.217.109/reworkactivities/count');
     const data = await response.json();
     console.log('[DataService] getReworkActivitiesCountBar API response:', data);
     // Expecting { rework_activities: number }
@@ -177,7 +177,7 @@ class DataService {
   }
 
   async getTimingViolationsCountBar(): Promise<Array<{ name: string; value: number }>> {
-    const response = await fetch('http://127.0.0.1:8001/timingviolations/count');
+    const response = await fetch('http://34.60.217.109/timingviolations/count');
     const data = await response.json();
     console.log('[DataService] getTimingViolationsCountBar API response:', data);
     // Expecting { timing_violations: number }
@@ -187,7 +187,7 @@ class DataService {
   }
 
   async getCaseComplexityCountBar(): Promise<Array<{ name: string; value: number }>> {
-    const response = await fetch('http://127.0.0.1:8001/casecomplexity/count');
+    const response = await fetch('http://34.60.217.109/casecomplexity/count');
     const data = await response.json();
     console.log('[DataService] getCaseComplexityCountBar API response:', data);
     // Expecting { simple: number, moderate: number, complex: number }
@@ -199,7 +199,7 @@ class DataService {
   }
 
   async getCaseComplexityTable(): Promise<Array<any>> {
-    const response = await fetch('http://127.0.0.1:8001/casecomplexity');
+    const response = await fetch('http://34.60.217.109/casecomplexity');
     const data = await response.json();
     // Expecting an array of case complexity details
     return Array.isArray(data) ? data : (data.cases ?? []);
@@ -207,14 +207,14 @@ class DataService {
 
   // Fetch resource performance table data from API
   async getResourcePerformanceTable(): Promise<any[]> {
-    const response = await fetch('http://127.0.0.1:8001/resourceperformance');
+    const response = await fetch('http://34.60.217.109/resourceperformance');
     const data = await response.json();
     return Array.isArray(data) ? data : [];
   }
 
   // Fetch timing analysis table data from API
   async getTimingAnalysisTable(): Promise<any[]> {
-    const response = await fetch('http://127.0.0.1:8001/timinganalysis');
+    const response = await fetch('http://34.60.217.109/timinganalysis');
     const data = await response.json();
     return Array.isArray(data) ? data : [];
   }

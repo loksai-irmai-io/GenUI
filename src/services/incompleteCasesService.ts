@@ -1,7 +1,7 @@
 // e:\Gen-UI\genui-dynamic-dashboards\src\services\incompleteCasesService.ts
 export class IncompleteCasesService {
   async getCountBar(): Promise<Array<{ name: string; value: number }>> {
-    const response = await fetch('http://127.0.0.1:8001/incompletecases/count');
+    const response = await fetch('http://34.60.217.109/incompletecases/count');
     const data = await response.json();
     // Defensive: handle both { count } and { incomplete, complete }
     if (typeof data.count === 'number') {

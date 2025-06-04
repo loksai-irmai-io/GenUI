@@ -17,6 +17,11 @@ import { Button } from "@/components/ui/button";
 import { BarChart3 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import ProcessFlowGraph from "../components/ProcessFlowGraph";
+import ErrorBoundary from "../components/ErrorBoundary";
+import {
+  normalizeVisualizationData,
+  isValidVisualizationData,
+} from "@/lib/vizDataUtils";
 
 // Sample data for widgets
 const sampleLineData = [
@@ -66,14 +71,6 @@ const Index = () => {
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
   const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
   const [dataVisualizationWidgets, setDataVisualizationWidgets] = useState<
-    Array<{
-      id: string;
-      type: string;
-      data: any[];
-      title: string;
-    }>
-  >([]);
-  const [chatbotVisualizations, setChatbotVisualizations] = useState<
     Array<{
       id: string;
       type: string;
@@ -236,7 +233,7 @@ const Index = () => {
             }
             case "process-failure-patterns-distribution": {
               try {
-                const response = await fetch("http://127.0.0.1:8001/allcounts");
+                const response = await fetch("http://34.60.217.109/allcounts");
                 if (!response.ok)
                   throw new Error(`API error: ${response.status}`);
                 let apiData = await response.json();
@@ -275,7 +272,7 @@ const Index = () => {
             // Outlier Analysis widgets
             case "all-counts": {
               try {
-                const res = await fetch("http://127.0.0.1:8001/allcounts");
+                const res = await fetch("http://34.60.217.109/allcounts");
                 const data = await res.json();
                 const arr = Object.entries(data).map(([name, value]) => ({
                   name,
@@ -343,7 +340,7 @@ const Index = () => {
             case "sop-low-percentage-count-bar": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/sopdeviation/low-percentage/count"
+                  "http://34.60.217.109/sopdeviation/low-percentage/count"
                 );
                 let data = await res.json();
                 let arr = [];
@@ -369,7 +366,7 @@ const Index = () => {
             case "sop-low-percentage-patterns-table": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/sopdeviation/patterns"
+                  "http://34.60.217.109/sopdeviation/patterns"
                 );
                 let data = await res.json();
                 if (data && data.data && Array.isArray(data.data))
@@ -407,7 +404,7 @@ const Index = () => {
             case "incomplete-cases-count": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/incompletecases/count"
+                  "http://34.60.217.109/incompletecases/count"
                 );
                 const data = await res.json();
                 dashboardVisualizations.push({
@@ -429,7 +426,7 @@ const Index = () => {
             case "incomplete-case-table": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/incompletecase_table"
+                  "http://34.60.217.109/incompletecase_table"
                 );
                 let data = await res.json();
                 if (data && data.data && Array.isArray(data.data))
@@ -459,7 +456,7 @@ const Index = () => {
             case "long-running-cases-count": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/longrunningcases/count"
+                  "http://34.60.217.109/longrunningcases/count"
                 );
                 const data = await res.json();
                 dashboardVisualizations.push({
@@ -481,7 +478,7 @@ const Index = () => {
             case "long-running-table": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/longrunning_table?page=1&size=100"
+                  "http://34.60.217.109/longrunning_table?page=1&size=100"
                 );
                 let data = await res.json();
                 if (data && data.data && Array.isArray(data.data))
@@ -511,7 +508,7 @@ const Index = () => {
             case "resource-switches-count": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/resourceswitches/count"
+                  "http://34.60.217.109/resourceswitches/count"
                 );
                 const data = await res.json();
                 dashboardVisualizations.push({
@@ -533,7 +530,7 @@ const Index = () => {
             case "resource-switches-count-table": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/resourceswitches_count_table"
+                  "http://34.60.217.109/resourceswitches_count_table"
                 );
                 let data = await res.json();
                 if (data && data.data && Array.isArray(data.data))
@@ -563,7 +560,7 @@ const Index = () => {
             case "resource-switches-table": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/resourceswitchestable_table?page=1&size=100"
+                  "http://34.60.217.109/resourceswitchestable_table?page=1&size=100"
                 );
                 let data = await res.json();
                 if (data && data.data && Array.isArray(data.data))
@@ -594,7 +591,7 @@ const Index = () => {
             case "controls-identified-count": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/controls_identified_count"
+                  "http://34.60.217.109/controls_identified_count"
                 );
                 let data = await res.json();
                 let arr = Array.isArray(data)
@@ -622,7 +619,7 @@ const Index = () => {
             case "controls-description": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/control_description?page=1&size=100"
+                  "http://34.60.217.109/control_description?page=1&size=100"
                 );
                 let data = await res.json();
                 data = Array.isArray(data) ? data : data.data || [];
@@ -645,7 +642,7 @@ const Index = () => {
             case "controls-definition": {
               try {
                 const res = await fetch(
-                  "http://127.0.0.1:8001/control_defination?page=1&size=100"
+                  "http://34.60.217.109/control_defination?page=1&size=100"
                 );
                 let data = await res.json();
                 data = Array.isArray(data) ? data : data.data || [];
@@ -667,19 +664,34 @@ const Index = () => {
             }
             case "sla-analysis": {
               try {
-                const res = await fetch("http://127.0.0.1:8001/sla_analysis");
+                const res = await fetch(
+                  "http://34.60.217.109/slagraph/avg-activity-duration-bar"
+                );
                 let data = await res.json();
-                data = Array.isArray(data) ? data : data.data || [];
+                // Transform plotly-style data to recharts array if needed
+                if (data && Array.isArray(data.data)) {
+                  const bar = data.data[0];
+                  if (bar && Array.isArray(bar.x) && Array.isArray(bar.y)) {
+                    data = bar.x.map((x: string, i: number) => ({
+                      name: x,
+                      value: bar.y[i],
+                    }));
+                  }
+                } else if (Array.isArray(data)) {
+                  // Already in correct format
+                } else {
+                  data = [];
+                }
                 dashboardVisualizations.push({
                   id: "sla-analysis",
-                  type: "sla-analysis-table",
+                  type: "sla-analysis-bar",
                   data,
-                  title: "SLA Analysis",
+                  title: "SLA Analysis (Average Activity Duration)",
                 });
               } catch (err) {
                 dashboardVisualizations.push({
                   id: "sla-analysis",
-                  type: "sla-analysis-table",
+                  type: "sla-analysis-bar",
                   data: [],
                   title: "SLA Analysis (Error)",
                 });
@@ -688,7 +700,7 @@ const Index = () => {
             }
             case "kpi": {
               try {
-                const res = await fetch("http://127.0.0.1:8001/kpi");
+                const res = await fetch("http://34.60.217.109/kpi");
                 let data = await res.json();
                 data = Array.isArray(data) ? data : data.data || [];
                 dashboardVisualizations.push({
@@ -767,36 +779,35 @@ const Index = () => {
       return;
     }
     try {
-      // Remove duplicates for this user (defensive, in case migration missed any)
-      // @ts-expect-error: Supabase typegen does not include this RPC, but it exists in the DB
-      await supabase.rpc("remove_duplicate_user_widget_preferences", {
-        user_id_param: user.id,
-      });
-      // Only keep the currently pinned widgets in the DB
-      await supabase
+      // Remove all previous widget preferences for this user
+      const { error: deleteError } = await supabase
         .from("user_widget_preferences")
         .delete()
-        .eq("user_id", user.id)
-        .not(
-          "selected_module",
-          "in",
-          `(${pinned.map((w) => `'${w}'`).join(",")})`
-        );
-      // Upsert only the currently pinned widgets
-      const preferences = pinned.map((widgetId) => ({
+        .eq("user_id", user.id);
+      if (deleteError) {
+        console.error("Error deleting previous preferences:", deleteError);
+        throw deleteError;
+      }
+      // Upsert all selected widgets, marking pinned as true if in pinned array
+      const preferences = widgets.map((widgetId) => ({
         user_id: user.id,
         widget_id: widgetId,
-        selected_module: widgetId,
-        pinned: true,
+        selected_module: widgetId || "", // Ensure not null/undefined
+        pinned: pinned.includes(widgetId),
       }));
+      console.log("Saving widget preferences:", preferences); // DEBUG LOG
       let error = null;
       try {
         const { error: upsertError } = await supabase
           .from("user_widget_preferences")
           .upsert(preferences, { onConflict: "user_id,selected_module" });
+        if (upsertError) {
+          console.error("Error upserting preferences:", upsertError);
+        }
         error = upsertError;
       } catch (e) {
         error = e;
+        console.error("Exception during upsert:", e);
       }
       if (error) throw error;
       await loadUserWidgetPreferences();
@@ -808,96 +819,13 @@ const Index = () => {
       console.error("Error saving preferences:", error);
       toast({
         title: "Error Saving Preferences",
-        description: "There was a problem saving your widget preferences.",
+        description: `There was a problem saving your widget preferences.\n${
+          error?.message || error
+        }`,
         variant: "destructive",
       });
     }
   }; // Handle visualization data received from any source
-  const handleDataReceived = (
-    type: string,
-    data: any,
-    title: string,
-    widgetId?: string
-  ) => {
-    console.log("handleDataReceived called with:", {
-      type,
-      title,
-      widgetId,
-      dataType: typeof data,
-      isArray: Array.isArray(data),
-      dataIsEmpty: Array.isArray(data)
-        ? data.length === 0
-        : data === null || data === undefined,
-      dataPreview: JSON.stringify(data).substring(0, 100) + "...",
-    });
-
-    // Input validation and data normalization
-    if (!type) {
-      console.error("Missing type for visualization data");
-      return;
-    }
-
-    // Ensure data is in the correct format for charting
-    let normalizedData = data;
-
-    // If data is not an array but should be, convert it
-    if (
-      !Array.isArray(normalizedData) &&
-      typeof normalizedData === "object" &&
-      normalizedData !== null
-    ) {
-      if (type === "incomplete-bar" || type === "longrunning-bar") {
-        normalizedData = Object.entries(normalizedData).map(
-          ([name, value]) => ({ name, value })
-        );
-        console.log("Converted object to array:", normalizedData);
-      }
-    }
-
-    // Fallback for empty data
-    if (
-      !normalizedData ||
-      (Array.isArray(normalizedData) && normalizedData.length === 0)
-    ) {
-      console.warn("Empty data for visualization type:", type);
-      if (type === "incomplete-bar") {
-        normalizedData = [{ name: "No Data", value: 0 }];
-      } else if (type === "longrunning-bar") {
-        normalizedData = [{ name: "No Data", value: 0 }];
-      }
-    }
-
-    if (widgetId) {
-      // Replace (not append) dashboard data for this widgetId
-      setDataVisualizationWidgets((prev) => {
-        const filtered = prev.filter((w) => w.id !== widgetId);
-        return [
-          ...filtered,
-          {
-            id: widgetId,
-            type,
-            data: normalizedData,
-            title,
-          },
-        ];
-      });
-    } else {
-      // Chatbot visualization: append instead of replace
-      const id = `data-viz-${type}-${Date.now()}-${Math.floor(
-        Math.random() * 100000
-      )}`;
-      setChatbotVisualizations((prev) => [
-        ...prev,
-        {
-          id,
-          type,
-          data: normalizedData,
-          title,
-        },
-      ]);
-    }
-  };
-
   // Pin/unpin handler for dashboard widgets
   const handleTogglePinWidget = (widgetId: string) => {
     setLocalPinned((prev) => {
@@ -959,32 +887,32 @@ const Index = () => {
       if (fetchedWidget.type === "object-lifecycle") {
         widgetContent = <ProcessFlowGraph key="object-lifecycle-graph" />;
       } else if (fetchedWidget.type === "sop-count") {
-        // SOP Deviation Count (single value bar)
         widgetContent = (
-          <SOPWidget
-            key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
-            type="count"
-            data={
-              Array.isArray(fetchedWidget.data)
-                ? fetchedWidget.data[0]
-                : fetchedWidget.data
-            }
-            visualizationType="bar"
-            title={fetchedWidget.title}
-            maximized={!!opts?.forOverlay}
-          />
+          <ErrorBoundary>
+            <SOPWidget
+              key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
+              type="count"
+              data={
+                Array.isArray(fetchedWidget.data)
+                  ? fetchedWidget.data[0]
+                  : fetchedWidget.data
+              }
+              visualizationType="bar"
+              title={fetchedWidget.title}
+            />
+          </ErrorBoundary>
         );
       } else if (fetchedWidget.type === "sop-patterns") {
-        // SOP Deviation Patterns (table)
         widgetContent = (
-          <SOPWidget
-            key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
-            type="patterns"
-            data={fetchedWidget.data}
-            visualizationType="bar"
-            title={fetchedWidget.title}
-            maximized={!!opts?.forOverlay}
-          />
+          <ErrorBoundary>
+            <SOPWidget
+              key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
+              type="patterns"
+              data={fetchedWidget.data}
+              visualizationType="bar"
+              title={fetchedWidget.title}
+            />
+          </ErrorBoundary>
         );
       } else if (tableWidgetTypes.includes(fetchedWidget.type)) {
         // Use custom columns for known types, else auto-generate
@@ -1014,19 +942,31 @@ const Index = () => {
             title={fetchedWidget.title}
             data={fetchedWidget.data}
             columns={columns}
-            {...(opts?.forOverlay ? { maximized: true } : {})}
           />
         );
       } else {
         // Fallback to DataVisualizationWidget for all other types
+        const normalized = normalizeVisualizationData(
+          fetchedWidget.data,
+          fetchedWidget.type
+        );
+        const valid = fetchedWidget.type.endsWith("bar")
+          ? isValidVisualizationData(normalized, ["name", "value"])
+          : Array.isArray(normalized);
         widgetContent = (
-          <DataVisualizationWidget
-            key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
-            type={fetchedWidget.type as any}
-            data={fetchedWidget.data}
-            title={fetchedWidget.title}
-            {...(opts?.forOverlay ? { maximized: true } : {})}
-          />
+          <ErrorBoundary>
+            <DataVisualizationWidget
+              key={fetchedWidget.id + (opts?.forOverlay ? "-max" : "")}
+              type={fetchedWidget.type as any}
+              data={
+                valid && normalized.length > 0
+                  ? normalized
+                  : [{ name: "No Data", value: 0 }]
+              }
+              title={fetchedWidget.title}
+              {...(opts?.forOverlay ? { maximized: true } : {})}
+            />
+          </ErrorBoundary>
         );
       }
     } else {
@@ -1166,8 +1106,6 @@ const Index = () => {
     })
     .map((viz) => renderWidget(viz.id));
 
-  const clearChatbotVisualizations = () => setChatbotVisualizations([]);
-
   return (
     <div className="min-h-screen flex w-full bg-gradient-to-br from-blue-50 to-indigo-50">
       <div className="flex-1 flex flex-col">
@@ -1263,9 +1201,9 @@ const Index = () => {
 
         <div className="fixed bottom-6 right-6 z-50">
           <ChatBot
-            onDataReceived={handleDataReceived}
-            visualizations={chatbotVisualizations}
-            clearVisualizations={clearChatbotVisualizations}
+            onDataReceived={() => {}}
+            visualizations={[]}
+            clearVisualizations={() => {}}
           />
         </div>
       </div>

@@ -3,21 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Minimize2, Loader2 } from "lucide-react";
-import { sopDeviationService } from "@/services/sopDeviationService";
-import { incompleteCasesService } from "@/services/incompleteCasesService";
-import { longRunningCasesService } from "@/services/longRunningCasesService";
-import { resourceSwitchesService } from "@/services/resourceSwitchesService";
-import { reworkActivitiesService } from "@/services/reworkActivitiesService";
-import { timingViolationsService } from "@/services/timingViolationsService";
-import { caseComplexityService } from "@/services/caseComplexityService";
-import { resourcePerformanceService } from "@/services/resourcePerformanceService";
-import { timingAnalysisService } from "@/services/timingAnalysisService";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
+import ErrorBoundary from "./ErrorBoundary";
 import DataVisualizationWidget from "./widgets/DataVisualizationWidget";
 import SOPWidget from "./widgets/SOPWidget";
 import { ConflictDialog } from "@/components/ui/alert-dialog";
 import ProcessFlowGraph from "./ProcessFlowGraph";
+import {
+  normalizeVisualizationData,
+  isValidVisualizationData,
+} from "@/lib/vizDataUtils";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: number;
@@ -26,15 +22,25 @@ interface Message {
   timestamp: Date;
 }
 
+interface Visualization {
+  id: string;
+  type: string;
+  data: any[];
+  title: string;
+}
+
 interface DataVisualizationProps {
   onDataReceived: (type: string, data: any[], title: string) => void;
-  visualizations?: Array<{
-    id: string;
-    type: string;
-    data: any[];
-    title: string;
-  }>;
+  visualizations?: Visualization[];
   clearVisualizations?: () => void;
+}
+
+interface ChatMessage {
+  id: number;
+  text: string;
+  sender: "user" | "bot";
+  timestamp: Date;
+  visualization?: Visualization | null;
 }
 
 const ChatBot: React.FC<DataVisualizationProps> = ({
@@ -44,617 +50,460 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 1,
       text: "Hello! I'm your GenUI assistant. Ask me about 'SOP deviation', 'Incomplete cases', or 'Long running cases' to visualize real data!",
       sender: "bot",
       timestamp: new Date(),
+      visualization: null,
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [conflictOpen, setConflictOpen] = useState(false);
-  const [conflictMessage, setConflictMessage] = useState<string | undefined>(
-    undefined
-  );
   const { user } = useAuth();
-  const { toast } = useToast(); // Debug visualizations state changes
-  useEffect(() => {
-    console.log(
-      "[ChatBot] Visualizations updated:",
-      JSON.stringify(visualizations)
-    );
+  const { toast } = useToast();
 
-    // Alert for debugging - remove in production
-    if (visualizations && visualizations.length > 0) {
-      console.log("DEBUG - Visualization data structure:", {
-        type: visualizations[0].type,
-        data: JSON.stringify(visualizations[0].data).substring(0, 100) + "...",
-        isArray: Array.isArray(visualizations[0].data),
-        dataLength: Array.isArray(visualizations[0].data)
-          ? visualizations[0].data.length
-          : "not an array",
-        hasCorrectProps:
-          Array.isArray(visualizations[0].data) &&
-          visualizations[0].data.length > 0
-            ? "First item props: " +
-              Object.keys(visualizations[0].data[0]).join(", ")
-            : "No items or not array",
-      });
-    }
+  useEffect(() => {
+    // Debug: log visualizations prop on every update
+    console.log("[ChatBot] Visualizations prop:", visualizations);
   }, [visualizations]);
 
-  // Direct endpoint fetchers for chatbot visualizations
-  const fetchVisualizationData = async (type: string) => {
-    switch (type) {
-      case "incomplete-bar": {
-        const res = await fetch("http://127.0.0.1:8001/incompletecases/count");
-        if (!res.ok) throw new Error("Failed to fetch incomplete cases");
+  // --- Visualization registry for chatbot dynamic routing ---
+  const visualizationRegistry = [
+    // Outlier Analysis & Process Analytics
+    {
+      id: "all-counts",
+      keywords: [
+        "all failure pattern counts",
+        "all counts",
+        "failure patterns",
+      ],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/allcounts");
         const data = await res.json();
-        // API returns { incomplete: number, complete: number }
-        if (Array.isArray(data)) return data;
-        if (typeof data === "object" && data !== null) {
-          // Normalize to [{ name, value }]
-          return Object.entries(data).map(([name, value]) => ({ name, value }));
-        }
-        return [];
-      }
-      case "longrunning-bar": {
-        const res = await fetch("http://127.0.0.1:8001/longrunningcases/count");
-        if (!res.ok) throw new Error("Failed to fetch long running cases");
-        const data = await res.json();
-        // API returns { long_running: number, regular: number }
-        if (Array.isArray(data)) return data;
-        if (typeof data === "object" && data !== null) {
-          return Object.entries(data).map(([name, value]) => ({ name, value }));
-        }
-        return [];
-      }
-      case "rework-activities-bar": {
-        const res = await fetch("http://127.0.0.1:8001/reworkactivities/count");
-        if (!res.ok) throw new Error("Failed to fetch rework activities");
-        const data = await res.json();
-        // API returns { rework_activities: number }
-        if (Array.isArray(data)) return data;
-        if (typeof data === "object" && data !== null) {
-          return Object.entries(data).map(([name, value]) => ({ name, value }));
-        }
-        return [];
-      }
-      case "resource-switches-bar": {
-        const res = await fetch("http://127.0.0.1:8001/resourceswitches/count");
-        if (!res.ok) throw new Error("Failed to fetch resource switches");
-        const data = await res.json();
-        // API returns { resource_switches: number }
-        if (Array.isArray(data)) return data;
-        if (typeof data === "object" && data !== null) {
-          return Object.entries(data).map(([name, value]) => ({ name, value }));
-        }
-        return [];
-      }
-      case "timing-violations-bar": {
-        const res = await fetch("http://127.0.0.1:8001/timingviolations/count");
-        if (!res.ok) throw new Error("Failed to fetch timing violations");
-        const data = await res.json();
-        // API returns { timing_violations: number }
-        if (Array.isArray(data)) return data;
-        if (typeof data === "object" && data !== null) {
-          return Object.entries(data).map(([name, value]) => ({ name, value }));
-        }
-        return [];
-      }
-      case "sop-count":
-      case "sop-patterns": {
-        const res = await fetch("http://127.0.0.1:8001/sopdeviation");
-        if (!res.ok) throw new Error("Failed to fetch sop deviation");
-        const data = await res.json();
-        if (!data || !Array.isArray(data.data)) return [];
-        if (type === "sop-count") {
-          const total = data.data.reduce(
-            (sum, row) => sum + parseInt(row.pattern_count),
-            0
-          );
-          const deviation = data.data
-            .filter((row) => row.is_sop_deviation === 1)
-            .reduce((sum, row) => sum + parseInt(row.pattern_count), 0);
-          const percentage = total ? (deviation / total) * 100 : 0;
-          return [
-            {
-              count: deviation,
-              percentage: Math.round(percentage * 100) / 100,
-              threshold: "30%",
-            },
-          ];
-        } else {
-          return data.data.map((row, idx) => ({
-            pattern_no: idx + 1,
-            pattern:
-              Array.isArray(row.sop_deviation_sequence_preview) &&
-              row.sop_deviation_sequence_preview.length > 0
-                ? row.sop_deviation_sequence_preview.slice(0, 5).join(" → ") +
-                  (row.sop_deviation_sequence_preview.length > 5 ? " ..." : "")
-                : "",
-            count: row.pattern_count,
-            percentage: row.percentage,
-          }));
-        }
-      }
-      case "case-complexity-table": {
-        const res = await fetch(
-          "http://127.0.0.1:8001/casecomplexity?page=1&size=100"
-        );
-        if (!res.ok) throw new Error("Failed to fetch case complexity");
-        const data = await res.json();
-        return Array.isArray(data) ? data : data.data || [];
-      }
-      case "resource-performance-table": {
-        const res = await fetch("http://127.0.0.1:8001/resourceperformance");
-        if (!res.ok) throw new Error("Failed to fetch resource performance");
-        const data = await res.json();
-        return Array.isArray(data) ? data : data.data || [];
-      }
-      case "timing-analysis-table": {
-        const res = await fetch("http://127.0.0.1:8001/timinganalysis");
-        if (!res.ok) throw new Error("Failed to fetch timing analysis");
-        const data = await res.json();
-        return Array.isArray(data) ? data : data.data || [];
-      }
-      case "process-failure-patterns-bar": {
-        const res = await fetch("http://127.0.0.1:8001/allcounts");
-        if (!res.ok)
-          throw new Error("Failed to fetch process failure patterns");
+        return Object.entries(data).map(([name, value]) => ({ name, value }));
+      },
+      type: "process-failure-patterns-bar",
+      title: "All Failure Pattern Counts",
+    },
+    {
+      id: "sop-patterns",
+      keywords: ["sop deviation patterns", "sop patterns"],
+      fetch: async () => {
+        const res = await fetch("/sopdeviation.json");
         let data = await res.json();
-        if (data && !Array.isArray(data)) {
-          data = Object.entries(data).map(([name, value]) => ({ name, value }));
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return Array.isArray(data)
+          ? data.map((row, idx) => ({
+              pattern_no: idx + 1,
+              pattern:
+                Array.isArray(row.sop_deviation_sequence_preview) &&
+                row.sop_deviation_sequence_preview.length > 0
+                  ? row.sop_deviation_sequence_preview.slice(0, 5).join(" → ") +
+                    (row.sop_deviation_sequence_preview.length > 5
+                      ? " ..."
+                      : "")
+                  : "",
+              count: row.pattern_count,
+              percentage: row.percentage,
+            }))
+          : [];
+      },
+      type: "sop-patterns-table",
+      title: "SOP Deviation Patterns",
+    },
+    {
+      id: "sop-low-percentage-count-bar",
+      keywords: [
+        "sop deviation low percentage count",
+        "low percentage sop count",
+      ],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/sopdeviation/low-percentage/count"
+        );
+        let data = await res.json();
+        if (data && typeof data.count === "number") {
+          return [{ name: "Low Percentage Count", value: data.count }];
         }
-        return Array.isArray(data) ? data : [];
-      }
-      default:
-        return null;
-    }
-  };
-
-  const handleSOPDeviation = async () => {
-    try {
-      // Fetch count and patterns from API endpoints
-      const [countData, patternsData] = await Promise.all([
-        sopDeviationService.getSOPDeviationCount(),
-        sopDeviationService.getSOPDeviationPatterns(),
-      ]);
-      // Add a delay to ensure visualizations render after messages
-      setTimeout(() => {
-        // Show count as a pie chart
-        onDataReceived("sop-count", [countData], "SOP Deviation Count");
-        // Show patterns as a bar chart
-        onDataReceived(
-          "sop-patterns",
-          Array.isArray(patternsData)
-            ? patternsData
-            : patternsData
-            ? [patternsData]
-            : [],
-          "SOP Deviation Patterns"
+        return [];
+      },
+      type: "incomplete-bar",
+      title: "SOP Deviation Low Percentage Count",
+    },
+    {
+      id: "sop-low-percentage-patterns-table",
+      keywords: [
+        "sop deviation low percentage patterns",
+        "low percentage sop patterns",
+      ],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/sopdeviation/patterns");
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return Array.isArray(data)
+          ? data.map((row) => ({
+              pattern_no: row.pattern_no,
+              pattern: row.pattern,
+              count: row.count,
+              percentage: row.percentage,
+            }))
+          : [];
+      },
+      type: "sop-patterns-table",
+      title: "SOP Deviation Low Percentage Patterns",
+    },
+    {
+      id: "incomplete-cases-count",
+      keywords: ["incomplete cases count", "incomplete cases bar"],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/incompletecases/count");
+        const data = await res.json();
+        return [{ name: "Incomplete Cases", value: data.count }];
+      },
+      type: "incomplete-bar",
+      title: "Incomplete Cases Count",
+    },
+    {
+      id: "incomplete-case-table",
+      keywords: ["incomplete case table", "incomplete cases table"],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/incompletecase_table");
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return data;
+      },
+      type: "incomplete-case-table",
+      title: "Incomplete Case Table",
+    },
+    {
+      id: "long-running-cases-count",
+      keywords: ["long running cases count", "long running cases bar"],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/longrunningcases/count");
+        const data = await res.json();
+        return [{ name: "Long Running Cases", value: data.count }];
+      },
+      type: "longrunning-bar",
+      title: "Long Running Cases Count",
+    },
+    {
+      id: "long-running-table",
+      keywords: ["long running table", "long running cases table"],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/longrunning_table?page=1&size=100"
         );
-      }, 100);
-
-      const successMessage: Message = {
-        id: Date.now(),
-        text: `Loaded SOP deviation data! Percentage: ${countData.percentage}%. Found ${patternsData.length} patterns. Visualizations added to your chatbot.`,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, successMessage]);
-    } catch (error: any) {
-      if (
-        error?.message?.includes("409") ||
-        error?.toString().includes("409")
-      ) {
-        setConflictMessage(
-          "A conflict occurred while fetching SOP deviation data. Please try again."
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return data;
+      },
+      type: "long-running-table",
+      title: "Long Running Table",
+    },
+    {
+      id: "resource-switches-count",
+      keywords: ["resource switches count", "resource switches bar"],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/resourceswitches/count");
+        const data = await res.json();
+        return [{ name: "Resource Switches", value: data.count }];
+      },
+      type: "resource-switches-bar",
+      title: "Resource Switches Count",
+    },
+    {
+      id: "resource-switches-count-table",
+      keywords: ["resource switches count table"],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/resourceswitches_count_table"
         );
-        setConflictOpen(true);
-      } else {
-        console.error("Error fetching SOP deviation data:", error);
-        const errorMessage: Message = {
-          id: Date.now(),
-          text: "Sorry, I couldn't fetch the SOP deviation data from the API.",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    }
-  };
-
-  const handleIncompleteCases = async () => {
-    try {
-      const data = await incompleteCasesService.getCountBar();
-      console.log("[ChatBot] incompleteCasesService.getCountBar result:", data);
-      // Add a delay to ensure visualization renders after messages
-      setTimeout(() => {
-        onDataReceived("incomplete-bar", data, "Incomplete Cases Analysis");
-      }, 100);
-
-      const successMessage: Message = {
-        id: Date.now(),
-        text: `Successfully loaded incomplete cases data from API! The analysis shows the distribution of complete vs incomplete cases. The data has been visualized as a bar chart on your chatbot.`,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, successMessage]);
-    } catch (error: any) {
-      if (
-        error?.message?.includes("409") ||
-        error?.toString().includes("409")
-      ) {
-        setConflictMessage(
-          "A conflict occurred while fetching incomplete cases data. Please try again."
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return data;
+      },
+      type: "resource-switches-count-table",
+      title: "Resource Switches Count Table",
+    },
+    {
+      id: "resource-switches-table",
+      keywords: ["resource switches table"],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/resourceswitchestable_table?page=1&size=100"
         );
-        setConflictOpen(true);
-      } else {
-        console.error("Error fetching incomplete cases data:", error);
-        const errorMessage: Message = {
-          id: Date.now(),
-          text: "Sorry, I couldn't fetch the incomplete cases data from the API.",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    }
-  };
-
-  const handleLongRunningCases = async () => {
-    try {
-      const data = await longRunningCasesService.getCountBar();
-      // Add a delay to ensure visualization renders after messages
-      setTimeout(() => {
-        onDataReceived("longrunning-bar", data, "Long Running Cases Analysis");
-      }, 100);
-
-      const successMessage: Message = {
-        id: Date.now(),
-        text: `Successfully loaded long running cases data from API! Found ${
-          data[0]?.value || 0
-        } long running cases. The data has been visualized as a bar chart on your chatbot.`,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, successMessage]);
-    } catch (error: any) {
-      if (
-        error?.message?.includes("409") ||
-        error?.toString().includes("409")
-      ) {
-        setConflictMessage(
-          "A conflict occurred while fetching long running cases data. Please try again."
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return data;
+      },
+      type: "resource-switches-table",
+      title: "Resource Switches Table",
+    },
+    {
+      id: "rework-activities-count",
+      keywords: ["rework activities count", "rework activities bar"],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/reworkactivities/count");
+        const data = await res.json();
+        return [{ name: "Rework Activities", value: data.count }];
+      },
+      type: "rework-activities-bar",
+      title: "Rework Activities Count",
+    },
+    {
+      id: "timing-violations-count",
+      keywords: ["timing violations count", "timing violations bar"],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/timingviolations/count");
+        const data = await res.json();
+        return [{ name: "Timing Violations", value: data.count }];
+      },
+      type: "timing-violations-bar",
+      title: "Timing Violations Count",
+    },
+    // CCM widgets
+    {
+      id: "controls-identified-count",
+      keywords: ["controls identified count"],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/controls_identified_count"
         );
-        setConflictOpen(true);
-      } else {
-        console.error("Error fetching long running cases data:", error);
-        const errorMessage: Message = {
-          id: Date.now(),
-          text: "Sorry, I couldn't fetch the long running cases data from the API.",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    }
-  };
-
-  const handleResourceSwitches = async () => {
-    try {
-      const data = await resourceSwitchesService.getCountBar();
-      onDataReceived("resource-switches-bar", data, "Resource Switches");
-      const successMessage: Message = {
-        id: Date.now(),
-        text: `Loaded resource switches data! Visualized as a bar chart on your chatbot.`,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, successMessage]);
-    } catch (error: any) {
-      if (
-        error?.message?.includes("409") ||
-        error?.toString().includes("409")
-      ) {
-        setConflictMessage(
-          "A conflict occurred while fetching resource switches data. Please try again."
+        let data = await res.json();
+        return Array.isArray(data)
+          ? data
+          : Object.entries(data).map(([name, value]) => ({ name, value }));
+      },
+      type: "incomplete-bar",
+      title: "Controls Identified Count",
+    },
+    {
+      id: "controls-description",
+      keywords: ["controls description"],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/control_description?page=1&size=100"
         );
-        setConflictOpen(true);
-      } else {
-        console.error("Error fetching resource switches data:", error);
-        const errorMessage: Message = {
-          id: Date.now(),
-          text: "Sorry, I couldn't fetch the resource switches data from the API.",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    }
-  };
-
-  const handleReworkActivities = async () => {
-    try {
-      const data = await reworkActivitiesService.getCountBar();
-      onDataReceived("rework-activities-bar", data, "Rework Activities");
-      const successMessage: Message = {
-        id: Date.now(),
-        text: `Loaded rework activities data! Visualized as a bar chart on your chatbot.`,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, successMessage]);
-    } catch (error: any) {
-      if (
-        error?.message?.includes("409") ||
-        error?.toString().includes("409")
-      ) {
-        setConflictMessage(
-          "A conflict occurred while fetching rework activities data. Please try again."
+        let data = await res.json();
+        return Array.isArray(data) ? data : data.data || [];
+      },
+      type: "controls-description-table",
+      title: "Controls Description",
+    },
+    {
+      id: "controls-definition",
+      keywords: ["controls definition"],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/control_defination?page=1&size=100"
         );
-        setConflictOpen(true);
-      } else {
-        console.error("Error fetching rework activities data:", error);
-        const errorMessage: Message = {
-          id: Date.now(),
-          text: "Sorry, I couldn't fetch the rework activities data from the API.",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    }
-  };
-
-  const handleTimingViolations = async () => {
-    try {
-      const data = await timingViolationsService.getCountBar();
-      onDataReceived("timing-violations-bar", data, "Timing Violations");
-      const successMessage: Message = {
-        id: Date.now(),
-        text: `Loaded timing violations data! Visualized as a bar chart on your chatbot.`,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, successMessage]);
-    } catch (error: any) {
-      if (
-        error?.message?.includes("409") ||
-        error?.toString().includes("409")
-      ) {
-        setConflictMessage(
-          "A conflict occurred while fetching timing violations data. Please try again."
+        let data = await res.json();
+        return Array.isArray(data) ? data : data.data || [];
+      },
+      type: "controls-definition-table",
+      title: "Controls Definition",
+    },
+    {
+      id: "sla-analysis-bar",
+      keywords: [
+        "sla analysis",
+        "average activity duration",
+        "sla bar",
+        "sla graph",
+      ],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/slagraph/avg-activity-duration-bar"
         );
-        setConflictOpen(true);
-      } else {
-        console.error("Error fetching timing violations data:", error);
-        const errorMessage: Message = {
-          id: Date.now(),
-          text: "Sorry, I couldn't fetch the timing violations data from the API.",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    }
-  };
-
-  const handleCaseComplexityTable = async () => {
-    try {
-      const data = await caseComplexityService.getTable();
-      onDataReceived(
-        "case-complexity-table",
-        Array.isArray(data) ? data : [],
-        "Case Complexity Details"
-      );
-      const successMessage: Message = {
-        id: Date.now(),
-        text: `Loaded case complexity table data! Visualized as a table on your chatbot.`,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, successMessage]);
-    } catch (error: any) {
-      if (
-        error?.message?.includes("409") ||
-        error?.toString().includes("409")
-      ) {
-        setConflictMessage(
-          "A conflict occurred while fetching case complexity data. Please try again."
+        let data = await res.json();
+        // Transform plotly-style data to recharts array if needed
+        if (data && Array.isArray(data.data)) {
+          const bar = data.data[0];
+          if (bar && Array.isArray(bar.x) && Array.isArray(bar.y)) {
+            return bar.x.map((x, i) => ({ name: x, value: bar.y[i] }));
+          }
+        } else if (Array.isArray(data)) {
+          return data;
+        }
+        return [];
+      },
+      type: "sla-analysis-bar",
+      title: "SLA Analysis (Average Activity Duration)",
+    },
+    {
+      id: "kpi",
+      keywords: ["kpi", "key performance indicators"],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/kpi");
+        let data = await res.json();
+        return Array.isArray(data) ? data : data.data || [];
+      },
+      type: "kpi-table",
+      title: "KPI",
+    },
+    // Special/graph widgets
+    {
+      id: "object-lifecycle",
+      keywords: ["object lifecycle", "object lifecycle graph", "process flow"],
+      fetch: async () => [],
+      type: "object-lifecycle",
+      title: "Object Lifecycle",
+    },
+    {
+      id: "case-complexity-table",
+      keywords: [
+        "case complexity table",
+        "complexity table",
+        "case complexity",
+      ],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/casecomplexity?page=1&size=100"
         );
-        setConflictOpen(true);
-      } else {
-        console.error("Error fetching case complexity table data:", error);
-        const errorMessage: Message = {
-          id: Date.now(),
-          text: "Sorry, I couldn't fetch the case complexity table data from the API.",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    }
-  };
-
-  const handleResourcePerformance = async () => {
-    try {
-      const data = await resourcePerformanceService.getTable();
-      onDataReceived(
-        "resource-performance-table",
-        data,
-        "Resource Performance"
-      );
-      const successMessage: Message = {
-        id: Date.now(),
-        text: `Loaded resource performance data! Visualized as a table on your chatbot.`,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, successMessage]);
-    } catch (error: any) {
-      if (
-        error?.message?.includes("409") ||
-        error?.toString().includes("409")
-      ) {
-        setConflictMessage(
-          "A conflict occurred while fetching resource performance data. Please try again."
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return data;
+      },
+      type: "case-complexity-table",
+      title: "Case Complexity Table",
+    },
+    {
+      id: "activity-pair-threshold",
+      keywords: [
+        "activity pair threshold",
+        "activity threshold",
+        "pair threshold",
+      ],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/activitypairthreshold");
+        let data = await res.json();
+        // If the data is an object, convert to array of objects for table display
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        // If still not an array, wrap in array
+        if (!Array.isArray(data)) data = [data];
+        if (!data || data.length === 0) return [{ 0: "Not Found" }];
+        return data;
+      },
+      type: "fallback-table",
+      title: "Activity Pair Threshold",
+    },
+    {
+      id: "reworked-activities-table",
+      keywords: [
+        "reworked activities table",
+        "rework activities table",
+        "reworked activities",
+      ],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/reworkedactivtiestable?page=1&size=100"
         );
-        setConflictOpen(true);
-      } else {
-        console.error("Error fetching resource performance data:", error);
-        const errorMessage: Message = {
-          id: Date.now(),
-          text: "Sorry, I couldn't fetch the resource performance data from the API.",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    }
-  };
-
-  const handleTimingAnalysis = async () => {
-    try {
-      const data = await timingAnalysisService.getTable();
-      onDataReceived("timing-analysis-table", data, "Timing Analysis");
-      const successMessage: Message = {
-        id: Date.now(),
-        text: `Loaded timing analysis data! Visualized as a table on your chatbot.`,
-        sender: "bot",
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, successMessage]);
-    } catch (error: any) {
-      if (
-        error?.message?.includes("409") ||
-        error?.toString().includes("409")
-      ) {
-        setConflictMessage(
-          "A conflict occurred while fetching timing analysis data. Please try again."
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        if (!Array.isArray(data) || data.length === 0)
+          return [{ 0: "Not Found" }];
+        return data;
+      },
+      type: "reworked-activities-table",
+      title: "Reworked Activities Table",
+    },
+    {
+      id: "timing-violations-table",
+      keywords: [
+        "timing violations table",
+        "timing violations list",
+        "timing violations",
+      ],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/timingviloationstable?page=1&size=100"
         );
-        setConflictOpen(true);
-      } else {
-        console.error("Error fetching timing analysis data:", error);
-        const errorMessage: Message = {
-          id: Date.now(),
-          text: "Sorry, I couldn't fetch the timing analysis data from the API.",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, errorMessage]);
-      }
-    }
-  };
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        if (!Array.isArray(data) || data.length === 0)
+          return [{ 0: "Not Found" }];
+        return data;
+      },
+      type: "timing-violations-table",
+      title: "Timing Violations Table",
+    },
+  ];
 
-  const handleProcessFailurePatterns = async () => {
-    try {
-      const response = await fetch("http://127.0.0.1:8001/allcounts");
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
-      let data = await response.json();
-      // Transform object to array for recharts
-      if (data && !Array.isArray(data)) {
-        data = Object.entries(data).map(([name, value]) => ({ name, value }));
-      }
-      onDataReceived(
-        "process-failure-patterns-bar",
-        Array.isArray(data) ? data : [],
-        "Process Failure Patterns Distribution"
-      );
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "Loaded process failure patterns data! Visualized as a bar chart on your chatbot.",
-          sender: "bot",
-          timestamp: new Date(),
-        },
-      ]);
-    } catch (error: any) {
-      if (
-        error?.message?.includes("409") ||
-        error?.toString().includes("409")
-      ) {
-        setConflictMessage(
-          "A conflict occurred while fetching process failure patterns data. Please try again."
-        );
-        setConflictOpen(true);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            text: "Sorry, I couldn't fetch the process failure patterns data from the API.",
-            sender: "bot",
-            timestamp: new Date(),
-          },
-        ]);
-      }
-    }
-  };
-
-  // Placeholder: Replace with your real LLM API call
-  async function fetchAIAnalysis(question: string): Promise<string> {
-    // Example: Call your backend or OpenAI API here
-    // For now, just echo the question
-    return `AI Analysis: Sorry, I can't answer this yet. (You asked: "${question}")`;
-  }
-
-  // Helper: determine if the last user message was a visualization request
-  const isLastUserMessageVisualization = () => {
-    if (messages.length === 0) return false;
-    const lastUserMsg = [...messages]
-      .reverse()
-      .find((m) => m.sender === "user");
-    if (!lastUserMsg) return false;
-    const lower = lastUserMsg.text.toLowerCase();
-    return (
-      lower.includes("sop deviation") ||
-      lower.includes("incomplete cases") ||
-      lower.includes("long running cases") ||
-      lower.includes("resource switches") ||
-      lower.includes("rework activities") ||
-      lower.includes("timing violations") ||
-      lower.includes("case complexity") ||
-      lower.includes("resource performance") ||
-      lower.includes("timing analysis") ||
-      lower.includes("process failure patterns") ||
-      lower.includes("object lifecycle")
+  // Helper: fuzzy match query to registry entry, considering type intent
+  function findBestVisualizationMatch(query: string) {
+    const lower = query.toLowerCase();
+    // 1. Exact id or title match
+    let match = visualizationRegistry.find(
+      (viz) => lower === viz.id || lower === viz.title.toLowerCase()
     );
-  };
-
-  // Helper: get the most recent visualization type from the last user message
-  const getLastVisualizationType = () => {
-    if (messages.length === 0) return null;
-    const lastUserMsg = [...messages]
-      .reverse()
-      .find((m) => m.sender === "user");
-    if (!lastUserMsg) return null;
-    const lower = lastUserMsg.text.toLowerCase();
-    if (lower.includes("sop deviation")) return "sop-patterns";
-    if (lower.includes("incomplete cases")) return "incomplete-bar";
-    if (lower.includes("long running cases")) return "longrunning-bar";
-    if (lower.includes("resource switches")) return "resource-switches-bar";
-    if (lower.includes("rework activities")) return "rework-activities-bar";
-    if (lower.includes("timing violations")) return "timing-violations-bar";
-    if (lower.includes("case complexity")) return "case-complexity-table";
-    if (lower.includes("resource performance"))
-      return "resource-performance-table";
-    if (lower.includes("timing analysis")) return "timing-analysis-table";
-    if (lower.includes("process failure patterns"))
-      return "process-failure-patterns-bar";
-    if (lower.includes("object lifecycle")) return "object-lifecycle";
-    return null;
-  };
+    if (match) return match;
+    // 2. Starts with id or title
+    match = visualizationRegistry.find(
+      (viz) =>
+        lower.startsWith(viz.id) || lower.startsWith(viz.title.toLowerCase())
+    );
+    if (match) return match;
+    // 3. All keywords present
+    match = visualizationRegistry.find((viz) =>
+      viz.keywords.every((kw) => lower.includes(kw))
+    );
+    if (match) return match;
+    // 4. Fuzzy scoring fallback
+    let best = null;
+    let bestScore = 0;
+    for (const viz of visualizationRegistry) {
+      let score = 0;
+      for (const kw of viz.keywords) {
+        if (lower.includes(kw)) score += 3;
+        else if (kw.split(" ").every((w) => lower.includes(w))) score += 2;
+        else if (kw.split(" ").some((w) => lower.includes(w))) score += 1;
+      }
+      if (lower.includes(viz.id.replace(/-/g, " "))) score += 2;
+      if (viz.type.includes("table") && lower.match(/table|list|details/))
+        score += 4;
+      if (viz.type.includes("bar") && lower.match(/bar|count|graph|chart/))
+        score += 2;
+      if (viz.type.includes("count") && lower.match(/count|number|total/))
+        score += 1;
+      if (viz.type.includes("graph") && lower.match(/graph|flow|process/))
+        score += 2;
+      if (viz.title && lower.includes(viz.title.toLowerCase())) score += 3;
+      if (lower.includes("table") && viz.type.includes("bar")) score -= 2;
+      if (
+        (lower.includes("bar") || lower.includes("graph")) &&
+        viz.type.includes("table")
+      )
+        score -= 2;
+      if (score > bestScore) {
+        best = viz;
+        bestScore = score;
+      }
+    }
+    return bestScore > 0 ? best : null;
+  }
 
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading) return;
-
-    // Clear previous visualizations before adding new ones
-    if (clearVisualizations) clearVisualizations();
-
     if (!user) {
       toast({
         title: "Authentication Required",
@@ -663,136 +512,151 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       });
       return;
     }
-
-    const userMessage: Message = {
+    const userMessage: ChatMessage = {
       id: Date.now(),
       text: message,
       sender: "user",
       timestamp: new Date(),
+      visualization: null,
     };
     setMessages((prev) => [...prev, userMessage]);
-
     setIsLoading(true);
-
-    const lowerMessage = message.toLowerCase();
-
     try {
-      if (lowerMessage.includes("incomplete cases")) {
-        const data = await fetchVisualizationData("incomplete-bar");
-        if (data) {
-          // Direct call - no delay
-          console.log("Got incomplete cases data:", data);
-          onDataReceived("incomplete-bar", data, "Incomplete Cases Analysis");
-
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now(),
-              text: `Successfully loaded incomplete cases data from endpoint! The analysis shows the distribution of complete vs incomplete cases. The data has been visualized as a bar chart on your chatbot.`,
-              sender: "bot",
-              timestamp: new Date(),
-            },
-          ]);
-          return;
-        }
-      } else if (lowerMessage.includes("long running cases")) {
-        const data = await fetchVisualizationData("longrunning-bar");
-        if (data) {
-          // Direct call - no delay
-          console.log("Got long running cases data:", data);
-          onDataReceived(
-            "longrunning-bar",
-            data,
-            "Long Running Cases Analysis"
-          );
-
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now(),
-              text: `Successfully loaded long running cases data from endpoint! The data has been visualized as a bar chart on your chatbot.`,
-              sender: "bot",
-              timestamp: new Date(),
-            },
-          ]);
-          return;
-        }
-      } else if (lowerMessage.includes("sop deviation")) {
-        const countData = await fetchVisualizationData("sop-count");
-        const patternsData = await fetchVisualizationData("sop-patterns");
-        if (countData && patternsData) {
-          // Add a small delay to ensure visualizations render after messages
-          setTimeout(() => {
-            onDataReceived("sop-count", countData, "SOP Deviation Count");
-            onDataReceived(
-              "sop-patterns",
-              patternsData,
-              "SOP Deviation Patterns"
-            );
-          }, 100);
-
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now(),
-              text: `Loaded SOP deviation data from endpoint! Visualizations added to your chatbot.`,
-              sender: "bot",
-              timestamp: new Date(),
-            },
-          ]);
-          return;
-        }
-      }
-      // fallback to original logic for other types and AI analysis
-      if (lowerMessage.includes("sop deviation")) {
-        await handleSOPDeviation();
-      } else if (lowerMessage.includes("incomplete cases")) {
-        await handleIncompleteCases();
-      } else if (lowerMessage.includes("long running cases")) {
-        await handleLongRunningCases();
-      } else if (lowerMessage.includes("resource switches")) {
-        await handleResourceSwitches();
-      } else if (lowerMessage.includes("rework activities")) {
-        await handleReworkActivities();
-      } else if (lowerMessage.includes("timing violations")) {
-        await handleTimingViolations();
-      } else if (lowerMessage.includes("case complexity")) {
-        await handleCaseComplexityTable();
-      } else if (lowerMessage.includes("resource performance")) {
-        await handleResourcePerformance();
-      } else if (lowerMessage.includes("timing analysis")) {
-        await handleTimingAnalysis();
-      } else if (lowerMessage.includes("process failure patterns")) {
-        await handleProcessFailurePatterns();
-      } else if (lowerMessage.includes("object lifecycle")) {
-        onDataReceived("object-lifecycle", [], "Object Lifecycle");
-        setTimeout(() => {
-          const botResponse: Message = {
-            id: Date.now() + 1,
-            text: "Here is the Object Lifecycle process flow graph!",
-            sender: "bot",
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, botResponse]);
-        }, 500);
-      } else {
-        // AI analysis for general questions
-        const aiResponse = await fetchAIAnalysis(message);
+      const lower = message.toLowerCase();
+      if (
+        lower.match(
+          /^(clear|reset|remove|delete) (visualization|visualizations|charts|all)$/
+        )
+      ) {
+        if (clearVisualizations) clearVisualizations();
         setMessages((prev) => [
           ...prev,
           {
-            id: Date.now() + 1,
-            text: aiResponse,
+            id: Date.now(),
+            text: "All visualizations cleared.",
             sender: "bot",
             timestamp: new Date(),
+            visualization: null,
           },
         ]);
+        setIsLoading(false);
+        setMessage("");
+        return;
       }
+      // --- Stricter matching ---
+      let match = findBestVisualizationMatch(message);
+      if (match) {
+        let data = await match.fetch();
+        let visualization: Visualization | null = null;
+        if (match.type === "object-lifecycle") {
+          visualization = {
+            id: match.id,
+            type: "object-lifecycle",
+            data: [],
+            title: match.title,
+          };
+        } else {
+          visualization = {
+            id: match.id,
+            type: match.type,
+            data,
+            title: match.title,
+          };
+        }
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            text: `Visualization for ${match.title} loaded!`,
+            sender: "bot",
+            timestamp: new Date(),
+            visualization,
+          },
+        ]);
+        setIsLoading(false);
+        setMessage("");
+        return;
+      }
+      // --- Fallback: support for activity pair threshold and unknown table/graph types ---
+      if (lower.includes("activity pair threshold")) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            text: `Visualization for Activity Pair Threshold loaded!`,
+            sender: "bot",
+            timestamp: new Date(),
+            visualization: {
+              id: "activity-pair-threshold",
+              type: "activity-pair-threshold",
+              data: [],
+              title: "Activity Pair Threshold",
+            },
+          },
+        ]);
+        setIsLoading(false);
+        setMessage("");
+        return;
+      }
+      // Fallback: try to fetch a JSON file matching the query
+      const guessFile = `/public/${lower.replace(/ /g, "_")}.json`;
+      try {
+        const res = await fetch(guessFile);
+        if (res.ok) {
+          let data = await res.json();
+          if (!Array.isArray(data)) {
+            data = Object.entries(data).map(([name, value]) => ({
+              name,
+              value,
+            }));
+          }
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now(),
+              text: `Visualization for ${message} loaded from ${guessFile}!`,
+              sender: "bot",
+              timestamp: new Date(),
+              visualization: {
+                id: guessFile,
+                type: guessFile.endsWith("table.json")
+                  ? "fallback-table"
+                  : "fallback-bar",
+                data,
+                title: `Visualization for ${message}`,
+              },
+            },
+          ]);
+          setIsLoading(false);
+          setMessage("");
+          return;
+        }
+      } catch (e) {}
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "Sorry, I don't know how to visualize that yet.",
+          sender: "bot",
+          timestamp: new Date(),
+          visualization: null,
+        },
+      ]);
+    } catch (err: any) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: `Error: ${err.message}`,
+          sender: "bot",
+          timestamp: new Date(),
+          visualization: null,
+        },
+      ]);
     } finally {
       setIsLoading(false);
+      setMessage("");
     }
-
-    setMessage("");
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -831,18 +695,37 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
           <CardContent className="p-0 flex flex-col h-[620px]">
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`p-3 rounded-lg max-w-[85%] ${
-                    msg.sender === "user"
-                      ? "bg-blue-600 text-white ml-auto"
-                      : "bg-gray-100 text-gray-900"
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-line">{msg.text}</p>
-                  <p className="text-xs opacity-70 mt-1">
-                    {msg.timestamp.toLocaleTimeString()}
-                  </p>
+                <div key={msg.id} className="mb-2">
+                  <div
+                    className={`p-3 rounded-lg max-w-[85%] ${
+                      msg.sender === "user"
+                        ? "bg-blue-600 text-white ml-auto"
+                        : "bg-gray-100 text-gray-900"
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-line">{msg.text}</p>
+                    <p className="text-xs opacity-70 mt-1">
+                      {msg.timestamp.toLocaleTimeString()}
+                    </p>
+                  </div>
+                  {/* Inline visualization for this message, if any */}
+                  {msg.visualization && (
+                    <div className="mt-2 ml-4">
+                      {msg.visualization.type === "object-lifecycle" ? (
+                        <ErrorBoundary>
+                          <ProcessFlowGraph />
+                        </ErrorBoundary>
+                      ) : (
+                        <ErrorBoundary>
+                          <DataVisualizationWidget
+                            type={msg.visualization.type}
+                            data={msg.visualization.data}
+                            title={msg.visualization.title}
+                          />
+                        </ErrorBoundary>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
               {isLoading && (
@@ -852,98 +735,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                     <span className="text-sm">Loading data...</span>
                   </div>
                 </div>
-              )}{" "}
-              {/* VISUALIZATIONS SECTION */}
-              <div className="mt-6 space-y-6 visualization-container">
-                {/* Dynamic visualization from props */}
-                {visualizations && visualizations.length > 0 && (
-                  <>
-                    {visualizations.map((viz, idx) => (
-                      <div
-                        className="bg-white border rounded-lg shadow p-4 mb-4"
-                        key={
-                          viz.id +
-                          "-" +
-                          viz.type +
-                          "-" +
-                          (viz.title || "") +
-                          "-" +
-                          idx
-                        }
-                      >
-                        <h3 className="text-lg font-bold mb-2">
-                          {viz.title || "Data Visualization"}
-                        </h3>
-                        {/* Visualization renderer with proper type checking and data handling */}
-                        {(() => {
-                          // Explicit SOPWidget types
-                          if (viz.type === "sop-count") {
-                            return (
-                              <SOPWidget
-                                type="count"
-                                data={
-                                  Array.isArray(viz.data) && viz.data.length > 0
-                                    ? viz.data[0]
-                                    : {
-                                        count: 0,
-                                        percentage: 0,
-                                        threshold: "30%",
-                                      }
-                                }
-                                visualizationType="bar"
-                                title={viz.title || "SOP Count"}
-                              />
-                            );
-                          }
-                          if (viz.type === "sop-patterns") {
-                            return (
-                              <SOPWidget
-                                type="patterns"
-                                data={Array.isArray(viz.data) ? viz.data : []}
-                                visualizationType="bar"
-                                title={viz.title || "SOP Patterns"}
-                              />
-                            );
-                          }
-                          // All other supported DataVisualizationWidget types
-                          const supportedTypes = [
-                            "incomplete-bar",
-                            "longrunning-bar",
-                            "resource-switches-bar",
-                            "rework-activities-bar",
-                            "timing-violations-bar",
-                            "case-complexity-bar",
-                            "case-complexity-table",
-                            "resource-performance-table",
-                            "timing-analysis-table",
-                            "process-failure-patterns-bar",
-                            "sop-table",
-                          ];
-                          if (supportedTypes.includes(viz.type)) {
-                            return (
-                              <DataVisualizationWidget
-                                type={viz.type as any}
-                                data={
-                                  Array.isArray(viz.data) && viz.data.length > 0
-                                    ? viz.data
-                                    : [{ name: "No Data", value: 0 }]
-                                }
-                                title={viz.title || "Data Visualization"}
-                              />
-                            );
-                          }
-                          // Fallback for unknown types
-                          return (
-                            <div className="text-gray-500 text-center">
-                              Unsupported visualization type: {viz.type}
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
+              )}
             </div>
             <div className="border-t p-3 flex space-x-2">
               <Input
@@ -970,11 +762,6 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
           </CardContent>
         </Card>
       )}
-      <ConflictDialog
-        open={conflictOpen}
-        onOpenChange={setConflictOpen}
-        message={conflictMessage}
-      />
     </div>
   );
 };

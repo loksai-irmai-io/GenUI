@@ -9,6 +9,7 @@ const CCM = () => {
   const [controlsDef, setControlsDef] = useState<any[]>([]);
   const [slaAnalysis, setSlaAnalysis] = useState<any[]>([]);
   const [kpi, setKpi] = useState<any[]>([]);
+  const [slaBarData, setSlaBarData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,19 +17,22 @@ const CCM = () => {
     setLoading(true);
     setError(null);
     Promise.all([
-      fetch("http://127.0.0.1:8001/controls_identified_count").then((res) =>
+      fetch("http://34.60.217.109/controls_identified_count").then((res) =>
         res.json()
       ),
-      fetch("http://127.0.0.1:8001/control_description?page=1&size=100").then(
+      fetch("http://34.60.217.109/control_description?page=1&size=100").then(
         (res) => res.json()
       ),
-      fetch("http://127.0.0.1:8001/control_defination?page=1&size=100").then(
+      fetch("http://34.60.217.109/control_defination?page=1&size=100").then(
         (res) => res.json()
       ),
-      fetch("http://127.0.0.1:8001/sla_analysis").then((res) => res.json()),
+      fetch("http://34.60.217.109/sla_analysis").then((res) => res.json()),
       fetch("http://127.0.0.1:8001/kpi").then((res) => res.json()),
+      fetch("http://127.0.0.1:8001/slagraph/avg-activity-duration-bar").then(
+        (res) => res.json()
+      ),
     ])
-      .then(([count, desc, def, sla, kpi]) => {
+      .then(([count, desc, def, sla, kpi, slaBar]) => {
         // Bar chart expects array of { name, value }
         let countArr = Array.isArray(count)
           ? count
@@ -38,6 +42,27 @@ const CCM = () => {
         setControlsDef(Array.isArray(def) ? def : def.data || []);
         setSlaAnalysis(Array.isArray(sla) ? sla : sla.data || []);
         setKpi(Array.isArray(kpi) ? kpi : kpi.data || []);
+        // Bar chart expects array of { name, value }
+        // Fix: transform plotly-style data to recharts array
+        let barArr: any[] = [];
+        if (slaBar && Array.isArray(slaBar.data)) {
+          // Plotly bar data: [{ x: [...], y: [...], ... }]
+          const bar = slaBar.data[0];
+          if (bar && Array.isArray(bar.x) && Array.isArray(bar.y)) {
+            barArr = bar.x.map((x: string, i: number) => ({
+              name: x,
+              value: bar.y[i],
+            }));
+          }
+        } else if (Array.isArray(slaBar)) {
+          barArr = slaBar;
+        } else if (slaBar && typeof slaBar === "object") {
+          barArr = Object.entries(slaBar).map(([name, value]) => ({
+            name,
+            value,
+          }));
+        }
+        setSlaBarData(barArr);
       })
       .catch((e) => setError("Failed to load CCM data."))
       .finally(() => setLoading(false));
@@ -253,10 +278,11 @@ const CCM = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           SLA Analysis
         </h3>
-        <TableWidget
-          title="SLA Analysis"
-          data={getSlaTableDataAndColumns(slaAnalysis).data}
-          columns={getSlaTableDataAndColumns(slaAnalysis).columns}
+        <DataVisualizationWidget
+          type="incomplete-bar"
+          title="Average Activity Duration (hrs)"
+          data={slaBarData}
+          maximized={false}
         />
       </div>
       {/* KPI Section */}

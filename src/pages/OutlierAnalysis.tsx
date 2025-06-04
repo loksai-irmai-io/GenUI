@@ -8,7 +8,7 @@ const widgetConfigs = [
     title: "All Failure Pattern Counts",
     type: "bar",
     fetch: async () => {
-      const res = await fetch("http://127.0.0.1:8001/allcounts");
+      const res = await fetch("http://34.60.217.109/allcounts");
       const data = await res.json();
       return Object.entries(data).map(([name, value]) => ({ name, value }));
     },
@@ -64,7 +64,7 @@ const widgetConfigs = [
     type: "bar",
     fetch: async () => {
       const res = await fetch(
-        "http://127.0.0.1:8001/sopdeviation/low-percentage/count"
+        "http://34.60.217.109/sopdeviation/low-percentage/count"
       );
       let data = await res.json();
       // Always return as array for bar chart
@@ -87,7 +87,7 @@ const widgetConfigs = [
     title: "SOP Deviation Low Percentage Patterns",
     type: "table",
     fetch: async () => {
-      const res = await fetch("http://127.0.0.1:8001/sopdeviation/patterns");
+      const res = await fetch("http://34.60.217.109/sopdeviation/patterns");
       let data = await res.json();
       if (data && data.data && Array.isArray(data.data)) data = data.data;
       if (!Array.isArray(data) && typeof data === "object" && data !== null)
@@ -120,7 +120,7 @@ const widgetConfigs = [
     title: "Incomplete Cases Count",
     type: "bar",
     fetch: async () => {
-      const res = await fetch("http://127.0.0.1:8001/incompletecases/count");
+      const res = await fetch("http://34.60.217.109/incompletecases/count");
       const data = await res.json();
       return [{ name: "Incomplete Cases", value: data.count }];
     },
@@ -138,7 +138,7 @@ const widgetConfigs = [
     title: "Incomplete Case Table",
     type: "table",
     fetch: async () => {
-      const res = await fetch("http://127.0.0.1:8001/incompletecase_table");
+      const res = await fetch("http://34.60.217.109/incompletecase_table");
       let data = await res.json();
       if (data && data.data && Array.isArray(data.data)) data = data.data;
       if (!Array.isArray(data) && typeof data === "object" && data !== null)
@@ -161,7 +161,7 @@ const widgetConfigs = [
     title: "Long Running Cases Count",
     type: "bar",
     fetch: async () => {
-      const res = await fetch("http://127.0.0.1:8001/longrunningcases/count");
+      const res = await fetch("http://34.60.217.109/longrunningcases/count");
       const data = await res.json();
       return [{ name: "Long Running Cases", value: data.count }];
     },
@@ -180,7 +180,7 @@ const widgetConfigs = [
     type: "table",
     fetch: async () => {
       const res = await fetch(
-        "http://127.0.0.1:8001/longrunning_table?page=1&size=100"
+        "http://34.60.217.109/longrunning_table?page=1&size=100"
       );
       let data = await res.json();
       if (data && data.data && Array.isArray(data.data)) data = data.data;
@@ -204,7 +204,7 @@ const widgetConfigs = [
     title: "Resource Switches Count",
     type: "bar",
     fetch: async () => {
-      const res = await fetch("http://127.0.0.1:8001/resourceswitches/count");
+      const res = await fetch("http://34.60.217.109/resourceswitches/count");
       const data = await res.json();
       return [{ name: "Resource Switches", value: data.count }];
     },
@@ -223,7 +223,7 @@ const widgetConfigs = [
     type: "table",
     fetch: async () => {
       const res = await fetch(
-        "http://127.0.0.1:8001/resourceswitches_count_table"
+        "http://34.60.217.109/resourceswitches_count_table"
       );
       let data = await res.json();
       if (data && data.data && Array.isArray(data.data)) data = data.data;
@@ -248,7 +248,7 @@ const widgetConfigs = [
     type: "table",
     fetch: async () => {
       const res = await fetch(
-        "http://127.0.0.1:8001/resourceswitchestable_table?page=1&size=100"
+        "http://34.60.217.109/resourceswitchestable_table?page=1&size=100"
       );
       let data = await res.json();
       if (data && data.data && Array.isArray(data.data)) data = data.data;
@@ -272,7 +272,7 @@ const widgetConfigs = [
     title: "Rework Activities Count",
     type: "bar",
     fetch: async () => {
-      const res = await fetch("http://127.0.0.1:8001/reworkactivities/count");
+      const res = await fetch("http://34.60.217.109/reworkactivities/count");
       const data = await res.json();
       return [{ name: "Rework Activities", value: data.count }];
     },
@@ -291,7 +291,7 @@ const widgetConfigs = [
     type: "table",
     fetch: async () => {
       const res = await fetch(
-        "http://127.0.0.1:8001/reworkedactivtiestable?page=1&size=100"
+        "http://34.60.217.109/reworkedactivtiestable?page=1&size=100"
       );
       let data = await res.json();
       if (data && data.data && Array.isArray(data.data)) data = data.data;
@@ -315,7 +315,7 @@ const widgetConfigs = [
     title: "Timing Violations Count",
     type: "bar",
     fetch: async () => {
-      const res = await fetch("http://127.0.0.1:8001/timingviolations/count");
+      const res = await fetch("http://34.60.217.109/timingviolations/count");
       const data = await res.json();
       return [{ name: "Timing Violations", value: data.count }];
     },
@@ -337,7 +337,7 @@ const widgetConfigs = [
       let data;
       try {
         const res = await fetch(
-          "http://127.0.0.1:8001/timingviolations_table?page=1&size=100"
+          "http://34.60.217.109/timingviolations_table?page=1&size=100"
         );
         if (!res.ok) throw new Error("API not found");
         data = await res.json();
@@ -391,7 +391,7 @@ const OutlierAnalysis = () => {
       .catch((e) => setError("Failed to load visualizations."));
 
     // Resource Performance
-    fetch("http://127.0.0.1:8001/resourceperformance")
+    fetch("http://34.60.217.109/resourceperformance")
       .then((res) => res.json())
       .then((data) =>
         setResourcePerformance(Array.isArray(data) ? data : data.data || [])
@@ -399,7 +399,7 @@ const OutlierAnalysis = () => {
       .catch(() => setResourcePerformance([]));
 
     // Timing Analysis
-    fetch("http://127.0.0.1:8001/timinganalysis")
+    fetch("http://34.60.217.109/timinganalysis")
       .then((res) => res.json())
       .then((data) =>
         setTimingAnalysis(Array.isArray(data) ? data : data.data || [])
@@ -407,7 +407,7 @@ const OutlierAnalysis = () => {
       .catch(() => setTimingAnalysis([]));
 
     // Case Complexity Table
-    fetch("http://127.0.0.1:8001/casecomplexity?page=1&size=100")
+    fetch("http://34.60.217.109/casecomplexity?page=1&size=100")
       .then((res) => res.json())
       .then((data) =>
         setCaseComplexity(Array.isArray(data) ? data : data.data || [])
@@ -415,7 +415,7 @@ const OutlierAnalysis = () => {
       .catch(() => setCaseComplexity([]));
 
     // Activity Pair Threshold Table
-    fetch("http://127.0.0.1:8001/activitypairthreshold")
+    fetch("http://34.60.217.109/activitypairthreshold")
       .then((res) => res.json())
       .then((data) =>
         setActivityPairThreshold(Array.isArray(data) ? data : data.data || [])

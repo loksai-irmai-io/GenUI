@@ -1,7 +1,7 @@
 // e:\Gen-UI\genui-dynamic-dashboards\src\services\caseComplexityService.ts
 export class CaseComplexityService {
   async getCountBar(): Promise<Array<{ name: string; value: number }>> {
-    const response = await fetch('http://127.0.0.1:8001/casecomplexity/count');
+    const response = await fetch('http://34.60.217.109/casecomplexity/count');
     const data = await response.json();
     return [
       { name: 'Simple', value: data.simple ?? 0 },
@@ -11,7 +11,7 @@ export class CaseComplexityService {
   }
 
   async getTable(): Promise<Array<any>> {
-    const response = await fetch('http://127.0.0.1:8001/casecomplexity');
+    const response = await fetch('http://34.60.217.109/casecomplexity');
     const data = await response.json();
     return Array.isArray(data) ? data : (data.cases ?? []);
   }

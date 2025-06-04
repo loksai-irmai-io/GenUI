@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import Header from "../components/Header";
 import ChatBot from "../components/ChatBot";
 import {
@@ -17,28 +17,45 @@ const sidebarTabs = [
   { label: "Process Discovery", path: "/process-discovery" },
   { label: "Outlier Analysis", path: "/outlier-analysis" },
   { label: "CCM", path: "/ccm" },
+  { label: "Overall AI Insights", path: "/ai-insights" }, // Added under CCM
 ];
 
 interface AppLayoutProps {
   children: React.ReactNode;
   onSelectWidgets?: () => void;
-  onDataReceived?: (type: string, data: any[], title: string) => void;
-  chatbotVisualizations?: Array<{
-    id: string;
-    type: string;
-    data: any[];
-    title: string;
-  }>;
 }
 
 const AppLayout = ({
   children,
   onSelectWidgets = () => {},
-  onDataReceived = () => {},
-  chatbotVisualizations,
 }: AppLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Global chatbot state
+  const [chatbotVisualizations, setChatbotVisualizations] = useState<
+    Array<{
+      id: string;
+      type: string;
+      data: any[];
+      title: string;
+    }>
+  >([]);
+
+  // Handler for chatbot data
+  const handleChatbotDataReceived = useCallback(
+    (type: string, data: any[], title: string) => {
+      const id = `data-viz-${type}-${Date.now()}-${Math.floor(
+        Math.random() * 100000
+      )}`;
+      setChatbotVisualizations((prev) => [...prev, { id, type, data, title }]);
+    },
+    []
+  );
+
+  const clearChatbotVisualizations = useCallback(() => {
+    setChatbotVisualizations([]);
+  }, []);
 
   return (
     <SidebarProvider>
@@ -67,9 +84,6 @@ const AppLayout = ({
                     </svg>
                   </span>
                   GenUI
-                </span>
-                <span className="block text-xs font-normal text-gray-400 mt-1">
-                  Dashboard Platform
                 </span>
               </div>
               <SidebarMenu>
@@ -104,8 +118,9 @@ const AppLayout = ({
         </SidebarInset>
         <div className="fixed bottom-4 right-4 z-50">
           <ChatBot
-            onDataReceived={onDataReceived}
+            onDataReceived={handleChatbotDataReceived}
             visualizations={chatbotVisualizations}
+            clearVisualizations={clearChatbotVisualizations}
           />
         </div>
       </div>

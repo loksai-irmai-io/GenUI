@@ -1,7 +1,7 @@
 // e:\Gen-UI\genui-dynamic-dashboards\src\services\timingViolationsService.ts
 export class TimingViolationsService {
   async getCountBar(): Promise<Array<{ name: string; value: number }>> {
-    const response = await fetch('http://127.0.0.1:8001/timingviolations/count');
+    const response = await fetch('http://34.60.217.109/timingviolations/count');
     const data = await response.json();
     // Defensive: handle both { count } and { timing_violations }
     if (typeof data.count === 'number') {

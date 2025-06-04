@@ -1,7 +1,7 @@
 // e:\Gen-UI\genui-dynamic-dashboards\src\services\resourceSwitchesService.ts
 export class ResourceSwitchesService {
   async getCountBar(): Promise<Array<{ name: string; value: number }>> {
-    const response = await fetch('http://127.0.0.1:8001/resourceswitches/count');
+    const response = await fetch('http://34.60.217.109/resourceswitches/count');
     const data = await response.json();
     // Defensive: handle both { count } and { resource_switches }
     if (typeof data.count === 'number') {

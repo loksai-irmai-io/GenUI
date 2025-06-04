@@ -24,7 +24,7 @@ interface FallbackResponse {
 }
 
 class SOPDeviationService {
-  private baseUrl = 'http://127.0.0.1:8001';
+  private baseUrl = 'http://34.60.217.109';
 
   private async loadFallbackData(): Promise<FallbackResponse> {
     const response = await fetch('/sopdeviation.json');
