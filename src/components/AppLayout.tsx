@@ -69,7 +69,7 @@ const AppLayout = ({
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 via-white to-blue-50">
-      {/* Global Header */}
+      {/* Single Global Header */}
       <Header onSelectWidgets={onSelectWidgets} />
       
       <SidebarProvider>
