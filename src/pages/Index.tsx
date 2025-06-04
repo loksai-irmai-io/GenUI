@@ -1107,7 +1107,6 @@ const Index = () => {
           widgetContent = (
             <ProcessFlowGraph
               key="object-lifecycle-graph"
-              maximized={!!opts?.forOverlay}
             />
           );
           break;
