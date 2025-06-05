@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -124,7 +123,7 @@ const Dashboard: React.FC = () => {
           <SOPWidget 
             key={widgetId}
             type="count"
-            data={{ count: 23, percentage: 15.2 }}
+            data={{ count: 23, percentage: 15.2, threshold: "30%" }}
             visualizationType="bar"
             title="SOP Deviations"
           />
