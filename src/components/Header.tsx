@@ -114,13 +114,11 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200/80 shadow-sm">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-md flex items-center justify-center">
-              <img 
-                src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
-                alt="IRMAI Logo" 
-                className="w-14 h-14 object-contain"
-              />
-            </div>
+            <img 
+              src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
+              alt="IRMAI Logo" 
+              className="w-20 h-20 object-contain"
+            />
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">GenUI</h1>
           </div>
 
