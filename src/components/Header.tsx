@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { User, LogOut, ChevronDown, Settings } from "lucide-react";
@@ -149,7 +150,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
           <div className="flex items-center space-x-3">
             {/* Select Process Dropdown */}
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-slate-300 hidden sm:inline">Process:</span>
+              <span className="text-sm text-slate-300 hidden sm:inline">Select Process:</span>
               <Select value={selectedProcess} onValueChange={handleProcessSelect}>
                 <SelectTrigger className="w-32 sm:w-40 bg-slate-800 hover:bg-slate-700 border-slate-600 text-slate-200 focus:ring-blue-400">
                   <SelectValue />
@@ -168,7 +169,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
                 onClick={() => setIsWidgetModalOpen(true)}
                 variant="outline"
                 size="sm"
-                className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 border-slate-600 text-blue-400 hover:text-blue-300 transition-all duration-200"
+                className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 border-slate-600 text-slate-200 hover:text-blue-300 transition-all duration-200"
               >
                 <Settings className="w-4 h-4" />
                 <span className="hidden sm:inline">Configure Widgets</span>

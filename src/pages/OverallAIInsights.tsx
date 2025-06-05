@@ -59,7 +59,7 @@ const endpoints = [
 
 // Utility to render structured content for each endpoint
 function renderAIContent(data: any, label: string) {
-  if (!data) return <div className="text-gray-500">No data found.</div>;
+  if (!data) return <div className="text-slate-400">No data found.</div>;
 
   // SOP Deviation AI Insights (and similar endpoints)
   if (
@@ -115,38 +115,38 @@ function renderAIContent(data: any, label: string) {
     return (
       <div className="space-y-4">
         {data.title && (
-          <h2 className="text-xl font-semibold mb-2">{data.title}</h2>
+          <h2 className="text-xl font-semibold mb-2 text-slate-100">{data.title}</h2>
         )}
         {keyFindings.length > 0 && (
           <section>
-            <h3 className="text-lg font-semibold mb-1">Key Findings</h3>
+            <h3 className="text-lg font-semibold mb-1 text-slate-200">Key Findings</h3>
             <ul className="list-disc ml-6 space-y-1">
               {keyFindings.map((item: string, i: number) => (
-                <li key={i}>{item}</li>
+                <li key={i} className="text-slate-300">{item}</li>
               ))}
             </ul>
           </section>
         )}
         {causes.length > 0 && (
           <section>
-            <h3 className="text-lg font-semibold mb-1">
+            <h3 className="text-lg font-semibold mb-1 text-slate-200">
               Potential Causes & Impacts
             </h3>
             <ul className="list-disc ml-6 space-y-1">
               {causes.map((item: string, i: number) => (
-                <li key={i}>{item}</li>
+                <li key={i} className="text-slate-300">{item}</li>
               ))}
             </ul>
           </section>
         )}
         {recommendations.length > 0 && (
           <section>
-            <h3 className="text-lg font-semibold mb-1">
+            <h3 className="text-lg font-semibold mb-1 text-slate-200">
               Actionable Recommendations
             </h3>
             <ul className="list-disc ml-6 space-y-1">
               {recommendations.map((item: string, i: number) => (
-                <li key={i}>{item}</li>
+                <li key={i} className="text-slate-300">{item}</li>
               ))}
             </ul>
           </section>
@@ -161,20 +161,20 @@ function renderAIContent(data: any, label: string) {
       <div className="space-y-4">
         {data.overall_summary && (
           <section>
-            <h2 className="text-xl font-semibold mb-1">Overall Summary</h2>
-            <p className="text-gray-800">{data.overall_summary}</p>
+            <h2 className="text-xl font-semibold mb-1 text-slate-100">Overall Summary</h2>
+            <p className="text-slate-300">{data.overall_summary}</p>
           </section>
         )}
         {Array.isArray(data.key_cross_cutting_themes_findings) && (
           <section>
-            <h2 className="text-xl font-semibold mb-1">
+            <h2 className="text-xl font-semibold mb-1 text-slate-100">
               Key Cross-Cutting Themes & Findings
             </h2>
             <ul className="list-disc ml-6 space-y-2">
               {data.key_cross_cutting_themes_findings.map(
                 (item: any, i: number) => (
-                  <li key={i}>
-                    <span className="font-medium">{item.theme}:</span>{" "}
+                  <li key={i} className="text-slate-300">
+                    <span className="font-medium text-slate-200">{item.theme}:</span>{" "}
                     {item.details}
                   </li>
                 )
@@ -184,8 +184,8 @@ function renderAIContent(data: any, label: string) {
         )}
         {data.recommendations && (
           <section>
-            <h2 className="text-xl font-semibold mb-1">Recommendations</h2>
-            <p className="text-gray-800">{data.recommendations}</p>
+            <h2 className="text-xl font-semibold mb-1 text-slate-100">Recommendations</h2>
+            <p className="text-slate-300">{data.recommendations}</p>
           </section>
         )}
       </div>
@@ -199,20 +199,20 @@ function renderAIContent(data: any, label: string) {
         {data.map((item, idx) => (
           <section
             key={idx}
-            className="border-b pb-3 mb-3 last:border-b-0 last:pb-0 last:mb-0"
+            className="border-b border-slate-600 pb-3 mb-3 last:border-b-0 last:pb-0 last:mb-0"
           >
             {item.title && (
-              <h2 className="text-lg font-semibold mb-1">{item.title}</h2>
+              <h2 className="text-lg font-semibold mb-1 text-slate-100">{item.title}</h2>
             )}
             {item.description && (
-              <p className="text-gray-800">{item.description}</p>
+              <p className="text-slate-300">{item.description}</p>
             )}
             {/* Fallback: show all fields if no title/description */}
             {!item.title && !item.description && (
               <ul className="list-disc ml-6">
                 {Object.entries(item).map(([k, v]) => (
-                  <li key={k}>
-                    <span className="font-medium">{k}:</span> {String(v)}
+                  <li key={k} className="text-slate-300">
+                    <span className="font-medium text-slate-200">{k}:</span> {String(v)}
                   </li>
                 ))}
               </ul>
@@ -230,30 +230,30 @@ function renderAIContent(data: any, label: string) {
       return (
         <div className="space-y-4">
           {data.title && (
-            <h2 className="text-xl font-semibold mb-2">{data.title}</h2>
+            <h2 className="text-xl font-semibold mb-2 text-slate-100">{data.title}</h2>
           )}
-          {data.summary && <p className="text-gray-800 mb-2">{data.summary}</p>}
+          {data.summary && <p className="text-slate-300 mb-2">{data.summary}</p>}
           {data.description && (
-            <p className="text-gray-800 mb-2">{data.description}</p>
+            <p className="text-slate-300 mb-2">{data.description}</p>
           )}
           {/* Show other fields as sections, skipping title/summary/description */}
           {Object.entries(data)
             .filter(([k]) => !["title", "summary", "description"].includes(k))
             .map(([k, v], idx) => (
               <section key={idx} className="mb-2">
-                <h3 className="text-lg font-semibold mb-1">
+                <h3 className="text-lg font-semibold mb-1 text-slate-200">
                   {k.replace(/_/g, " ")}
                 </h3>
                 {Array.isArray(v) ? (
                   <ul className="list-disc ml-6">
                     {v.map((item, i) => (
-                      <li key={i}>
+                      <li key={i} className="text-slate-300">
                         {typeof item === "string" ? item : JSON.stringify(item)}
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-gray-800">
+                  <p className="text-slate-300">
                     {typeof v === "string" ? v : JSON.stringify(v)}
                   </p>
                 )}
@@ -267,22 +267,22 @@ function renderAIContent(data: any, label: string) {
       <div className="space-y-2">
         {Object.entries(data).map(([k, v], idx) => (
           <section key={idx} className="mb-2">
-            <h3 className="text-lg font-semibold mb-1">
+            <h3 className="text-lg font-semibold mb-1 text-slate-200">
               {k.replace(/_/g, " ")}
             </h3>
             {Array.isArray(v) ? (
               <ul className="list-disc ml-6">
                 {v.map((item, i) => (
-                  <li key={i}>
+                  <li key={i} className="text-slate-300">
                     {typeof item === "string" ? item : JSON.stringify(item)}
                   </li>
                 ))}
               </ul>
             ) : typeof v === "object" && v !== null ? (
-              <div className="bg-gray-50 p-2 rounded border text-xs">
+              <div className="bg-slate-700 p-2 rounded border border-slate-600 text-xs">
                 {Object.entries(v).map(([subk, subv], subi) => (
-                  <div key={subi}>
-                    <span className="font-medium">
+                  <div key={subi} className="text-slate-300">
+                    <span className="font-medium text-slate-200">
                       {subk.replace(/_/g, " ")}:{" "}
                     </span>
                     {typeof subv === "string" ? subv : JSON.stringify(subv)}
@@ -290,7 +290,7 @@ function renderAIContent(data: any, label: string) {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-800">
+              <p className="text-slate-300">
                 {typeof v === "string" ? v : JSON.stringify(v)}
               </p>
             )}
@@ -301,7 +301,7 @@ function renderAIContent(data: any, label: string) {
   }
 
   // Fallback: just show as string
-  return <div className="text-gray-800">{String(data)}</div>;
+  return <div className="text-slate-300">{String(data)}</div>;
 }
 
 const TabContent: React.FC<{ url: string; label: string }> = ({

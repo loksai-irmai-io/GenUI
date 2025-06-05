@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,25 +19,38 @@ const AVAILABLE_WIDGETS = [
   { id: "data-viz", name: "Data Visualization", component: "DataVisualizationWidget" },
   { id: "timing-analysis", name: "Timing Analysis", component: "TimingAnalysisTable" },
   { id: "resource-performance", name: "Resource Performance", component: "ResourcePerformanceTable" },
+  { id: "controls-identified-count", name: "Controls Identified Count", component: "ControlsIdentifiedCount" },
 ];
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
+  const [selectedWidgets, setSelectedWidgets] = useState<string[]>(["info-cards", "chart-widget", "sop-widget"]);
   const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [controlsData, setControlsData] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
       fetchUserPreferences();
     }
+    fetchControlsData();
   }, [user, refreshKey]);
+
+  const fetchControlsData = async () => {
+    try {
+      const response = await fetch('/controls_identified_count.json');
+      const data = await response.json();
+      setControlsData(data);
+    } catch (error) {
+      console.error("Error fetching controls data:", error);
+      setControlsData([]);
+    }
+  };
 
   const fetchUserPreferences = async () => {
     try {
       if (!user) {
-        setSelectedWidgets(["info-cards", "chart-widget", "sop-widget"]);
         return;
       }
 
@@ -48,19 +62,15 @@ const Dashboard: React.FC = () => {
 
       if (error && error.code !== "PGRST116") {
         console.error("Error fetching user preferences:", error);
-        setSelectedWidgets(["info-cards", "chart-widget", "sop-widget"]);
         return;
       }
 
-      if (data && data.selected_widgets) {
+      if (data && data.selected_widgets && data.selected_widgets.length > 0) {
         setSelectedWidgets(data.selected_widgets);
         setPinnedWidgets(data.pinned_widgets || []);
-      } else {
-        setSelectedWidgets(["info-cards", "chart-widget", "sop-widget"]);
       }
     } catch (error) {
       console.error("Error fetching user preferences:", error);
-      setSelectedWidgets(["info-cards", "chart-widget", "sop-widget"]);
     }
   };
 
@@ -145,6 +155,17 @@ const Dashboard: React.FC = () => {
         return <TimingAnalysisTable key={widgetId} />;
       case "resource-performance":
         return <ResourcePerformanceTable key={widgetId} />;
+      case "controls-identified-count":
+        const totalControls = controlsData.reduce((sum, item) => sum + item.value, 0);
+        return (
+          <InfoCard
+            key={widgetId}
+            title="Controls Identified Count"
+            value={totalControls.toString()}
+            subtitle="Total identified controls in the process"
+            size="medium"
+          />
+        );
       default:
         return null;
     }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -204,13 +205,13 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent
-        className="max-w-6xl max-h-[85vh] overflow-y-auto"
+        className="max-w-6xl max-h-[85vh] overflow-y-auto bg-slate-800 border-slate-700 text-slate-200"
         aria-label="Widget Selection Modal"
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
+          <DialogTitle className="flex items-center justify-between text-slate-100">
             <span>Configure Dashboard Widgets</span>
-            <Badge variant="outline">{localPinnedWidgets.length} pinned</Badge>
+            <Badge variant="outline" className="border-slate-600 text-slate-300">{localPinnedWidgets.length} pinned</Badge>
           </DialogTitle>
         </DialogHeader>
 
@@ -218,8 +219,8 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
           {Object.entries(CATEGORY_WIDGETS).map(([category, widgets]) => (
             <div key={category} className="space-y-4">
               <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-gray-900">{category}</h2>
-                <Badge variant="secondary" className="text-xs">
+                <h2 className="text-xl font-bold text-slate-100">{category}</h2>
+                <Badge variant="secondary" className="text-xs bg-slate-700 text-slate-300 border-slate-600">
                   {widgets.length} widget{widgets.length !== 1 ? "s" : ""}
                 </Badge>
               </div>
@@ -228,7 +229,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
                 {widgets.map((widget) => (
                   <div
                     key={widget.id}
-                    className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-400 transition-colors cursor-pointer"
+                    className="flex items-start space-x-3 p-4 border border-slate-600 rounded-lg hover:bg-slate-700 focus-within:ring-2 focus-within:ring-blue-400 transition-colors cursor-pointer"
                     tabIndex={0}
                     aria-label={`Toggle pin for widget: ${widget.name}`}
                     onClick={() => handleTogglePin(widget.id)}
@@ -239,30 +240,30 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
                   >
                     <div className="flex items-center mt-1">
                       {localPinnedWidgets.includes(widget.id) ? (
-                        <Pin className="w-5 h-5 text-blue-600" />
+                        <Pin className="w-5 h-5 text-blue-400" />
                       ) : (
-                        <PinOff className="w-5 h-5 text-gray-400" />
+                        <PinOff className="w-5 h-5 text-slate-500" />
                       )}
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 flex items-center gap-2 flex-wrap">
+                      <h4 className="font-medium text-slate-100 flex items-center gap-2 flex-wrap">
                         {widget.name}
                         <Badge
                           variant="outline"
-                          className="text-xs font-normal"
+                          className="text-xs font-normal border-slate-600 text-slate-400"
                         >
                           {category}
                         </Badge>
                         {localPinnedWidgets.includes(widget.id) && (
                           <Badge
                             variant="default"
-                            className="text-xs bg-blue-600"
+                            className="text-xs bg-blue-600 text-white"
                           >
                             Pinned
                           </Badge>
                         )}
                       </h4>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-slate-400 mt-1">
                         {widget.description}
                       </p>
                     </div>
@@ -273,14 +274,15 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
           ))}
         </div>
 
-        <div className="flex justify-between items-center pt-6 border-t">
-          <p className="text-sm text-gray-600">
+        <div className="flex justify-between items-center pt-6 border-t border-slate-700">
+          <p className="text-sm text-slate-400">
             Click widgets to pin/unpin them on your dashboard
           </p>
           <div className="flex space-x-3">
             <Button
               variant="outline"
               onClick={handleCancel}
+              className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-slate-200"
               aria-label="Cancel widget selection"
             >
               <X className="w-4 h-4 mr-2" />
@@ -289,7 +291,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
             <Button
               onClick={handleSave}
               disabled={!hasChanges}
-              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white"
               aria-label="Save widget preferences"
             >
               <Save className="w-4 h-4 mr-2" />
