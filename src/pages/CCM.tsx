@@ -1,6 +1,8 @@
+
 import React, { useEffect, useState } from "react";
 import DataVisualizationWidget from "../components/widgets/DataVisualizationWidget";
 import DataTable from "../components/widgets/DataTable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const CCM = () => {
   // State for each widget
@@ -279,56 +281,83 @@ const CCM = () => {
 
   return (
     <div className="max-w-5xl mx-auto py-8">
-      <h2 className="text-2xl font-bold mb-6">CCM</h2>
-      {loading && <div>Loading CCM visualizations...</div>}
-      {error && <div className="text-red-500">{error}</div>}
-      {/* Controls Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Controls</h3>
-        <div className="mb-6">
-          <div className="inline-block align-top w-full md:w-auto">
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">CCM</h2>
+        <p className="text-lg text-gray-600 font-medium">
+          Comprehensive Control and Compliance Management dashboard with SLA analysis and KPI tracking.
+        </p>
+      </div>
+
+      {loading && (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-800 font-medium mb-6">
+          {error}
+        </div>
+      )}
+
+      <Tabs defaultValue="controls" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-8">
+          <TabsTrigger value="controls">Controls</TabsTrigger>
+          <TabsTrigger value="sla-analysis">SLA Analysis</TabsTrigger>
+          <TabsTrigger value="kpi">KPI</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="controls" className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Controls</h3>
+            <div className="mb-6">
+              <div className="inline-block align-top w-full md:w-auto">
+                <DataVisualizationWidget
+                  type="incomplete-bar"
+                  title="Controls identified count"
+                  data={controlsCount}
+                  maximized={false}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-1 min-w-0">
+                <TableWidget
+                  title="Controls description"
+                  data={controlsDesc}
+                  columns={getColumns(controlsDesc)}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <TableWidget
+                  title="Control definition"
+                  data={controlsDef}
+                  columns={getColumns(controlsDef)}
+                />
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sla-analysis" className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">SLA Analysis</h3>
             <DataVisualizationWidget
               type="incomplete-bar"
-              title="Controls identified count"
-              data={controlsCount}
+              title="Average Activity Duration (hrs)"
+              data={slaBarData}
               maximized={false}
             />
           </div>
-        </div>
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="flex-1 min-w-0">
-            <TableWidget
-              title="Controls description"
-              data={controlsDesc}
-              columns={getColumns(controlsDesc)}
-            />
+        </TabsContent>
+
+        <TabsContent value="kpi" className="space-y-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">KPI</h3>
+            <TableWidget title="KPI" data={kpi} columns={getColumns(kpi)} />
           </div>
-          <div className="flex-1 min-w-0">
-            <TableWidget
-              title="Control definition"
-              data={controlsDef}
-              columns={getColumns(controlsDef)}
-            />
-          </div>
-        </div>
-      </div>
-      {/* SLA Analysis Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          SLA Analysis
-        </h3>
-        <DataVisualizationWidget
-          type="incomplete-bar"
-          title="Average Activity Duration (hrs)"
-          data={slaBarData}
-          maximized={false}
-        />
-      </div>
-      {/* KPI Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">KPI</h3>
-        <TableWidget title="KPI" data={kpi} columns={getColumns(kpi)} />
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -1,7 +1,9 @@
+
 import React, { useEffect, useState } from "react";
 import DataVisualizationWidget from "../components/widgets/DataVisualizationWidget";
 import DataTable from "../components/widgets/DataTable";
 import InfoCard from "../components/widgets/InfoCard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const widgetConfigs = [
   {
@@ -32,7 +34,6 @@ const widgetConfigs = [
       if (data && data.data && Array.isArray(data.data)) data = data.data;
       if (!Array.isArray(data) && typeof data === "object" && data !== null)
         data = Object.values(data);
-      // Map to correct columns for display
       if (Array.isArray(data)) {
         data = data.map((row, idx) => ({
           pattern_no: idx + 1,
@@ -330,7 +331,6 @@ const widgetConfigs = [
     title: "Timing Violations Table",
     type: "table",
     fetch: async () => {
-      // Try API endpoint first, fallback to static file if not found
       let data;
       try {
         const res = await fetch(
@@ -339,7 +339,6 @@ const widgetConfigs = [
         if (!res.ok) throw new Error("API not found");
         data = await res.json();
       } catch (e) {
-        // fallback to static file
         const res = await fetch("/timingviolations_table.json");
         data = await res.json();
       }
@@ -373,7 +372,7 @@ const OutlierAnalysis = () => {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    // Failure Patterns section
+    
     Promise.all(
       widgetConfigs.map(async (w) => {
         try {
@@ -387,7 +386,6 @@ const OutlierAnalysis = () => {
       .then(setFailureWidgets)
       .catch((e) => setError("Failed to load visualizations."));
 
-    // Resource Performance
     fetch("http://34.60.217.109/resourceperformance")
       .then((res) => res.json())
       .then((data) =>
@@ -395,7 +393,6 @@ const OutlierAnalysis = () => {
       )
       .catch(() => setResourcePerformance([]));
 
-    // Timing Analysis
     fetch("http://34.60.217.109/timinganalysis")
       .then((res) => res.json())
       .then((data) =>
@@ -403,7 +400,6 @@ const OutlierAnalysis = () => {
       )
       .catch(() => setTimingAnalysis([]));
 
-    // Case Complexity Table
     fetch("http://34.60.217.109/casecomplexity?page=1&size=100")
       .then((res) => res.json())
       .then((data) =>
@@ -411,7 +407,6 @@ const OutlierAnalysis = () => {
       )
       .catch(() => setCaseComplexity([]));
 
-    // Activity Pair Threshold Table
     fetch("http://34.60.217.109/activitypairthreshold")
       .then((res) => res.json())
       .then((data) =>
@@ -422,13 +417,11 @@ const OutlierAnalysis = () => {
     setLoading(false);
   }, []);
 
-  // Remove all SOP Deviation Patterns tables from widgetConfigs except one, and ensure only one is rendered in the Failure Patterns section
   const filteredFailureWidgets = failureWidgets.filter(
     (w) =>
       w.id !== "sop-patterns" && w.id !== "sop-low-percentage-patterns-table"
   );
 
-  // Only render the correct SOP Deviation Patterns table ONCE, with correct columns and data
   const sopPatternsWidget = failureWidgets.find((w) => w.id === "sop-patterns");
   let sopPatternsTable = null;
   if (sopPatternsWidget) {
@@ -465,9 +458,8 @@ const OutlierAnalysis = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-8 space-y-10">
-      {/* Page Header */}
-      <div className="mb-12">
+    <div className="max-w-7xl mx-auto py-8">
+      <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-gray-900 via-blue-800 to-gray-900 bg-clip-text text-transparent">
           Outlier Analysis
         </h1>
@@ -476,107 +468,122 @@ const OutlierAnalysis = () => {
         </p>
       </div>
 
-      {/* Failure Patterns Section */}
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/60 p-10 mb-10">
-        <div className="flex items-center mb-8">
-          <div className="w-2 h-8 bg-gradient-to-b from-red-500 to-orange-500 rounded-full mr-4"></div>
-          <h2 className="text-2xl font-bold text-gray-900">Failure Patterns</h2>
+      {loading && (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
-        {loading && (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-800 font-medium">
-            {error}
-          </div>
-        )}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-          {filteredFailureWidgets.map((w) => (
-            <div key={w.id} className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
-              {w.render(w.data, w.title)}
+      )}
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-800 font-medium mb-6">
+          {error}
+        </div>
+      )}
+
+      <Tabs defaultValue="failure-patterns" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsTrigger value="failure-patterns">Failure Patterns</TabsTrigger>
+          <TabsTrigger value="resource-performance">Resource Performance</TabsTrigger>
+          <TabsTrigger value="timing-analysis">Timing Analysis</TabsTrigger>
+          <TabsTrigger value="case-complexity">Case Complexity</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="failure-patterns" className="space-y-6">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/60 p-10">
+            <div className="flex items-center mb-8">
+              <div className="w-2 h-8 bg-gradient-to-b from-red-500 to-orange-500 rounded-full mr-4"></div>
+              <h2 className="text-2xl font-bold text-gray-900">Failure Patterns</h2>
             </div>
-          ))}
-        </div>
-        {sopPatternsTable && (
-          <div className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
-            {sopPatternsTable}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+              {filteredFailureWidgets.map((w) => (
+                <div key={w.id} className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
+                  {w.render(w.data, w.title)}
+                </div>
+              ))}
+            </div>
+            {sopPatternsTable && (
+              <div className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
+                {sopPatternsTable}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </TabsContent>
 
-      {/* Resource Performance Section */}
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/60 p-10 mb-10">
-        <div className="flex items-center mb-8">
-          <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full mr-4"></div>
-          <h2 className="text-2xl font-bold text-gray-900">Resource Performance</h2>
-        </div>
-        <div className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
-          <DataVisualizationWidget
-            type="resource-performance-table"
-            title="Resource Performance Analysis"
-            data={resourcePerformance}
-            maximized
-          />
-        </div>
-      </div>
-
-      {/* Timing Analysis Section */}
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/60 p-10 mb-10">
-        <div className="flex items-center mb-8">
-          <div className="w-2 h-8 bg-gradient-to-b from-green-500 to-emerald-500 rounded-full mr-4"></div>
-          <h2 className="text-2xl font-bold text-gray-900">Timing Analysis</h2>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
-            <DataVisualizationWidget
-              type="timing-analysis-table"
-              title="Timing Analysis Overview"
-              data={timingAnalysis}
-              maximized
-            />
+        <TabsContent value="resource-performance" className="space-y-6">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/60 p-10">
+            <div className="flex items-center mb-8">
+              <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full mr-4"></div>
+              <h2 className="text-2xl font-bold text-gray-900">Resource Performance</h2>
+            </div>
+            <div className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
+              <DataVisualizationWidget
+                type="resource-performance-table"
+                title="Resource Performance Analysis"
+                data={resourcePerformance}
+                maximized
+              />
+            </div>
           </div>
-          <div className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
-            <DataTable
-              title="Activity Pair Threshold"
-              data={activityPairThreshold}
-              columns={
-                activityPairThreshold.length > 0
-                  ? Object.keys(activityPairThreshold[0]).map((key) => ({
-                      key,
-                      label: key,
-                    }))
-                  : []
-              }
-              maximized
-            />
-          </div>
-        </div>
-      </div>
+        </TabsContent>
 
-      {/* Case Complexity Section */}
-      <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/60 p-10 mb-10">
-        <div className="flex items-center mb-8">
-          <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full mr-4"></div>
-          <h2 className="text-2xl font-bold text-gray-900">Case Complexity</h2>
-        </div>
-        <div className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
-          <DataTable
-            title="Case Complexity Analysis"
-            data={caseComplexity}
-            columns={
-              caseComplexity.length > 0
-                ? Object.keys(caseComplexity[0]).map((key) => ({
-                    key,
-                    label: key,
-                  }))
-                : []
-            }
-            maximized
-          />
-        </div>
-      </div>
+        <TabsContent value="timing-analysis" className="space-y-6">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/60 p-10">
+            <div className="flex items-center mb-8">
+              <div className="w-2 h-8 bg-gradient-to-b from-green-500 to-emerald-500 rounded-full mr-4"></div>
+              <h2 className="text-2xl font-bold text-gray-900">Timing Analysis</h2>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
+                <DataVisualizationWidget
+                  type="timing-analysis-table"
+                  title="Timing Analysis Overview"
+                  data={timingAnalysis}
+                  maximized
+                />
+              </div>
+              <div className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
+                <DataTable
+                  title="Activity Pair Threshold"
+                  data={activityPairThreshold}
+                  columns={
+                    activityPairThreshold.length > 0
+                      ? Object.keys(activityPairThreshold[0]).map((key) => ({
+                          key,
+                          label: key,
+                        }))
+                      : []
+                  }
+                  maximized
+                />
+              </div>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="case-complexity" className="space-y-6">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-200/60 p-10">
+            <div className="flex items-center mb-8">
+              <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full mr-4"></div>
+              <h2 className="text-2xl font-bold text-gray-900">Case Complexity</h2>
+            </div>
+            <div className="bg-gray-50/50 rounded-xl p-6 border border-gray-100">
+              <DataTable
+                title="Case Complexity Analysis"
+                data={caseComplexity}
+                columns={
+                  caseComplexity.length > 0
+                    ? Object.keys(caseComplexity[0]).map((key) => ({
+                        key,
+                        label: key,
+                      }))
+                    : []
+                }
+                maximized
+              />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
