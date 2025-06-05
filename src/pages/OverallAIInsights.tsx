@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -11,47 +12,47 @@ const endpoints = [
   },
   {
     key: "sop",
-    label: "SOP Deviation AI Insights",
+    label: "SOP Deviation",
     url: "http://34.60.217.109/aiinsights/sop",
   },
   {
     key: "incomplete",
-    label: "Incomplete Cases AI Insights",
+    label: "Incomplete Cases",
     url: "http://34.60.217.109/aiinsights/incomplete",
   },
   {
     key: "longrunning",
-    label: "Long Running Cases AI Insights",
+    label: "Long Running Cases",
     url: "http://34.60.217.109/aiinsights/longrunning",
   },
   {
     key: "reworked",
-    label: "Reworked Activities AI Insights",
+    label: "Reworked Activities",
     url: "http://34.60.217.109/aiinsights/reworked",
   },
   {
     key: "resourceswitches",
-    label: "Resource Switches AI Insights",
+    label: "Resource Switches",
     url: "http://34.60.217.109/aiinsights/resourceswitches",
   },
   {
     key: "timingviolation",
-    label: "Timing Violations AI Insights",
+    label: "Timing Violations",
     url: "http://34.60.217.109/aiinsights/timingviolation",
   },
   {
     key: "casecomplexity",
-    label: "Case Complexity AI Insights",
+    label: "Case Complexity",
     url: "http://34.60.217.109/aiinsights/casecomplexity",
   },
   {
     key: "resourceperformance",
-    label: "Resource Performance AI Insights",
+    label: "Resource Performance",
     url: "http://34.60.217.109/aiinsights/resourceperformance",
   },
   {
     key: "timinganalysis",
-    label: "Timing Analysis AI Insights",
+    label: "Timing Analysis",
     url: "http://34.60.217.109/aiinsights/timinganalysis",
   },
 ];
@@ -325,53 +326,66 @@ const TabContent: React.FC<{ url: string; label: string }> = ({
   }, [url]);
 
   return (
-    <Card className="mt-4">
-      <CardHeader>
-        <CardTitle>{label}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="flex items-center space-x-2 text-gray-500">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Loading...</span>
-          </div>
-        ) : error ? (
-          <div className="text-red-500">{error}</div>
-        ) : (
-          renderAIContent(data, label)
-        )}
-      </CardContent>
-    </Card>
+    <div className="w-full">
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold text-gray-900">{label}</CardTitle>
+        </CardHeader>
+        <CardContent className="w-full">
+          {loading ? (
+            <div className="flex items-center justify-center py-8 space-x-2 text-gray-500">
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span>Loading...</span>
+            </div>
+          ) : error ? (
+            <div className="text-red-500 text-center py-8">{error}</div>
+          ) : (
+            <div className="w-full max-w-none">
+              {renderAIContent(data, label)}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
 const OverallAIInsights: React.FC = () => {
   const [tab, setTab] = useState(endpoints[0].key);
+  
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Overall AI Insights</h1>
+    <div className="w-full max-w-7xl mx-auto py-8 px-4">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">Overall AI Insights</h1>
+        <p className="text-lg text-gray-600">
+          Comprehensive AI-driven analysis and insights across all process areas
+        </p>
+      </div>
+      
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="flex flex-wrap gap-2 mb-4 overflow-x-auto scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-transparent">
+        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 w-full mb-8 h-auto p-2 bg-gray-100 rounded-lg">
           {endpoints.map((ep) => (
             <TabsTrigger
               key={ep.key}
               value={ep.key}
-              className={`capitalize whitespace-nowrap ${
-                tab === ep.key
-                  ? "bg-blue-100 text-blue-700 font-semibold shadow"
-                  : ""
-              }`}
-              style={{ minWidth: 180 }}
+              className="text-xs sm:text-sm font-medium px-2 py-3 rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm hover:bg-gray-50"
             >
-              {ep.label}
+              <span className="text-center leading-tight">{ep.label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
-        {endpoints.map((ep) => (
-          <TabsContent key={ep.key} value={ep.key} className="w-full">
-            {tab === ep.key && <TabContent url={ep.url} label={ep.label} />}
-          </TabsContent>
-        ))}
+        
+        <div className="w-full">
+          {endpoints.map((ep) => (
+            <TabsContent key={ep.key} value={ep.key} className="w-full mt-0">
+              {tab === ep.key && (
+                <div className="w-full">
+                  <TabContent url={ep.url} label={ep.label} />
+                </div>
+              )}
+            </TabsContent>
+          ))}
+        </div>
       </Tabs>
     </div>
   );
