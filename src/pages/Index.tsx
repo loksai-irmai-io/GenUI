@@ -1,11 +1,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import WidgetSelectionModal from "@/components/WidgetSelectionModal";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Settings } from "lucide-react";
 
 // Import widget components
 import ChartWidget from "@/components/widgets/ChartWidget";
@@ -18,7 +16,6 @@ import DataVisualizationWidget from "@/components/widgets/DataVisualizationWidge
 
 const Dashboard: React.FC = () => {
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
-  const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
   const [availableWidgets, setAvailableWidgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -46,7 +43,6 @@ const Dashboard: React.FC = () => {
 
       if (data) {
         setSelectedWidgets(data.selected_widgets || []);
-        setPinnedWidgets(data.pinned_widgets || []);
       }
     } catch (error) {
       console.error("Error fetching user preferences:", error);
@@ -72,7 +68,7 @@ const Dashboard: React.FC = () => {
 
   const renderWidget = (widget: any) => {
     const widgetProps = {
-      key: widget.id,
+      key: String(widget.id), // Convert to string to fix TypeScript error
       title: widget.widget_name,
       description: widget.description,
     };
@@ -94,7 +90,7 @@ const Dashboard: React.FC = () => {
         return <DataVisualizationWidget {...widgetProps} type="chart" data={[]} />;
       default:
         return (
-          <Card key={widget.id} className="p-6">
+          <Card key={String(widget.id)} className="p-6">
             <CardHeader>
               <CardTitle>{widget.widget_name}</CardTitle>
             </CardHeader>
@@ -107,7 +103,7 @@ const Dashboard: React.FC = () => {
   };
 
   const selectedWidgetData = availableWidgets.filter(widget => 
-    selectedWidgets.includes(widget.id)
+    selectedWidgets.includes(String(widget.id)) // Convert to string for comparison
   );
 
   if (loading) {
