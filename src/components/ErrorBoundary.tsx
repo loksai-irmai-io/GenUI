@@ -2,6 +2,7 @@ import React from "react";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
+  isWidget?: boolean;
 }
 
 interface ErrorBoundaryState {
@@ -28,9 +29,28 @@ class ErrorBoundary extends React.Component<
     // eslint-disable-next-line no-console
     console.error("[ErrorBoundary] Caught error:", error, errorInfo);
   }
-
   render() {
     if (this.state.hasError) {
+      // Simply return an error UI without DOM queries that might fail during SSR
+      // or cause issues during initial render
+      const isWidget = this.props.isWidget || false;
+
+      if (isWidget) {
+        return (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="text-gray-600 text-center">
+              <p className="text-red-500 font-medium mb-1">
+                Error displaying content
+              </p>
+              <p className="text-sm text-gray-500">
+                The component couldn't be rendered correctly
+              </p>
+            </div>
+          </div>
+        );
+      }
+
+      // Default full-screen error UI
       return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-blue-50 p-4">
           <div className="enterprise-card max-w-lg w-full text-center animate-fade-in">

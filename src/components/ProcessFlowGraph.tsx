@@ -1,39 +1,45 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import ReactFlow, {
   Background,
   Controls,
   MarkerType,
   useNodesState,
   useEdgesState,
+  Node,
+  Edge,
 } from "reactflow";
 import "reactflow/dist/style.css";
 
-const steps = [
+// Default steps if no data is provided
+const defaultSteps = [
   "Application Submission",
   "Initial Assessment",
-  "Rejected",
-  "Initial Assessment",
-  "Rejected",
   "Pre-Approval",
   "Appraisal Request",
   "Valuation Accepted",
   "Underwriting Approved",
   "Final Approval",
-  "Signing of Loan Agreement",
   "Loan Funding",
   "Disbursement of Funds",
-  "Loan Closure",
 ];
 
-const patternCounts = [
-  6764, 3100, 2803, 2306, 1604, 1289, 1071, 876, 838, 580, 1, 1, 1,
-];
+const defaultPatternCounts = [6764, 3100, 2306, 1289, 1071, 876, 838, 580, 300];
+
+// Define interface for graph data
+interface GraphData {
+  nodes: any[];
+  edges: any[];
+}
+
+interface ProcessFlowGraphProps {
+  data?: GraphData;
+}
 
 const nodeGap = 110;
 const nodeX = 100;
 const nodeYStart = 40;
 
-const nodes = steps.map((label, i) => ({
+const nodes = defaultSteps.map((label, i) => ({
   id: `n${i}`,
   data: { label },
   position: { x: nodeX, y: nodeYStart + i * nodeGap },
@@ -41,7 +47,7 @@ const nodes = steps.map((label, i) => ({
   selectable: false,
 }));
 
-const edges = steps.slice(0, -1).map((_, i) => ({
+const edges = defaultSteps.slice(0, -1).map((_, i) => ({
   id: `e${i}`,
   source: `n${i}`,
   target: `n${i + 1}`,
@@ -58,7 +64,7 @@ const edges = steps.slice(0, -1).map((_, i) => ({
     width: 24,
     height: 24,
   },
-  label: patternCounts[i] ? `${patternCounts[i]}` : "",
+  label: defaultPatternCounts[i] ? `${defaultPatternCounts[i]}` : "",
   labelStyle: {
     fill: "#d77",
     fontWeight: 600,

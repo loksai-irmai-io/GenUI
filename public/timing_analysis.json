@@ -1,0 +1,16 @@
+[
+  {"Activity": "Application Submission", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 21234, "Violations_After": 0},
+  {"Activity": "Initial Assessment", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 25467, "Violations_After": 0},
+  {"Activity": "Pre-Approval", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 15828, "Violations_After": 0},
+  {"Activity": "Appraisal Request", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 19205, "Violations_After": 0},
+  {"Activity": "Valuation Accepted", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.01, "Total_Events": 18134, "Violations_After": 2},
+  {"Activity": "Underwriting Approved", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 17552, "Violations_After": 0},
+  {"Activity": "Final Approval", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 17552, "Violations_After": 0},
+  {"Activity": "Signing of Loan Agreement", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 17552, "Violations_After": 0},
+  {"Activity": "Loan Funding", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 17552, "Violations_After": 0},
+  {"Activity": "Disbursement of Funds", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 17552, "Violations_After": 0},
+  {"Activity": "Valuation Issues", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 10, "Violations_After": 0},
+  {"Activity": "Rejected", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 11012, "Violations_After": 0},
+  {"Activity": "Additional Info Required", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 3475, "Violations_After": 0},
+  {"Activity": "Underwriting Rejected", "Score": 0, "Outlier": "No", "Violation_Rate_(%)": 0.0, "Total_Events": 582, "Violations_After": 0}
+]

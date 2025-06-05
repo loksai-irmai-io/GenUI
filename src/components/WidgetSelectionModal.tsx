@@ -20,18 +20,6 @@ interface WidgetSelectionModalProps {
 
 // Comprehensive list of all available widgets organized by category
 const CATEGORY_WIDGETS = {
-  "Outlier Analysis": [
-    {
-      id: "timing-analysis",
-      name: "Timing Analysis",
-      description: "Analyze timing patterns and deviations",
-    },
-    {
-      id: "resource-performance",
-      name: "Resource Performance",
-      description: "Monitor resource efficiency and utilization",
-    },
-  ],
   "Process Discovery": [
     {
       id: "object-lifecycle",
@@ -39,11 +27,124 @@ const CATEGORY_WIDGETS = {
       description: "Track object lifecycle and transitions",
     },
   ],
+  "Outlier Analysis": [
+    {
+      id: "all-counts",
+      name: "All Failure Patterns Count",
+      description: "Count of all identified process failure patterns",
+    },
+    {
+      id: "sop-patterns",
+      name: "SOP Deviation Patterns",
+      description: "Patterns of standard operating procedure deviations",
+    },
+    {
+      id: "sop-low-percentage-count-bar",
+      name: "SOP Deviation Count",
+      description: "Count of low percentage SOP deviations",
+    },
+    {
+      id: "incomplete-cases-count",
+      name: "Incomplete Cases Count",
+      description: "Count of cases that remain incomplete",
+    },
+    {
+      id: "incomplete-case-table",
+      name: "Incomplete Cases Table",
+      description: "Detailed table of all incomplete cases",
+    },
+    {
+      id: "long-running-cases-count",
+      name: "Long-Running Cases Count",
+      description: "Count of cases taking longer than expected",
+    },
+    {
+      id: "long-running-table",
+      name: "Long-Running Table",
+      description: "Detailed table of all long-running cases",
+    },
+    {
+      id: "resource-switches-count",
+      name: "Resource Switches Count",
+      description: "Count of resource handovers in processes",
+    },
+    {
+      id: "resource-switches-count-table",
+      name: "Resource Switches Count Table",
+      description: "Table of resource switch counts by process",
+    },
+    {
+      id: "resource-switches-table",
+      name: "Resource Switches Table",
+      description: "Detailed table of all resource switches",
+    },
+    {
+      id: "rework-activities-count",
+      name: "Rework Activities Count",
+      description: "Count of activities that required rework",
+    },
+    {
+      id: "reworked-activities-table",
+      name: "Reworked Activities Table",
+      description: "Detailed table of all reworked activities",
+    },
+    {
+      id: "timing-violations-count",
+      name: "Timing Violations Count",
+      description: "Count of identified timing violations",
+    },
+    {
+      id: "timing-violations-table",
+      name: "Timing Violations Table",
+      description: "Detailed table of all timing violations",
+    },
+    {
+      id: "resource-performance",
+      name: "Resource Performance",
+      description:
+        "Performance analysis of resources by efficiency and utilization",
+    },
+    {
+      id: "timing-analysis",
+      name: "Timing Analysis Overview",
+      description: "Overview of timing patterns and deviations",
+    },
+    {
+      id: "activity-pair-threshold",
+      name: "Activity Pair Threshold",
+      description: "Analysis of threshold times between activity pairs",
+    },
+    {
+      id: "case-complexity-table",
+      name: "Case Complexity Analysis",
+      description: "Analysis of case complexity factors",
+    },
+  ],
   CCM: [
     {
-      id: "process-failure-patterns-distribution",
-      name: "Process Failure Patterns",
-      description: "Analyze failure patterns and distributions",
+      id: "controls-identified-count",
+      name: "Controls Identified Count",
+      description: "Count of identified controls in the process",
+    },
+    {
+      id: "controls-description",
+      name: "Controls Description",
+      description: "Detailed description of controls",
+    },
+    {
+      id: "control-definition",
+      name: "Control Definition",
+      description: "Definition of controls and their parameters",
+    },
+    {
+      id: "sla-analysis-bar",
+      name: "SLA Analysis",
+      description: "Service Level Agreement analysis and performance metrics",
+    },
+    {
+      id: "kpi",
+      name: "KPI",
+      description: "Key Performance Indicators for process management",
     },
   ],
 };

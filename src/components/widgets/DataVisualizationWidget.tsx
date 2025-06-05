@@ -1,5 +1,5 @@
-
 import React from "react";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import {
   BarChart,
   Bar,
@@ -18,10 +18,53 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+interface GraphNode {
+  id: string;
+  type?: string;
+  data?: {
+    label?: string;
+    [key: string]: any;
+  };
+  position?: {
+    x: number;
+    y: number;
+  };
+  [key: string]: any;
+}
+
+interface GraphEdge {
+  id?: string;
+  source: string;
+  target: string;
+  type?: string;
+  label?: string;
+  data?: {
+    [key: string]: any;
+  };
+  [key: string]: any;
+}
+
+interface GraphData {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+}
+
+interface BarChartData {
+  name: string;
+  value: number;
+  [key: string]: any;
+}
+
+interface TableData {
+  [key: string]: any;
+}
+
+type WidgetData = BarChartData[] | TableData[] | GraphData;
+
 interface DataVisualizationWidgetProps {
   type: string;
   title: string;
-  data: any[];
+  data: WidgetData;
   className?: string;
   maximized?: boolean;
 }
@@ -35,15 +78,287 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
 }) => {
   const renderVisualization = () => {
     // --- Table types: render generic table for any *-table type ---
-    if (type.endsWith("-table")) {
-      if (!Array.isArray(data) || data.length === 0) {
+    if (type.endsWith("-table") || type === "kpi-table") {
+      // Validate input data
+      if (!Array.isArray(data)) {
+        return (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            Invalid data format for table
+          </div>
+        );
+      }
+
+      if (data.length === 0) {
         return (
           <div className="flex items-center justify-center h-full text-gray-500">
             No data available
           </div>
         );
       }
-      const columns = Object.keys(data[0] || {});
+
+      // Check if all objects in the array have undefined values
+      const firstRow = data[0];
+      if (!firstRow || typeof firstRow !== "object") {
+        return (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            Invalid data structure for table
+          </div>
+        );
+      }
+
+      const allUndefined = Object.values(firstRow).every(
+        (val) => val === undefined || val === null
+      );
+
+      if (allUndefined) {
+        return (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            Table contains undefined values only
+          </div>
+        );
+      }
+
+      // Clean up data - replace undefined/null values
+      const cleanedData = data.map((row) => {
+        if (!row || typeof row !== "object") return row;
+        const cleanRow = { ...row };
+        Object.keys(cleanRow).forEach((key) => {
+          if (cleanRow[key] === undefined || cleanRow[key] === null) {
+            cleanRow[key] = "-";
+          }
+        });
+        return cleanRow;
+      });
+
+      const columns = Object.keys(cleanedData[0] || {});
+      return (
+        <div
+          className={
+            maximized
+              ? "w-full overflow-x-auto max-w-full"
+              : "w-full overflow-x-auto max-w-[32rem]"
+          }
+        >
+          <Table className="w-full">
+            <TableHeader className="bg-gray-50 dark:bg-gray-800">
+              <TableRow>
+                {columns.map((col) => (
+                  <TableHead
+                    key={col}
+                    className="px-2 py-1 text-xs font-medium whitespace-nowrap"
+                  >
+                    {col
+                      .replace(/_/g, " ")
+                      .replace(/\b\w/g, (l) => l.toUpperCase())}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cleanedData.map((row, idx) => (
+                <TableRow
+                  key={idx}
+                  className="border-b border-gray-100 dark:border-gray-700"
+                >
+                  {columns.map((col) => (
+                    <TableCell key={col} className="px-2 py-1 text-xs">
+                      {(() => {
+                        const value = row[col];
+                        // Handle undefined/null values
+                        if (value === undefined || value === null) {
+                          return "-";
+                        }
+                        // Handle object values (including arrays)
+                        if (typeof value === "object") {
+                          try {
+                            return JSON.stringify(value);
+                          } catch (e) {
+                            return "Complex Object";
+                          }
+                        }
+                        // Handle other value types
+                        return String(value);
+                      })()}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      );
+    } // --- Default bar chart for most widgets ---
+    if (
+      type === "bar" ||
+      type.endsWith("-bar") ||
+      type === "process-failure-patterns-bar" ||
+      type === "sla-analysis-bar"
+    ) {
+      // First, validate and clean the data
+      if (!Array.isArray(data)) {
+        return (
+          <div className="flex items-center justify-center h-[400px] text-gray-500">
+            Invalid data format for bar chart
+          </div>
+        );
+      }
+
+      // Filter out invalid data items
+      let processedData = data.filter(
+        (item) =>
+          item &&
+          typeof item === "object" &&
+          item.name !== undefined &&
+          item.name !== null &&
+          item.value !== undefined &&
+          item.value !== null
+      );
+
+      // Convert any string values to numbers if possible
+      processedData = processedData.map((item) => ({
+        name: item.name,
+        value:
+          typeof item.value === "string" && !isNaN(Number(item.value))
+            ? Number(item.value)
+            : item.value,
+      }));
+
+      // Final check for empty data
+      if (processedData.length === 0) {
+        return (
+          <div className="flex items-center justify-center h-[400px] text-gray-500">
+            No valid data available for chart visualization
+          </div>
+        );
+      }
+
+      return (
+        <div className="w-full h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={processedData}
+              margin={{ top: 16, right: 16, left: 8, bottom: 40 }}
+              barCategoryGap={40}
+            >
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis
+                dataKey="name"
+                angle={-20}
+                textAnchor="end"
+                height={80}
+                interval={0}
+                tick={{ fontSize: 14 }}
+              />
+              <YAxis allowDecimals={false} tick={{ fontSize: 14 }} />
+              <Tooltip
+                formatter={(value) => [value, "Value"]}
+                labelFormatter={(name) => `${name}`}
+              />
+              <Bar
+                dataKey="value"
+                fill="#2563eb"
+                minPointSize={4}
+                isAnimationActive={false}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    } // --- Special case: object-lifecycle ---
+    if (type === "object-lifecycle") {
+      // Type guard to verify if data is GraphData
+      const isGraphData = (value: any): value is GraphData => {
+        return (
+          value &&
+          typeof value === "object" &&
+          "nodes" in value &&
+          "edges" in value &&
+          Array.isArray(value.nodes) &&
+          Array.isArray(value.edges)
+        );
+      };
+
+      if (!isGraphData(data) || data.nodes.length === 0) {
+        return (
+          <div className="flex items-center justify-center h-[400px] text-gray-500">
+            No lifecycle data available
+          </div>
+        );
+      }
+
+      // Import our dedicated data-compatible component
+      const ProcessFlowGraphWithData = React.lazy(
+        () => import("@/components/ProcessFlowGraphWithData")
+      );
+      return (
+        <div className="w-full h-[400px]">
+          <React.Suspense
+            fallback={
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="text-gray-600">
+                  <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <p>Loading process flow graph...</p>
+                </div>
+              </div>
+            }
+          >
+            {" "}
+            <ErrorBoundary isWidget={true}>
+              <ProcessFlowGraphWithData data={data} />
+            </ErrorBoundary>
+          </React.Suspense>
+        </div>
+      );
+    } // --- Special case: activity-pair-threshold ---
+    if (type === "activity-pair-threshold") {
+      // Check for missing or invalid data
+      if (
+        !Array.isArray(data) ||
+        data.length === 0 ||
+        (typeof data === "object" && Object.keys(data).length === 0)
+      ) {
+        return (
+          <div className="flex items-center justify-center h-[400px] text-gray-500">
+            No threshold data available
+          </div>
+        );
+      }
+
+      // Check for valid structure in data
+      const hasData = data.some(
+        (item) =>
+          item && typeof item === "object" && Object.keys(item).length > 0
+      );
+
+      if (!hasData) {
+        return (
+          <div className="flex items-center justify-center h-[400px] text-gray-500">
+            No valid threshold data available
+          </div>
+        );
+      }
+
+      // Check for undefined values in the data
+      const hasUndefinedValues = data.some((item) =>
+        Object.values(item).some((val) => val === undefined || val === null)
+      );
+
+      if (hasUndefinedValues) {
+        // Clean up the data - replace undefined values with "-"
+        data = data.map((item) => {
+          const cleanItem = { ...item };
+          Object.keys(cleanItem).forEach((key) => {
+            if (cleanItem[key] === undefined || cleanItem[key] === null) {
+              cleanItem[key] = "-";
+            }
+          });
+          return cleanItem;
+        });
+      }
+
+      // Display actual threshold data as a table
+      const columns = data[0] ? Object.keys(data[0]) : [];
+
       return (
         <div
           className={
@@ -77,72 +392,13 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
                     <TableCell key={col} className="px-2 py-1 text-xs">
                       {typeof row[col] === "object" && row[col] !== null
                         ? JSON.stringify(row[col])
-                        : String(row[col])}
+                        : String(row[col] ?? "-")}
                     </TableCell>
                   ))}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
-      );
-    }
-
-    // --- Default bar chart for most widgets ---
-    if (type === "bar" || type.endsWith("-bar") || type === "process-failure-patterns-bar" || type === "sla-analysis-bar") {
-      let processedData = Array.isArray(data) ? data : [];
-      if (processedData.length === 0) {
-        processedData = [{ name: "No Data", value: 0 }];
-      }
-      return (
-        <div className="w-full h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={processedData}
-              margin={{ top: 16, right: 16, left: 8, bottom: 40 }}
-              barCategoryGap={40}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="name"
-                angle={-20}
-                textAnchor="end"
-                height={80}
-                interval={0}
-                tick={{ fontSize: 14 }}
-              />
-              <YAxis allowDecimals={false} tick={{ fontSize: 14 }} />
-              <Tooltip />
-              <Bar
-                dataKey="value"
-                fill="#2563eb"
-                minPointSize={4}
-                isAnimationActive={false}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      );
-    }
-
-    // --- Special case: object-lifecycle ---
-    if (type === "object-lifecycle") {
-      return (
-        <div className="w-full h-[400px] flex items-center justify-center">
-          <span className="text-blue-700 font-semibold">
-            Object Lifecycle Graph Placeholder
-          </span>
-        </div>
-      );
-    }
-
-    // --- Special case: activity-pair-threshold ---
-    if (type === "activity-pair-threshold") {
-      return (
-        <div className="w-full h-[400px] flex items-center justify-center">
-          <span className="text-blue-700 font-semibold">
-            Activity Pair Threshold Visualization Placeholder
-          </span>
         </div>
       );
     }

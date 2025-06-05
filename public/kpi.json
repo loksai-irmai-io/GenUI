@@ -1,0 +1,37 @@
+[
+  {
+    "KPI_Name": "Average Loan Amount",
+    "Definition": "The average value of loans processed.",
+    "Formula_/_How_to_Calculate": "AVG('Loan Amount')",
+    "Calculated_Value_(from_sample)": 406427,
+    "Why_it_is_important": "Indicates the typical size of loans being handled, useful for resource allocation and financial planning."
+  },
+  {
+    "KPI_Name": "Application Processing Time",
+    "Definition": "The average time taken to process a mortgage application from submission to final approval.",
+    "Formula_/_How_to_Calculate": "Calculation complex for sample; requires calculating the time difference between 'Application Submission' and 'Final Approval' timestamps for each case_id, then averaging these differences.",
+    "Calculated_Value_(from_sample)": "Calculation complex for sample",
+    "Why_it_is_important": "Measures the efficiency of the mortgage processing workflow. Long processing times can indicate bottlenecks or inefficiencies that need addressing."
+  },
+  {
+    "KPI_Name": "Loan Approval Rate",
+    "Definition": "The percentage of mortgage applications that are approved.",
+    "Formula_/_How_to_Calculate": "(COUNT(DISTINCT case_id WHERE Reasons for Rejection IS NULL) / COUNT(DISTINCT case_id)) * 100",
+    "Calculated_Value_(from_sample)": "100% (Based on the sample data, all applications were approved)",
+    "Why_it_is_important": "A key indicator of the success rate of the mortgage application process. A low approval rate suggests potential issues with the application process or applicant eligibility criteria."
+  },
+  {
+    "KPI_Name": "Average Credit Score of Approved Applicants",
+    "Definition": "The average credit score of applicants whose applications were approved.",
+    "Formula_/_How_to_Calculate": "AVG('Credit Score' WHERE Reasons for Rejection IS NULL)",
+    "Calculated_Value_(from_sample)": 695,
+    "Why_it_is_important": "Provides insights into the creditworthiness of approved applicants and can be used to assess risk."
+  },
+  {
+    "KPI_Name": "Rejection Rate by Reason",
+    "Definition": "The percentage of rejected applications for each reason listed in 'Reasons for Rejection'.",
+    "Formula_/_How_to_Calculate": "For each distinct value in 'Reasons for Rejection', calculate (COUNT(case_id WHERE Reasons for Rejection = specific reason) / COUNT(DISTINCT case_id)) * 100",
+    "Calculated_Value_(from_sample)": "0% (No rejections in sample data)",
+    "Why_it_is_important": "Identifies the most common reasons for application rejection, allowing for targeted improvements in the application process or applicant screening."
+  }
+]
