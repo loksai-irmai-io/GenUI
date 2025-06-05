@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { User, LogOut, ChevronDown, Settings } from "lucide-react";
@@ -10,6 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
@@ -27,6 +33,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
   const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
   const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
+  const [selectedProcess, setSelectedProcess] = useState<string>("Mortgage");
 
   // Check if current page is Dashboard
   const isDashboardPage = location.pathname === "/" || location.pathname === "";
@@ -85,10 +92,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
         description: "Your widget preferences have been updated successfully.",
       });
 
-      // Trigger a refresh of the dashboard
       onSelectWidgets();
-      
-      // Force page reload to ensure widgets display
       window.location.reload();
     } catch (error) {
       console.error("Error saving widget preferences:", error);
@@ -98,6 +102,14 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleProcessSelect = (value: string) => {
+    setSelectedProcess(value);
+    toast({
+      title: "Process Data Loaded",
+      description: `Loaded ${value} data`,
+    });
   };
 
   const handleSignOut = async () => {
@@ -131,10 +143,25 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
                 className="w-16 h-16 object-contain"
               />
             </div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent tracking-tight">GenUI</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent tracking-tight">GenUI</h1>
           </div>
 
           <div className="flex items-center space-x-3">
+            {/* Select Process Dropdown */}
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-slate-300 hidden sm:inline">Process:</span>
+              <Select value={selectedProcess} onValueChange={handleProcessSelect}>
+                <SelectTrigger className="w-32 sm:w-40 bg-slate-800 hover:bg-slate-700 border-slate-600 text-slate-200 focus:ring-blue-400">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-slate-600 text-slate-200">
+                  <SelectItem value="Mortgage" className="text-slate-200 hover:bg-slate-700 focus:bg-slate-700 focus:text-slate-100">Mortgage</SelectItem>
+                  <SelectItem value="Claims" className="text-slate-200 hover:bg-slate-700 focus:bg-slate-700 focus:text-slate-100">Claims</SelectItem>
+                  <SelectItem value="Receivables" className="text-slate-200 hover:bg-slate-700 focus:bg-slate-700 focus:text-slate-100">Receivables</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Configure Widgets Button - Only visible on Dashboard page */}
             {isDashboardPage && (
               <Button
@@ -175,7 +202,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
                 <DropdownMenuSeparator className="bg-slate-700" />
                 <DropdownMenuItem
                   onClick={handleSignOut}
-                  className="text-red-400 focus:text-red-300 focus:bg-slate-700 cursor-pointer"
+                  className="text-red-400 focus:text-red-300 focus:bg-slate-700 hover:bg-slate-700 hover:text-red-300 cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out

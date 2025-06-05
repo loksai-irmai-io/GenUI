@@ -10,6 +10,7 @@ interface InfoCardProps {
   size?: "small" | "medium" | "large";
   subtitle?: string;
   maximized?: boolean;
+  className?: string;
 }
 
 const InfoCard: React.FC<InfoCardProps> = ({
@@ -20,6 +21,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
   size = "medium",
   subtitle,
   maximized,
+  className = "",
 }) => {
   const sizeClasses = {
     small: "p-4",
@@ -61,7 +63,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
         maximized ? " max-w-2xl" : ""
       } ${
         sizeClasses[size]
-      } focus-visible:ring-2 focus-visible:ring-blue-400 outline-none`}
+      } focus-visible:ring-2 focus-visible:ring-blue-400 outline-none ${className}`}
       tabIndex={0}
       aria-label={`${title}: ${value}`}
     >
