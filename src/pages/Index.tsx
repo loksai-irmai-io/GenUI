@@ -137,7 +137,7 @@ const Dashboard: React.FC = () => {
   };
 
   const renderWidget = (widget: any) => {
-    const widgetId = String(widget.id);
+    const widgetId = String(widget.id); // Ensure widget ID is always a string
     const widgetProps = {
       key: widgetId,
       title: widget.widget_name,
@@ -319,7 +319,7 @@ const Dashboard: React.FC = () => {
             case "table":
               return (
                 <div key={widgetId} className="relative">
-                  <DataTable {...widgetProps} data={[]} columns={[]} />
+                  <DataTable title={widget.widget_name} data={[]} columns={[]} />
                   <button
                     onClick={() => handlePinToggle(widgetId)}
                     className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
