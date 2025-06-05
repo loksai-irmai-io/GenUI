@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../irmai/genui-dynamic-dashboards/terraform"
+		}
+	],
+	"settings": {}
+}
