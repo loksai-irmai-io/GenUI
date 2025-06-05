@@ -72,26 +72,26 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-200/30 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-200/30 rounded-full blur-3xl"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-900/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-slate-700/30 rounded-full blur-3xl"></div>
       </div>
       
-      <Card className="w-full max-w-md shadow-2xl border-0 bg-white/95 backdrop-blur-sm relative z-10">
+      <Card className="w-full max-w-md shadow-2xl border-0 bg-slate-800/95 backdrop-blur-sm relative z-10">
         <CardHeader className="text-center pb-8 pt-8">
-          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden bg-white shadow-lg border border-gray-100 flex items-center justify-center">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden bg-slate-700 shadow-lg border border-slate-600 flex items-center justify-center">
             <img 
               src="/lovable-uploads/4fa81d66-b6af-4ee2-b81c-259365c7a007.png" 
               alt="IRMAI Logo" 
               className="w-16 h-16 object-contain"
             />
           </div>
-          <CardTitle className="text-3xl font-bold text-gray-900 mb-2">
+          <CardTitle className="text-3xl font-bold text-slate-100 mb-2">
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </CardTitle>
-          <p className="text-gray-600 text-base leading-relaxed">
+          <p className="text-slate-300 text-base leading-relaxed">
             {isSignUp ? 'Join GenUI to get started with your dashboard' : 'Sign in to access your personalized dashboard'}
           </p>
         </CardHeader>
@@ -99,11 +99,11 @@ const Auth = () => {
         <CardContent className="px-8 pb-8">
           <form onSubmit={handleAuth} className="space-y-6">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700 block">
+              <label htmlFor="email" className="text-sm font-medium text-slate-200 block">
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   id="email"
                   type="email"
@@ -111,17 +111,17 @@ const Auth = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  className="pl-10 h-12 border-slate-600 bg-slate-700 text-slate-100 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700 block">
+              <label htmlFor="password" className="text-sm font-medium text-slate-200 block">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -129,7 +129,7 @@ const Auth = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="pl-10 pr-12 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  className="pl-10 pr-12 h-12 border-slate-600 bg-slate-700 text-slate-100 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500"
                 />
                 <Button
                   type="button"
@@ -139,9 +139,9 @@ const Auth = () => {
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
+                    <EyeOff className="h-4 w-4 text-slate-400" />
                   ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
+                    <Eye className="h-4 w-4 text-slate-400" />
                   )}
                 </Button>
               </div>
@@ -166,7 +166,7 @@ const Auth = () => {
           <div className="mt-8 text-center">
             <button
               onClick={() => setIsSignUp(!isSignUp)}
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200 hover:underline"
+              className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors duration-200 hover:underline"
             >
               {isSignUp 
                 ? 'Already have an account? Sign in' 

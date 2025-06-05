@@ -121,7 +121,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200/80 shadow-sm">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700 shadow-lg">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
             <div className="flex items-center justify-center">
@@ -131,7 +131,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
                 className="w-16 h-16 object-contain"
               />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">GenUI</h1>
+            <h1 className="text-2xl font-bold text-slate-100 tracking-tight">GenUI</h1>
           </div>
 
           <div className="flex items-center space-x-3">
@@ -141,7 +141,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
                 onClick={() => setIsWidgetModalOpen(true)}
                 variant="outline"
                 size="sm"
-                className="flex items-center space-x-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800 transition-all duration-200"
+                className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 border-slate-600 text-blue-400 hover:text-blue-300 transition-all duration-200"
               >
                 <Settings className="w-4 h-4" />
                 <span className="hidden sm:inline">Configure Widgets</span>
@@ -154,28 +154,28 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 border-gray-200 transition-all duration-200"
+                  className="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 border-slate-600 transition-all duration-200"
                 >
-                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User className="w-3.5 h-3.5 text-blue-600" />
+                  <div className="w-6 h-6 bg-blue-900 rounded-full flex items-center justify-center">
+                    <User className="w-3.5 h-3.5 text-blue-400" />
                   </div>
-                  <span className="hidden sm:inline max-w-24 md:max-w-none truncate text-gray-700">
+                  <span className="hidden sm:inline max-w-24 md:max-w-none truncate text-slate-200">
                     {username}
                   </span>
-                  <ChevronDown className="w-3 h-3 text-gray-500" />
+                  <ChevronDown className="w-3 h-3 text-slate-400" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white border shadow-lg z-50">
+              <DropdownMenuContent align="end" className="w-56 bg-slate-800 border-slate-700 shadow-xl z-50">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none text-gray-900">{username}</p>
-                    <p className="text-xs leading-none text-gray-500 truncate">{user?.email}</p>
+                    <p className="text-sm font-medium leading-none text-slate-100">{username}</p>
+                    <p className="text-xs leading-none text-slate-400 truncate">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-slate-700" />
                 <DropdownMenuItem
                   onClick={handleSignOut}
-                  className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                  className="text-red-400 focus:text-red-300 focus:bg-slate-700 cursor-pointer"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
