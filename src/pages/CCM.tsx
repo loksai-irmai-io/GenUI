@@ -130,47 +130,49 @@ const CCM = () => {
 
   // Table wrapper for improved formatting and independent sizing
   const TableWidget = ({ title, data, columns }: any) => (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-4 max-w-full overflow-x-auto">
-      <h3 className="text-base font-semibold text-gray-900 mb-2">{title}</h3>
-      <table className="min-w-[400px] w-full text-sm border-collapse">
-        <thead className="bg-gray-50">
-          <tr>
-            {columns.map((col: any) => (
-              <th
-                key={col.key}
-                className="px-3 py-2 text-left font-semibold text-gray-700 border-b"
-              >
-                {col.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.length === 0 ? (
+    <div className="w-full enterprise-card p-6 mb-6">
+      <h3 className="text-xl font-semibold text-slate-100 mb-4 tracking-tight">{title}</h3>
+      <div className="w-full overflow-x-auto">
+        <table className="w-full text-sm border-collapse bg-slate-800/50 border border-slate-700 rounded-lg">
+          <thead className="bg-slate-700/80">
             <tr>
-              <td
-                colSpan={columns.length}
-                className="text-center text-gray-400 py-4"
-              >
-                No data available
-              </td>
+              {columns.map((col: any) => (
+                <th
+                  key={col.key}
+                  className="px-6 py-4 text-left font-semibold text-slate-200 border-b border-slate-600"
+                >
+                  {col.label}
+                </th>
+              ))}
             </tr>
-          ) : (
-            data.map((row: any, idx: number) => (
-              <tr
-                key={idx}
-                className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-              >
-                {columns.map((col: any) => (
-                  <td key={col.key} className="px-3 py-2 border-b align-top">
-                    {formatCell(row[col.key])}
-                  </td>
-                ))}
+          </thead>
+          <tbody>
+            {data.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={columns.length}
+                  className="text-center text-slate-400 py-8"
+                >
+                  No data available
+                </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+            ) : (
+              data.map((row: any, idx: number) => (
+                <tr
+                  key={idx}
+                  className="border-b border-slate-700 hover:bg-slate-700/50 transition-colors"
+                >
+                  {columns.map((col: any) => (
+                    <td key={col.key} className="px-6 py-4 text-slate-300 align-top">
+                      {formatCell(row[col.key])}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 
@@ -280,68 +282,72 @@ const CCM = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-8">
+    <div className="max-w-7xl mx-auto py-8 px-4">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">CCM</h2>
-        <p className="text-lg text-gray-600 font-medium">
+        <h1 className="text-4xl font-bold text-slate-100 mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
+          CCM
+        </h1>
+        <p className="text-lg text-slate-300 font-medium max-w-3xl">
           Comprehensive Control and Compliance Management dashboard with SLA analysis and KPI tracking.
         </p>
       </div>
 
       {loading && (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-red-800 font-medium mb-6">
+        <div className="bg-red-900/50 border border-red-700 rounded-xl p-6 text-red-300 font-medium mb-6">
           {error}
         </div>
       )}
 
       <Tabs defaultValue="controls" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="controls">Controls</TabsTrigger>
-          <TabsTrigger value="sla-analysis">SLA Analysis</TabsTrigger>
-          <TabsTrigger value="kpi">KPI</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 mb-8 bg-slate-800/50 border border-slate-700">
+          <TabsTrigger value="controls" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300">Controls</TabsTrigger>
+          <TabsTrigger value="sla-analysis" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300">SLA Analysis</TabsTrigger>
+          <TabsTrigger value="kpi" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300">KPI</TabsTrigger>
         </TabsList>
 
         <TabsContent value="controls" className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Controls</h3>
-            <div className="mb-6">
-              <div className="inline-block align-top w-full md:w-auto">
-                <DataVisualizationWidget
-                  type="incomplete-bar"
-                  title="Controls identified count"
-                  data={controlsCount}
-                  maximized={false}
-                />
-              </div>
+          <div className="enterprise-card p-8">
+            <h2 className="text-2xl font-bold text-slate-100 mb-6 flex items-center">
+              <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full mr-4"></div>
+              Controls Overview
+            </h2>
+            
+            <div className="mb-8">
+              <DataVisualizationWidget
+                type="incomplete-bar"
+                title="Controls identified count"
+                data={controlsCount}
+                maximized={false}
+              />
             </div>
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-1 min-w-0">
-                <TableWidget
-                  title="Controls description"
-                  data={controlsDesc}
-                  columns={getColumns(controlsDesc)}
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <TableWidget
-                  title="Control definition"
-                  data={controlsDef}
-                  columns={getColumns(controlsDef)}
-                />
-              </div>
+            
+            <div className="space-y-6">
+              <TableWidget
+                title="Controls Description"
+                data={controlsDesc}
+                columns={getColumns(controlsDesc)}
+              />
+              <TableWidget
+                title="Control Definition"
+                data={controlsDef}
+                columns={getColumns(controlsDef)}
+              />
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="sla-analysis" className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">SLA Analysis</h3>
+          <div className="enterprise-card p-8">
+            <h2 className="text-2xl font-bold text-slate-100 mb-6 flex items-center">
+              <div className="w-2 h-8 bg-gradient-to-b from-green-500 to-emerald-500 rounded-full mr-4"></div>
+              SLA Analysis
+            </h2>
             <DataVisualizationWidget
               type="incomplete-bar"
               title="Average Activity Duration (hrs)"
@@ -352,9 +358,12 @@ const CCM = () => {
         </TabsContent>
 
         <TabsContent value="kpi" className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">KPI</h3>
-            <TableWidget title="KPI" data={kpi} columns={getColumns(kpi)} />
+          <div className="enterprise-card p-8">
+            <h2 className="text-2xl font-bold text-slate-100 mb-6 flex items-center">
+              <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full mr-4"></div>
+              Key Performance Indicators
+            </h2>
+            <TableWidget title="KPI Metrics" data={kpi} columns={getColumns(kpi)} />
           </div>
         </TabsContent>
       </Tabs>

@@ -131,7 +131,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
                 className="w-16 h-16 object-contain"
               />
             </div>
-            <h1 className="text-2xl font-bold text-slate-100 tracking-tight">GenUI</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent tracking-tight">GenUI</h1>
           </div>
 
           <div className="flex items-center space-x-3">
