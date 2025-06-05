@@ -608,19 +608,97 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         "timing violations",
       ],
       fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/timingviloationstable?page=1&size=100"
-        );
-        let data = await res.json();
+        // Try API endpoint first, fallback to static file if not found
+        let data;
+        try {
+          const res = await fetch(
+            "http://34.60.217.109/timingviolations_table?page=1&size=100"
+          );
+          if (!res.ok) throw new Error("API not found");
+          data = await res.json();
+        } catch (e) {
+          // fallback to static file
+          const res = await fetch("/timingviolations_table.json");
+          data = await res.json();
+        }
         if (data && data.data && Array.isArray(data.data)) data = data.data;
         if (!Array.isArray(data) && typeof data === "object" && data !== null)
           data = Object.values(data);
-        if (!Array.isArray(data) || data.length === 0)
-          return [{ 0: "Not Found" }];
         return data;
       },
       type: "timing-violations-table",
       title: "Timing Violations Table",
+    }, // Timing Analysis visualization
+    {
+      id: "timing-analysis",
+      keywords: [
+        "timing analysis",
+        "timing report",
+        "analysis timing",
+        "timing performance",
+        "performance timing",
+        "timing charts",
+        "timing graphs",
+      ],
+      fetch: async () => {
+        // Try API endpoint first, fallback to static file if not found
+        let data;
+        try {
+          const res = await fetch("http://34.60.217.109/timinganalysis");
+          if (!res.ok) throw new Error("API not found");
+          data = await res.json();
+        } catch (e) {
+          // fallback to static file
+          const res = await fetch("/timing_analysis.json");
+          data = await res.json();
+        }
+        // Handle different data structures
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null) {
+          data = Object.values(data);
+        }
+        return Array.isArray(data) ? data : [];
+      },
+      type: "timing-analysis-table",
+      title: "Timing Analysis",
+    },
+    // Object Lifecycle visualization
+    {
+      id: "object-lifecycle",
+      keywords: [
+        "object lifecycle",
+        "object life cycle",
+        "lifecycle",
+        "life cycle",
+        "process flow",
+        "flow diagram",
+      ],
+      fetch: async () => {
+        // Object lifecycle is a special visualization that doesn't fetch data
+        // It displays a process flow diagram
+        return [];
+      },
+      type: "object-lifecycle",
+      title: "Object Lifecycle Visualization",
+    },
+    // KPI visualization
+    {
+      id: "kpi",
+      keywords: [
+        "kpi",
+        "key performance indicators",
+        "performance indicators",
+        "key performance",
+        "performance metrics",
+      ],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/kpi");
+        let data = await res.json();
+        // Handle the response format similar to CCM.tsx
+        return Array.isArray(data) ? data : data.data || [];
+      },
+      type: "kpi-table",
+      title: "Key Performance Indicators",
     },
   ];
   // Helper: fuzzy match query to registry entry, considering type intent
