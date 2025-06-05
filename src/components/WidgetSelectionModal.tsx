@@ -28,6 +28,16 @@ interface WidgetSelectionModalProps {
   pinnedWidgets: string[];
 }
 
+// Page mappings for better organization
+const PAGE_CATEGORIES = {
+  "Process Discovery": ["Process Discovery"],
+  "Outlier Analysis": ["Outlier Analysis"],
+  "CCM": ["CCM", "Case Complexity Management"],
+  "Analytics": ["Analytics", "General"],
+  "Performance": ["Performance", "Resource Performance"],
+  "SOP": ["SOP", "Standard Operating Procedures"]
+};
+
 const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   isOpen,
   onClose,
@@ -96,9 +106,27 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
     onClose();
   };
 
-  const categories = Array.from(
-    new Set(availableWidgets.map((w) => w.category))
-  );
+  // Group widgets by page categories
+  const getPageForCategory = (category: string): string => {
+    for (const [page, categories] of Object.entries(PAGE_CATEGORIES)) {
+      if (categories.some(cat => category.toLowerCase().includes(cat.toLowerCase()))) {
+        return page;
+      }
+    }
+    return "Other";
+  };
+
+  const groupedWidgets = availableWidgets.reduce((acc, widget) => {
+    const page = getPageForCategory(widget.category);
+    if (!acc[page]) {
+      acc[page] = [];
+    }
+    acc[page].push(widget);
+    return acc;
+  }, {} as Record<string, Widget[]>);
+
+  const pageOrder = ["Process Discovery", "Outlier Analysis", "CCM", "Analytics", "Performance", "SOP", "Other"];
+  const sortedPages = pageOrder.filter(page => groupedWidgets[page]?.length > 0);
 
   if (loading) {
     return (
@@ -118,7 +146,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="max-w-4xl max-h-[80vh] overflow-y-auto"
+        className="max-w-5xl max-h-[80vh] overflow-y-auto"
         aria-label="Widget Selection Modal"
       >
         <DialogHeader>
@@ -128,49 +156,54 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {categories.map((category) => (
-            <div key={category} className="space-y-3">
-              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-                {category}
-              </h3>
+        <div className="space-y-8">
+          {sortedPages.map((page) => (
+            <div key={page} className="space-y-4">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-bold text-gray-900">{page}</h2>
+                <Badge variant="secondary" className="text-xs">
+                  {groupedWidgets[page].length} widgets
+                </Badge>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {availableWidgets
-                  .filter((widget) => widget.category === category)
-                  .map((widget) => (
-                    <div
-                      key={widget.id}
-                      className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-400 transition-colors cursor-pointer"
-                      tabIndex={0}
-                      aria-label={`Select widget: ${widget.name}`}
-                      onClick={() => handleToggleWidget(widget.id)}
-                      onKeyDown={(e) =>
-                        (e.key === "Enter" || e.key === " ") &&
-                        handleToggleWidget(widget.id)
-                      }
-                    >
-                      <Checkbox
-                        checked={localSelection.includes(widget.id)}
-                        onCheckedChange={() => handleToggleWidget(widget.id)}
-                        className="mt-1"
-                        aria-label={`Toggle ${widget.name}`}
-                      />
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 flex items-center">
-                          {widget.name}
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          {widget.description}
-                        </p>
-                      </div>
+                {groupedWidgets[page].map((widget) => (
+                  <div
+                    key={widget.id}
+                    className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-blue-50 focus-within:ring-2 focus-within:ring-blue-400 transition-colors cursor-pointer"
+                    tabIndex={0}
+                    aria-label={`Select widget: ${widget.name}`}
+                    onClick={() => handleToggleWidget(widget.id)}
+                    onKeyDown={(e) =>
+                      (e.key === "Enter" || e.key === " ") &&
+                      handleToggleWidget(widget.id)
+                    }
+                  >
+                    <Checkbox
+                      checked={localSelection.includes(widget.id)}
+                      onCheckedChange={() => handleToggleWidget(widget.id)}
+                      className="mt-1"
+                      aria-label={`Toggle ${widget.name}`}
+                    />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                        {widget.name}
+                        <Badge variant="outline" className="text-xs font-normal">
+                          {widget.category}
+                        </Badge>
+                      </h4>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {widget.description}
+                      </p>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </div>
           ))}
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-6 border-t">
           <Button
             variant="outline"
             onClick={onClose}
