@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "react-router-dom";
 import WidgetSelectionModal from "@/components/WidgetSelectionModal";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,13 +22,9 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const location = useLocation();
   const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
   const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
-
-  // Check if current page is Dashboard
-  const isDashboardPage = location.pathname === "/" || location.pathname === "";
 
   useEffect(() => {
     fetchUserPreferences();
@@ -111,18 +106,6 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
     }
   };
 
-  const handleConfigureWidgets = () => {
-    if (!isDashboardPage) {
-      toast({
-        title: "Widget Configuration Unavailable",
-        description: "Widget configuration is only available on the Dashboard page.",
-        variant: "destructive",
-      });
-      return;
-    }
-    setIsWidgetModalOpen(true);
-  };
-
   // Extract username from email (part before @)
   const username = user?.email?.split('@')[0] || 'User';
 
@@ -131,29 +114,27 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200/80 shadow-sm">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
-            <div className="flex items-center justify-center">
+            <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-md flex items-center justify-center">
               <img 
                 src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
                 alt="IRMAI Logo" 
-                className="w-18 h-18 object-contain"
+                className="w-14 h-14 object-contain"
               />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">GenUI</h1>
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* Configure Widgets Button - Only show on Dashboard */}
-            {isDashboardPage && (
-              <Button
-                onClick={handleConfigureWidgets}
-                variant="outline"
-                size="sm"
-                className="flex items-center space-x-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800 transition-all duration-200"
-              >
-                <Settings className="w-4 h-4" />
-                <span className="hidden sm:inline">Configure Widgets</span>
-              </Button>
-            )}
+            {/* Configure Widgets Button */}
+            <Button
+              onClick={() => setIsWidgetModalOpen(true)}
+              variant="outline"
+              size="sm"
+              className="flex items-center space-x-2 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800 transition-all duration-200"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Configure Widgets</span>
+            </Button>
 
             {/* User Profile Dropdown */}
             <DropdownMenu>
@@ -193,16 +174,14 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
         </div>
       </header>
 
-      {/* Widget Selection Modal - Only render on Dashboard */}
-      {isDashboardPage && (
-        <WidgetSelectionModal
-          isOpen={isWidgetModalOpen}
-          onClose={() => setIsWidgetModalOpen(false)}
-          onSave={handleSaveWidgets}
-          selectedWidgets={selectedWidgets}
-          pinnedWidgets={pinnedWidgets}
-        />
-      )}
+      {/* Widget Selection Modal */}
+      <WidgetSelectionModal
+        isOpen={isWidgetModalOpen}
+        onClose={() => setIsWidgetModalOpen(false)}
+        onSave={handleSaveWidgets}
+        selectedWidgets={selectedWidgets}
+        pinnedWidgets={pinnedWidgets}
+      />
     </>
   );
 };
