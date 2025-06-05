@@ -1,3 +1,4 @@
+
 // e:\Gen-UI\genui-dynamic-dashboards\src\services\incompleteCasesService.ts
 export class IncompleteCasesService {
   async getCountBar(): Promise<Array<{ name: string; value: number }>> {
@@ -14,6 +15,13 @@ export class IncompleteCasesService {
       { name: 'Complete Cases', value: data.complete ?? 0 }
     ];
   }
+
+  async getCount(): Promise<number> {
+    const response = await fetch('http://34.60.217.109/incompletecases/count');
+    const data = await response.json();
+    return data.count ?? data.incomplete ?? 0;
+  }
 }
 
 export const incompleteCasesService = new IncompleteCasesService();
+

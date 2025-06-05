@@ -1,3 +1,4 @@
+
 // e:\Gen-UI\genui-dynamic-dashboards\src\services\resourceSwitchesService.ts
 export class ResourceSwitchesService {
   async getCountBar(): Promise<Array<{ name: string; value: number }>> {
@@ -13,6 +14,13 @@ export class ResourceSwitchesService {
       { name: 'Resource Switches', value: data.resource_switches ?? 0 }
     ];
   }
+
+  async getCount(): Promise<number> {
+    const response = await fetch('http://34.60.217.109/resourceswitches/count');
+    const data = await response.json();
+    return data.count ?? data.resource_switches ?? 0;
+  }
 }
 
 export const resourceSwitchesService = new ResourceSwitchesService();
+

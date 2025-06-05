@@ -1,3 +1,4 @@
+
 // e:\Gen-UI\genui-dynamic-dashboards\src\services\longRunningCasesService.ts
 export class LongRunningCasesService {
   async getCountBar(): Promise<Array<{ name: string; value: number }>> {
@@ -14,6 +15,13 @@ export class LongRunningCasesService {
       { name: 'Regular Cases', value: data.regular ?? 0 }
     ];
   }
+
+  async getCount(): Promise<number> {
+    const response = await fetch('http://34.60.217.109/longrunningcases/count');
+    const data = await response.json();
+    return data.count ?? data.long_running ?? 0;
+  }
 }
 
 export const longRunningCasesService = new LongRunningCasesService();
+

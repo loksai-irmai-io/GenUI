@@ -1,7 +1,7 @@
-
 import React, { useEffect, useState } from "react";
 import DataVisualizationWidget from "../components/widgets/DataVisualizationWidget";
 import DataTable from "../components/widgets/DataTable";
+import InfoCard from "../components/widgets/InfoCard";
 
 const widgetConfigs = [
   {
@@ -60,25 +60,21 @@ const widgetConfigs = [
     },
   },
   {
-    id: "sop-low-percentage-count-bar",
+    id: "sop-low-percentage-count-card",
     title: "SOP Deviation Low Percentage Count",
-    type: "bar",
+    type: "card",
     fetch: async () => {
       const res = await fetch(
         "http://34.60.217.109/sopdeviation/low-percentage/count"
       );
       let data = await res.json();
-      // Always return as array for bar chart
-      if (data && typeof data.count === "number") {
-        return [{ name: "Low Percentage Count", value: data.count }];
-      }
-      return [];
+      return data && typeof data.count === "number" ? data.count : 0;
     },
     render: (data, title) => (
-      <DataVisualizationWidget
-        type="incomplete-bar"
+      <InfoCard
         title={title}
-        data={data}
+        value={data.toLocaleString()}
+        subtitle="Low percentage deviation patterns identified"
         maximized
       />
     ),
@@ -117,19 +113,19 @@ const widgetConfigs = [
     },
   },
   {
-    id: "incomplete-cases-count",
+    id: "incomplete-cases-count-card",
     title: "Incomplete Cases Count",
-    type: "bar",
+    type: "card",
     fetch: async () => {
       const res = await fetch("http://34.60.217.109/incompletecases/count");
       const data = await res.json();
-      return [{ name: "Incomplete Cases", value: data.count }];
+      return data.count;
     },
     render: (data, title) => (
-      <DataVisualizationWidget
-        type="incomplete-bar"
+      <InfoCard
         title={title}
-        data={data}
+        value={data.toLocaleString()}
+        subtitle="Cases requiring completion"
         maximized
       />
     ),
@@ -158,19 +154,19 @@ const widgetConfigs = [
     },
   },
   {
-    id: "long-running-cases-count",
+    id: "long-running-cases-count-card",
     title: "Long Running Cases Count",
-    type: "bar",
+    type: "card",
     fetch: async () => {
       const res = await fetch("http://34.60.217.109/longrunningcases/count");
       const data = await res.json();
-      return [{ name: "Long Running Cases", value: data.count }];
+      return data.count;
     },
     render: (data, title) => (
-      <DataVisualizationWidget
-        type="longrunning-bar"
+      <InfoCard
         title={title}
-        data={data}
+        value={data.toLocaleString()}
+        subtitle="Cases exceeding standard processing time"
         maximized
       />
     ),
@@ -201,19 +197,19 @@ const widgetConfigs = [
     },
   },
   {
-    id: "resource-switches-count",
+    id: "resource-switches-count-card",
     title: "Resource Switches Count",
-    type: "bar",
+    type: "card",
     fetch: async () => {
       const res = await fetch("http://34.60.217.109/resourceswitches/count");
       const data = await res.json();
-      return [{ name: "Resource Switches", value: data.count }];
+      return data.count;
     },
     render: (data, title) => (
-      <DataVisualizationWidget
-        type="resource-switches-bar"
+      <InfoCard
         title={title}
-        data={data}
+        value={data.toLocaleString()}
+        subtitle="Resource allocation changes detected"
         maximized
       />
     ),
@@ -269,19 +265,19 @@ const widgetConfigs = [
     },
   },
   {
-    id: "rework-activities-count",
+    id: "rework-activities-count-card",
     title: "Rework Activities Count",
-    type: "bar",
+    type: "card",
     fetch: async () => {
       const res = await fetch("http://34.60.217.109/reworkactivities/count");
       const data = await res.json();
-      return [{ name: "Rework Activities", value: data.count }];
+      return data.count;
     },
     render: (data, title) => (
-      <DataVisualizationWidget
-        type="rework-activities-bar"
+      <InfoCard
         title={title}
-        data={data}
+        value={data.toLocaleString()}
+        subtitle="Activities requiring rework"
         maximized
       />
     ),
@@ -312,19 +308,19 @@ const widgetConfigs = [
     },
   },
   {
-    id: "timing-violations-count",
+    id: "timing-violations-count-card",
     title: "Timing Violations Count",
-    type: "bar",
+    type: "card",
     fetch: async () => {
       const res = await fetch("http://34.60.217.109/timingviolations/count");
       const data = await res.json();
-      return [{ name: "Timing Violations", value: data.count }];
+      return data.count;
     },
     render: (data, title) => (
-      <DataVisualizationWidget
-        type="timing-violations-bar"
+      <InfoCard
         title={title}
-        data={data}
+        value={data.toLocaleString()}
+        subtitle="Timing constraint violations detected"
         maximized
       />
     ),

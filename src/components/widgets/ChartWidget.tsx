@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   LineChart,
@@ -15,6 +14,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import InfoCard from "./InfoCard";
 
 interface ChartData {
   name: string;
@@ -48,6 +48,19 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({
   xAxisKey = "name",
   maximized = false,
 }) => {
+  // If it's a bar chart with only one data point, render as InfoCard instead
+  if (type === "bar" && data.length === 1) {
+    const singleItem = data[0];
+    return (
+      <InfoCard
+        title={title}
+        value={singleItem[dataKey]?.toLocaleString() || "0"}
+        subtitle={`Single ${singleItem[xAxisKey] || "item"} measurement`}
+        maximized={maximized}
+      />
+    );
+  }
+
   const renderChart = () => {
     const commonTooltipStyle = {
       backgroundColor: 'rgba(30, 41, 59, 0.95)',
