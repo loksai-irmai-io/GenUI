@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import WidgetSelectionModal from "@/components/WidgetSelectionModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Settings, TrendingUp, Users, Activity, BarChart3 } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 
 // Import widget components
 import ChartWidget from "@/components/widgets/ChartWidget";
@@ -118,19 +118,19 @@ const Dashboard: React.FC<DashboardProps> = ({ isWidgetModalOpen, setIsWidgetMod
 
     switch (widget.widget_type) {
       case "chart":
-        return <ChartWidget {...widgetProps} />;
+        return <ChartWidget {...widgetProps} type="line" data={[]} />;
       case "table":
-        return <DataTable {...widgetProps} />;
+        return <DataTable {...widgetProps} data={[]} columns={[]} />;
       case "info_card":
-        return <InfoCard {...widgetProps} />;
+        return <InfoCard {...widgetProps} value="N/A" />;
       case "sop":
-        return <SOPWidget {...widgetProps} />;
+        return <SOPWidget {...widgetProps} type="deviation" data={[]} visualizationType="table" />;
       case "timing_analysis":
         return <TimingAnalysisTable {...widgetProps} />;
       case "resource_performance":
         return <ResourcePerformanceTable {...widgetProps} />;
       case "data_visualization":
-        return <DataVisualizationWidget {...widgetProps} />;
+        return <DataVisualizationWidget {...widgetProps} type="chart" data={[]} />;
       default:
         return (
           <Card key={widget.id} className="p-6">
@@ -175,57 +175,6 @@ const Dashboard: React.FC<DashboardProps> = ({ isWidgetModalOpen, setIsWidgetMod
           <Settings className="w-4 h-4" />
           <span>Configure Widgets</span>
         </Button>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="p-6 border-l-4 border-l-blue-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active Widgets</p>
-              <p className="text-3xl font-bold text-gray-900">{selectedWidgets.length}</p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <BarChart3 className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 border-l-4 border-l-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Performance</p>
-              <p className="text-3xl font-bold text-gray-900">98.5%</p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 border-l-4 border-l-orange-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active Users</p>
-              <p className="text-3xl font-bold text-gray-900">1,234</p>
-            </div>
-            <div className="p-3 bg-orange-100 rounded-lg">
-              <Users className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 border-l-4 border-l-purple-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">System Health</p>
-              <p className="text-3xl font-bold text-gray-900">Excellent</p>
-            </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Activity className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-        </Card>
       </div>
 
       {/* Widgets Section */}

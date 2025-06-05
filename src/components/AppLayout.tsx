@@ -77,11 +77,24 @@ const AppLayout = ({
 
   // Clone children and pass widget modal props if it's the Dashboard page
   const childrenWithProps = React.Children.map(children, (child) => {
-    if (React.isValidElement(child) && location.pathname === "/") {
-      return React.cloneElement(child as React.ReactElement<any>, {
-        isWidgetModalOpen,
-        setIsWidgetModalOpen,
-      });
+    if (React.isValidElement(child)) {
+      // Check if we're on the dashboard route and the child is the Routes component
+      if (location.pathname === "/" && child.type && typeof child.type === 'object' && 'type' in child.type) {
+        // We need to pass props to the Index component inside Routes
+        return React.cloneElement(child, {
+          children: React.Children.map(child.props.children, (routeChild) => {
+            if (React.isValidElement(routeChild) && routeChild.props.path === "/") {
+              return React.cloneElement(routeChild, {
+                element: React.cloneElement(routeChild.props.element, {
+                  isWidgetModalOpen,
+                  setIsWidgetModalOpen,
+                })
+              });
+            }
+            return routeChild;
+          })
+        });
+      }
     }
     return child;
   });

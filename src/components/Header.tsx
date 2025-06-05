@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Settings, ChevronDown } from "lucide-react";
+import { User, LogOut, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,28 +55,6 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
         </div>
 
         <div className="flex items-center space-x-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onSelectWidgets}
-            className="hidden sm:flex border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
-            aria-label="Configure Widgets"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            <span className="hidden md:inline">Configure Widgets</span>
-            <span className="md:hidden">Configure</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onSelectWidgets}
-            className="sm:hidden"
-            aria-label="Configure Widgets"
-          >
-            <Settings className="w-4 h-4" />
-          </Button>
-
           {/* User Profile Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
