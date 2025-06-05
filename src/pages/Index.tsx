@@ -74,32 +74,55 @@ const Dashboard: React.FC = () => {
       description: widget.description,
     };
 
-    switch (widget.widget_type) {
-      case "chart":
-        return <ChartWidget {...widgetProps} type="line" data={[]} />;
-      case "table":
-        return <DataTable {...widgetProps} data={[]} columns={[]} />;
-      case "info_card":
-        return <InfoCard {...widgetProps} value="N/A" />;
-      case "sop":
-        return <SOPWidget {...widgetProps} type="count" data={{ count: 0, percentage: 0, threshold: 0 }} visualizationType="bar" />;
-      case "timing_analysis":
+    // Handle specific widget IDs that need special rendering
+    switch (widgetId) {
+      case "timing-analysis":
         return <TimingAnalysisTable key={widgetId} />;
-      case "resource_performance":
+      case "resource-performance":
         return <ResourcePerformanceTable key={widgetId} />;
-      case "data_visualization":
-        return <DataVisualizationWidget {...widgetProps} type="chart" data={[]} />;
+      case "all-counts":
+      case "incomplete-cases-count":
+      case "long-running-cases-count":
+      case "resource-switches-count":
+      case "controls-identified-count":
+        return <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />;
+      case "process-failure-patterns-distribution":
+        return <DataVisualizationWidget {...widgetProps} type="process-failure-patterns-bar" data={[]} />;
+      case "object-lifecycle":
+      case "object-lifecycle-process":
+        return <DataVisualizationWidget {...widgetProps} type="object-lifecycle" data={[]} />;
+      case "sla-analysis":
+      case "controls-definition":
+      case "controls-description":
+      case "kpi":
+      case "incomplete-case-table":
+      case "long-running-table":
+      case "resource-switches-table":
+      case "resource-switches-count-table":
+      case "sop-low-percentage-patterns-table":
+        return <DataVisualizationWidget {...widgetProps} type="table" data={[]} />;
+      case "sop-deviation":
+        return <SOPWidget {...widgetProps} type="count" data={{ count: 0, percentage: 0, threshold: 0 }} visualizationType="bar" />;
+      case "sop-patterns":
+      case "sop-low-percentage-patterns-table":
+        return <SOPWidget {...widgetProps} type="patterns" data={[]} visualizationType="table" />;
       default:
-        return (
-          <Card key={widgetId} className="p-6">
-            <CardHeader>
-              <CardTitle>{widget.widget_name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">{widget.description}</p>
-            </CardContent>
-          </Card>
-        );
+        // Use widget_type if available, otherwise fall back to default rendering
+        if (widget.widget_type) {
+          switch (widget.widget_type) {
+            case "chart":
+              return <ChartWidget {...widgetProps} type="line" data={[]} />;
+            case "table":
+              return <DataTable {...widgetProps} data={[]} columns={[]} />;
+            case "info_card":
+              return <InfoCard {...widgetProps} value="N/A" />;
+            default:
+              return <DataVisualizationWidget {...widgetProps} type="chart" data={[]} />;
+          }
+        } else {
+          // Default fallback rendering for unknown widgets
+          return <DataVisualizationWidget {...widgetProps} type="chart" data={[]} />;
+        }
     }
   };
 
@@ -127,6 +150,15 @@ const Dashboard: React.FC = () => {
           <p className="text-lg text-gray-600">Monitor your key metrics and insights</p>
         </div>
       </div>
+
+      {/* Debug Information */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="text-xs text-gray-500 p-2 bg-gray-50 rounded">
+          <p>Selected Widgets: {selectedWidgets.join(', ')}</p>
+          <p>Available Widgets: {availableWidgets.length}</p>
+          <p>Filtered Widgets: {selectedWidgetData.length}</p>
+        </div>
+      )}
 
       {/* Widgets Section */}
       {selectedWidgetData.length > 0 ? (

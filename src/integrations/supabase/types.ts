@@ -172,6 +172,7 @@ export type Database = {
           id: string
           widget_category: string
           widget_name: string
+          widget_type: string | null
         }
         Insert: {
           created_at?: string
@@ -179,6 +180,7 @@ export type Database = {
           id?: string
           widget_category: string
           widget_name: string
+          widget_type?: string | null
         }
         Update: {
           created_at?: string
@@ -186,6 +188,7 @@ export type Database = {
           id?: string
           widget_category?: string
           widget_name?: string
+          widget_type?: string | null
         }
         Relationships: []
       }

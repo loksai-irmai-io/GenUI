@@ -32,8 +32,10 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
   const isDashboardPage = location.pathname === "/" || location.pathname === "";
 
   useEffect(() => {
-    fetchUserPreferences();
-  }, []);
+    if (user) {
+      fetchUserPreferences();
+    }
+  }, [user]);
 
   const fetchUserPreferences = async () => {
     try {
@@ -85,6 +87,9 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
 
       // Trigger a refresh of the dashboard
       onSelectWidgets();
+      
+      // Force page reload to ensure widgets display
+      window.location.reload();
     } catch (error) {
       console.error("Error saving widget preferences:", error);
       toast({
