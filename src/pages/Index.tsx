@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus } from "lucide-react";
@@ -67,8 +66,9 @@ const Dashboard: React.FC = () => {
   };
 
   const renderWidget = (widget: any) => {
+    const widgetId = String(widget.id);
     const widgetProps = {
-      key: String(widget.id), // Convert to string to fix TypeScript error
+      key: widgetId,
       title: widget.widget_name,
       description: widget.description,
     };
@@ -83,14 +83,14 @@ const Dashboard: React.FC = () => {
       case "sop":
         return <SOPWidget {...widgetProps} type="count" data={{ count: 0, percentage: 0, threshold: 0 }} visualizationType="bar" />;
       case "timing_analysis":
-        return <TimingAnalysisTable {...widgetProps} />;
+        return <TimingAnalysisTable key={widgetId} />;
       case "resource_performance":
-        return <ResourcePerformanceTable {...widgetProps} />;
+        return <ResourcePerformanceTable key={widgetId} />;
       case "data_visualization":
         return <DataVisualizationWidget {...widgetProps} type="chart" data={[]} />;
       default:
         return (
-          <Card key={String(widget.id)} className="p-6">
+          <Card key={widgetId} className="p-6">
             <CardHeader>
               <CardTitle>{widget.widget_name}</CardTitle>
             </CardHeader>
@@ -103,7 +103,7 @@ const Dashboard: React.FC = () => {
   };
 
   const selectedWidgetData = availableWidgets.filter(widget => 
-    selectedWidgets.includes(String(widget.id)) // Convert to string for comparison
+    selectedWidgets.includes(String(widget.id))
   );
 
   if (loading) {
