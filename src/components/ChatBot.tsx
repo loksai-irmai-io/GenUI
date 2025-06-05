@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { MessageCircle, Send, Minimize2, Loader2 } from "lucide-react";
 import ErrorBoundary from "./ErrorBoundary";
 import DataVisualizationWidget from "./widgets/DataVisualizationWidget";
+import InfoCard from "./widgets/InfoCard";
 import SOPWidget from "./widgets/SOPWidget";
 import { ConflictDialog } from "@/components/ui/alert-dialog";
 import ProcessFlowGraph from "./ProcessFlowGraph";
@@ -64,7 +65,6 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
   const { toast } = useToast();
 
   useEffect(() => {
-    // Debug: log visualizations prop on every update
     console.log("[ChatBot] Visualizations prop:", visualizations);
   }, [visualizations]);
 
@@ -83,7 +83,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         const data = await res.json();
         return Object.entries(data).map(([name, value]) => ({ name, value }));
       },
-      type: "process-failure-patterns-bar",
+      type: "info-card",
       title: "All Failure Pattern Counts",
     },
     {
@@ -126,11 +126,11 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         );
         let data = await res.json();
         if (data && typeof data.count === "number") {
-          return [{ name: "Low Percentage Count", value: data.count }];
+          return { count: data.count, title: "SOP Deviation Low Percentage Count" };
         }
-        return [];
+        return { count: 0, title: "SOP Deviation Low Percentage Count" };
       },
-      type: "incomplete-bar",
+      type: "info-card",
       title: "SOP Deviation Low Percentage Count",
     },
     {
@@ -163,9 +163,9 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       fetch: async () => {
         const res = await fetch("http://34.60.217.109/incompletecases/count");
         const data = await res.json();
-        return [{ name: "Incomplete Cases", value: data.count }];
+        return { count: data.count, title: "Incomplete Cases" };
       },
-      type: "incomplete-bar",
+      type: "info-card",
       title: "Incomplete Cases Count",
     },
     {
@@ -188,9 +188,9 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       fetch: async () => {
         const res = await fetch("http://34.60.217.109/longrunningcases/count");
         const data = await res.json();
-        return [{ name: "Long Running Cases", value: data.count }];
+        return { count: data.count, title: "Long Running Cases" };
       },
-      type: "longrunning-bar",
+      type: "info-card",
       title: "Long Running Cases Count",
     },
     {
@@ -215,9 +215,9 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       fetch: async () => {
         const res = await fetch("http://34.60.217.109/resourceswitches/count");
         const data = await res.json();
-        return [{ name: "Resource Switches", value: data.count }];
+        return { count: data.count, title: "Resource Switches" };
       },
-      type: "resource-switches-bar",
+      type: "info-card",
       title: "Resource Switches Count",
     },
     {
@@ -258,9 +258,9 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       fetch: async () => {
         const res = await fetch("http://34.60.217.109/reworkactivities/count");
         const data = await res.json();
-        return [{ name: "Rework Activities", value: data.count }];
+        return { count: data.count, title: "Rework Activities" };
       },
-      type: "rework-activities-bar",
+      type: "info-card",
       title: "Rework Activities Count",
     },
     {
@@ -269,9 +269,9 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       fetch: async () => {
         const res = await fetch("http://34.60.217.109/timingviolations/count");
         const data = await res.json();
-        return [{ name: "Timing Violations", value: data.count }];
+        return { count: data.count, title: "Timing Violations" };
       },
-      type: "timing-violations-bar",
+      type: "info-card",
       title: "Timing Violations Count",
     },
     // CCM widgets
@@ -283,11 +283,12 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
           "http://34.60.217.109/controls_identified_count"
         );
         let data = await res.json();
-        return Array.isArray(data)
-          ? data
-          : Object.entries(data).map(([name, value]) => ({ name, value }));
+        const total = Array.isArray(data) 
+          ? data.reduce((sum, item) => sum + (item.value || 0), 0)
+          : Object.values(data).reduce((sum: number, value: any) => sum + (typeof value === 'number' ? value : 0), 0);
+        return { count: total, title: "Controls Identified Count" };
       },
-      type: "incomplete-bar",
+      type: "info-card",
       title: "Controls Identified Count",
     },
     {
@@ -701,6 +702,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       title: "Key Performance Indicators",
     },
   ];
+
   // Helper: fuzzy match query to registry entry, considering type intent
   const findBestVisualizationMatch = (query: string) => {
     const lower = query.toLowerCase();
@@ -813,6 +815,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         let data = await match.fetch();
         console.log(`[ChatBot] Visualization data for ${match.id}:`, data);
         let visualization: Visualization | null = null;
+        
         if (match.type === "object-lifecycle") {
           visualization = {
             id: match.id,
@@ -820,17 +823,21 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
             data: [],
             title: match.title,
           };
+        } else if (match.type === "info-card") {
+          visualization = {
+            id: match.id,
+            type: "info-card",
+            data: data,
+            title: match.title,
+          };
         } else {
-          // Ensure data is properly formatted for visualization
+          // Handle other visualization types
           if (match.type.endsWith("-bar") && Array.isArray(data)) {
-            // Ensure bar chart data has name and value properties
             data = data.map((item) => {
               if (typeof item === "object" && item !== null) {
-                // If item already has name/value, use it
                 if (item.name !== undefined && item.value !== undefined) {
                   return item;
                 }
-                // Otherwise try to extract name/value from first two properties
                 const keys = Object.keys(item);
                 if (keys.length >= 2) {
                   return {
@@ -851,19 +858,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
           };
         }
 
-        // Customize messages for specific visualization types
         let responseText = `Visualization for ${match.title} loaded!`;
-
-        if (match.id === "sla-analysis-data") {
-          responseText =
-            "Here's the detailed SLA analysis data showing key metrics, findings, and recommendations:";
-        } else if (
-          match.id === "sla-analysis-duration-bar" ||
-          match.id === "sla-analysis-bar"
-        ) {
-          responseText =
-            "Here's the SLA Analysis chart showing average activity durations in hours:";
-        }
 
         setMessages((prev) => [
           ...prev,
@@ -977,7 +972,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
           <MessageCircle className="w-12 h-12 text-white" />
         </Button>
       ) : (
-        <Card className="w-[540px] h-[700px] shadow-2xl border-0 bg-white">
+        <Card className="w-[540px] h-[700px] shadow-2xl border-0 bg-slate-800 border-slate-700">
           <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
             <CardTitle className="flex items-center justify-between text-base">
               <span className="flex items-center space-x-2">
@@ -994,7 +989,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
               </Button>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0 flex flex-col h-[620px]">
+          <CardContent className="p-0 flex flex-col h-[620px] bg-slate-800">
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.map((msg) => (
                 <div key={msg.id} className="mb-2">
@@ -1002,7 +997,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                     className={`p-3 rounded-lg max-w-[85%] ${
                       msg.sender === "user"
                         ? "bg-blue-600 text-white ml-auto"
-                        : "bg-gray-100 text-gray-900"
+                        : "bg-slate-700 text-slate-100"
                     }`}
                   >
                     <p className="text-sm whitespace-pre-line">{msg.text}</p>
@@ -1016,6 +1011,15 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                       {msg.visualization.type === "object-lifecycle" ? (
                         <ErrorBoundary>
                           <ProcessFlowGraph />
+                        </ErrorBoundary>
+                      ) : msg.visualization.type === "info-card" ? (
+                        <ErrorBoundary>
+                          <InfoCard
+                            title={msg.visualization.data.title || msg.visualization.title}
+                            value={msg.visualization.data.count || 0}
+                            subtitle="Process metric"
+                            size="medium"
+                          />
                         </ErrorBoundary>
                       ) : (
                         <ErrorBoundary>
@@ -1031,7 +1035,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                 </div>
               ))}
               {isLoading && (
-                <div className="bg-gray-100 text-gray-900 p-3 rounded-lg max-w-[85%]">
+                <div className="bg-slate-700 text-slate-100 p-3 rounded-lg max-w-[85%]">
                   <div className="flex items-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span className="text-sm">Loading data...</span>
@@ -1039,13 +1043,13 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                 </div>
               )}
             </div>
-            <div className="border-t p-3 flex space-x-2">
+            <div className="border-t border-slate-600 p-3 flex space-x-2 bg-slate-800">
               <Input
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask about SOP deviation, incomplete cases, or long running cases..."
-                className="flex-1 text-base"
+                className="flex-1 text-base bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
                 disabled={isLoading}
               />
               <Button

@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import DataVisualizationWidget from "../components/widgets/DataVisualizationWidget";
 import DataTable from "../components/widgets/DataTable";
+import InfoCard from "../components/widgets/InfoCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const CCM = () => {
@@ -319,11 +320,11 @@ const CCM = () => {
             </h2>
             
             <div className="mb-8">
-              <DataVisualizationWidget
-                type="incomplete-bar"
-                title="Controls identified count"
-                data={controlsCount}
-                maximized={false}
+              <InfoCard
+                title="Controls Identified Count"
+                value={controlsCount.reduce((sum, item) => sum + (item.value || 0), 0).toString()}
+                subtitle="Total identified controls in the process"
+                size="large"
               />
             </div>
             

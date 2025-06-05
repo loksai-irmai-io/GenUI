@@ -19,8 +19,30 @@ interface WidgetSelectionModalProps {
   pinnedWidgets: string[];
 }
 
-// Comprehensive list of all available widgets organized by category
+// Updated comprehensive list of all available widgets organized by category
 const CATEGORY_WIDGETS = {
+  "Dashboard Essentials": [
+    {
+      id: "info-cards",
+      name: "Key Metrics Overview",
+      description: "Essential KPIs and metrics cards for dashboard overview",
+    },
+    {
+      id: "sla-analysis-bar",
+      name: "SLA Analysis Bar Chart",
+      description: "Service Level Agreement analysis with activity duration metrics",
+    },
+    {
+      id: "process-failure-patterns",
+      name: "Process Failure Patterns",
+      description: "Distribution chart showing different types of process failures",
+    },
+    {
+      id: "mortgage-lifecycle",
+      name: "Mortgage Application Lifecycle",
+      description: "Interactive process flow diagram for mortgage applications",
+    },
+  ],
   "Process Discovery": [
     {
       id: "object-lifecycle",
@@ -30,24 +52,9 @@ const CATEGORY_WIDGETS = {
   ],
   "Outlier Analysis": [
     {
-      id: "all-counts",
-      name: "All Failure Patterns Count",
-      description: "Count of all identified process failure patterns",
-    },
-    {
-      id: "sop-patterns",
-      name: "SOP Deviation Patterns",
-      description: "Patterns of standard operating procedure deviations",
-    },
-    {
-      id: "sop-low-percentage-count-bar",
-      name: "SOP Deviation Count",
-      description: "Count of low percentage SOP deviations",
-    },
-    {
       id: "incomplete-cases-count",
-      name: "Incomplete Cases Count",
-      description: "Count of cases that remain incomplete",
+      name: "Incomplete Cases (Info Card)",
+      description: "Count of cases that remain incomplete displayed as info card",
     },
     {
       id: "incomplete-case-table",
@@ -56,8 +63,8 @@ const CATEGORY_WIDGETS = {
     },
     {
       id: "long-running-cases-count",
-      name: "Long-Running Cases Count",
-      description: "Count of cases taking longer than expected",
+      name: "Long-Running Cases (Info Card)",
+      description: "Count of cases taking longer than expected as info card",
     },
     {
       id: "long-running-table",
@@ -66,13 +73,8 @@ const CATEGORY_WIDGETS = {
     },
     {
       id: "resource-switches-count",
-      name: "Resource Switches Count",
-      description: "Count of resource handovers in processes",
-    },
-    {
-      id: "resource-switches-count-table",
-      name: "Resource Switches Count Table",
-      description: "Table of resource switch counts by process",
+      name: "Resource Switches (Info Card)",
+      description: "Count of resource handovers in processes as info card",
     },
     {
       id: "resource-switches-table",
@@ -81,18 +83,13 @@ const CATEGORY_WIDGETS = {
     },
     {
       id: "rework-activities-count",
-      name: "Rework Activities Count",
-      description: "Count of activities that required rework",
-    },
-    {
-      id: "reworked-activities-table",
-      name: "Reworked Activities Table",
-      description: "Detailed table of all reworked activities",
+      name: "Rework Activities (Info Card)",
+      description: "Count of activities that required rework as info card",
     },
     {
       id: "timing-violations-count",
-      name: "Timing Violations Count",
-      description: "Count of identified timing violations",
+      name: "Timing Violations (Info Card)",
+      description: "Count of identified timing violations as info card",
     },
     {
       id: "timing-violations-table",
@@ -101,51 +98,35 @@ const CATEGORY_WIDGETS = {
     },
     {
       id: "resource-performance",
-      name: "Resource Performance",
-      description:
-        "Performance analysis of resources by efficiency and utilization",
+      name: "Resource Performance Table",
+      description: "Performance analysis table of resources by efficiency and utilization",
     },
     {
       id: "timing-analysis",
-      name: "Timing Analysis Overview",
-      description: "Overview of timing patterns and deviations",
-    },
-    {
-      id: "activity-pair-threshold",
-      name: "Activity Pair Threshold",
-      description: "Analysis of threshold times between activity pairs",
-    },
-    {
-      id: "case-complexity-table",
-      name: "Case Complexity Analysis",
-      description: "Analysis of case complexity factors",
+      name: "Timing Analysis Table",
+      description: "Overview table of timing patterns and deviations",
     },
   ],
-  CCM: [
+  "Legacy Widgets": [
+    {
+      id: "chart-widget",
+      name: "Performance Chart",
+      description: "Basic line chart for performance tracking",
+    },
+    {
+      id: "sop-widget",
+      name: "SOP Deviations",
+      description: "Standard operating procedure deviation analysis",
+    },
+    {
+      id: "data-viz",
+      name: "Data Visualization",
+      description: "Generic data visualization widget",
+    },
     {
       id: "controls-identified-count",
-      name: "Controls Identified Count",
-      description: "Count of identified controls in the process",
-    },
-    {
-      id: "controls-description",
-      name: "Controls Description",
-      description: "Detailed description of controls",
-    },
-    {
-      id: "control-definition",
-      name: "Control Definition",
-      description: "Definition of controls and their parameters",
-    },
-    {
-      id: "sla-analysis-bar",
-      name: "SLA Analysis",
-      description: "Service Level Agreement analysis and performance metrics",
-    },
-    {
-      id: "kpi",
-      name: "KPI",
-      description: "Key Performance Indicators for process management",
+      name: "Controls Identified (Info Card)",
+      description: "Count of identified controls displayed as info card",
     },
   ],
 };
@@ -173,7 +154,6 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
         ? prev.filter((id) => id !== widgetId)
         : [...prev, widgetId];
 
-      // Check if there are changes compared to the original pinned widgets
       const hasNewChanges =
         JSON.stringify(newPinned.sort()) !==
         JSON.stringify(pinnedWidgets.sort());
@@ -184,7 +164,6 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   };
 
   const handleSave = () => {
-    // Save both selected and pinned widgets (pinned widgets are also selected)
     onSave(localPinnedWidgets, localPinnedWidgets);
     setHasChanges(false);
     onClose();
@@ -196,7 +175,6 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   };
 
   const handleCancel = () => {
-    // Reset local state to original values
     setLocalPinnedWidgets(pinnedWidgets);
     setHasChanges(false);
     onClose();
