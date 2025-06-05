@@ -21,6 +21,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
   const [tempPinnedWidgets, setTempPinnedWidgets] = useState<string[]>([]);
+  const [hasUserSelection, setHasUserSelection] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -31,9 +32,11 @@ const Dashboard: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        // No user logged in - show default widgets
         setSelectedWidgets(DEFAULT_WIDGETS);
         setPinnedWidgets(DEFAULT_WIDGETS);
         setTempPinnedWidgets(DEFAULT_WIDGETS);
+        setHasUserSelection(false);
         setLoading(false);
         return;
       }
@@ -46,27 +49,35 @@ const Dashboard: React.FC = () => {
 
       if (error && error.code !== "PGRST116") {
         console.error("Error fetching user preferences:", error);
+        // Error fetching - show default widgets
         setSelectedWidgets(DEFAULT_WIDGETS);
         setPinnedWidgets(DEFAULT_WIDGETS);
         setTempPinnedWidgets(DEFAULT_WIDGETS);
+        setHasUserSelection(false);
         setLoading(false);
         return;
       }
 
       if (data && data.selected_widgets && data.selected_widgets.length > 0) {
-        setSelectedWidgets(data.selected_widgets || []);
+        // User has custom selections - use them instead of defaults
+        setSelectedWidgets(data.selected_widgets);
         setPinnedWidgets(data.pinned_widgets || []);
         setTempPinnedWidgets(data.pinned_widgets || []);
+        setHasUserSelection(true);
       } else {
+        // User exists but no custom selections - show default widgets
         setSelectedWidgets(DEFAULT_WIDGETS);
         setPinnedWidgets(DEFAULT_WIDGETS);
         setTempPinnedWidgets(DEFAULT_WIDGETS);
+        setHasUserSelection(false);
       }
     } catch (error) {
       console.error("Error fetching user preferences:", error);
+      // Error - show default widgets
       setSelectedWidgets(DEFAULT_WIDGETS);
       setPinnedWidgets(DEFAULT_WIDGETS);
       setTempPinnedWidgets(DEFAULT_WIDGETS);
+      setHasUserSelection(false);
     } finally {
       setLoading(false);
     }
@@ -103,6 +114,7 @@ const Dashboard: React.FC = () => {
       setSelectedWidgets(tempPinnedWidgets);
       setPinnedWidgets(tempPinnedWidgets);
       setHasChanges(false);
+      setHasUserSelection(true); // User now has custom selections
 
       toast({
         title: "Changes Saved",
@@ -307,6 +319,7 @@ const Dashboard: React.FC = () => {
           <p>Pinned Widgets: {pinnedWidgets.join(', ')}</p>
           <p>Temp Pinned Widgets: {tempPinnedWidgets.join(', ')}</p>
           <p>Has Changes: {hasChanges.toString()}</p>
+          <p>Has User Selection: {hasUserSelection.toString()}</p>
         </div>
       )}
 
