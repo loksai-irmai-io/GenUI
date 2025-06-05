@@ -20,7 +20,6 @@ const DEFAULT_WIDGETS = ["resource-performance", "process-failure-patterns-distr
 const Dashboard: React.FC = () => {
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
   const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
-  const [availableWidgets, setAvailableWidgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
   const [tempPinnedWidgets, setTempPinnedWidgets] = useState<string[]>([]);
@@ -28,7 +27,6 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchUserPreferences();
-    fetchAvailableWidgets();
   }, []);
 
   const fetchUserPreferences = async () => {
@@ -76,21 +74,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const fetchAvailableWidgets = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("widgets")
-        .select("*")
-        .order("widget_category", { ascending: true })
-        .order("widget_name", { ascending: true });
-
-      if (error) throw error;
-      setAvailableWidgets(data || []);
-    } catch (error) {
-      console.error("Error fetching widgets:", error);
-    }
-  };
-
   const handlePinToggle = (widgetId: string) => {
     setTempPinnedWidgets(prev => {
       const newPinned = prev.includes(widgetId)
@@ -111,7 +94,7 @@ const Dashboard: React.FC = () => {
         .from("user_preferences")
         .upsert({
           user_id: user.id,
-          selected_widgets: selectedWidgets,
+          selected_widgets: tempPinnedWidgets,
           pinned_widgets: tempPinnedWidgets,
         }, {
           onConflict: "user_id",
@@ -119,6 +102,7 @@ const Dashboard: React.FC = () => {
 
       if (error) throw error;
 
+      setSelectedWidgets(tempPinnedWidgets);
       setPinnedWidgets(tempPinnedWidgets);
       setHasChanges(false);
 
@@ -136,12 +120,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const renderWidget = (widget: any) => {
-    const widgetId = String(widget.id);
+  const renderWidget = (widgetId: string) => {
     const widgetProps = {
       key: widgetId,
-      title: widget.widget_name,
-      description: widget.description,
+      title: getWidgetTitle(widgetId),
+      description: getWidgetDescription(widgetId),
     };
 
     // Handle specific widget IDs that need special rendering
@@ -198,7 +181,6 @@ const Dashboard: React.FC = () => {
           </div>
         );
       case "object-lifecycle":
-      case "object-lifecycle-process":
         return (
           <div key={widgetId} className="relative">
             <DataVisualizationWidget {...widgetProps} type="object-lifecycle" data={[]} />
@@ -215,138 +197,46 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
         );
-      case "sop-deviation":
-        return (
-          <div key={widgetId} className="relative">
-            <SOPWidget {...widgetProps} type="count" data={{ count: 0, percentage: 0, threshold: 0 }} visualizationType="bar" />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
-        );
-      case "sop-patterns":
-        return (
-          <div key={widgetId} className="relative">
-            <SOPWidget {...widgetProps} type="patterns" data={[]} visualizationType="table" />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
-        );
       default:
-        // Use widget_type if available, otherwise fall back to default rendering
-        if (widget.widget_type) {
-          switch (widget.widget_type) {
-            case "chart":
-              return (
-                <div key={widgetId} className="relative">
-                  <ChartWidget {...widgetProps} type="line" data={[]} />
-                  <button
-                    onClick={() => handlePinToggle(widgetId)}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-                    aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-                  >
-                    {tempPinnedWidgets.includes(widgetId) ? (
-                      <PinOff className="w-4 h-4 text-gray-600" />
-                    ) : (
-                      <Pin className="w-4 h-4 text-gray-600" />
-                    )}
-                  </button>
-                </div>
-              );
-            case "table":
-              return (
-                <div key={widgetId} className="relative">
-                  <DataTable title={widget.widget_name} data={[]} columns={[]} />
-                  <button
-                    onClick={() => handlePinToggle(widgetId)}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-                    aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-                  >
-                    {tempPinnedWidgets.includes(widgetId) ? (
-                      <PinOff className="w-4 h-4 text-gray-600" />
-                    ) : (
-                      <Pin className="w-4 h-4 text-gray-600" />
-                    )}
-                  </button>
-                </div>
-              );
-            case "info_card":
-              return (
-                <div key={widgetId} className="relative">
-                  <InfoCard {...widgetProps} value="N/A" />
-                  <button
-                    onClick={() => handlePinToggle(widgetId)}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-                    aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-                  >
-                    {tempPinnedWidgets.includes(widgetId) ? (
-                      <PinOff className="w-4 h-4 text-gray-600" />
-                    ) : (
-                      <Pin className="w-4 h-4 text-gray-600" />
-                    )}
-                  </button>
-                </div>
-              );
-            default:
-              return (
-                <div key={widgetId} className="relative">
-                  <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
-                  <button
-                    onClick={() => handlePinToggle(widgetId)}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-                    aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-                  >
-                    {tempPinnedWidgets.includes(widgetId) ? (
-                      <PinOff className="w-4 h-4 text-gray-600" />
-                    ) : (
-                      <Pin className="w-4 h-4 text-gray-600" />
-                    )}
-                  </button>
-                </div>
-              );
-          }
-        } else {
-          // Default fallback rendering for unknown widgets
-          return (
-            <div key={widgetId} className="relative">
-              <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
-              <button
-                onClick={() => handlePinToggle(widgetId)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-                aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-              >
-                {tempPinnedWidgets.includes(widgetId) ? (
-                  <PinOff className="w-4 h-4 text-gray-600" />
-                ) : (
-                  <Pin className="w-4 h-4 text-gray-600" />
-                )}
-              </button>
-            </div>
-          );
-        }
+        // Default fallback rendering for unknown widgets
+        return (
+          <div key={widgetId} className="relative">
+            <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
+            <button
+              onClick={() => handlePinToggle(widgetId)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
+              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
+            >
+              {tempPinnedWidgets.includes(widgetId) ? (
+                <PinOff className="w-4 h-4 text-gray-600" />
+              ) : (
+                <Pin className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+          </div>
+        );
     }
   };
 
-  const selectedWidgetData = availableWidgets.filter(widget => 
-    selectedWidgets.includes(String(widget.id))
-  );
+  const getWidgetTitle = (widgetId: string): string => {
+    const titles: Record<string, string> = {
+      "timing-analysis": "Timing Analysis",
+      "resource-performance": "Resource Performance",
+      "process-failure-patterns-distribution": "Process Failure Patterns",
+      "object-lifecycle": "Object Lifecycle"
+    };
+    return titles[widgetId] || "Widget";
+  };
+
+  const getWidgetDescription = (widgetId: string): string => {
+    const descriptions: Record<string, string> = {
+      "timing-analysis": "Analyze timing patterns and deviations",
+      "resource-performance": "Monitor resource efficiency and utilization",
+      "process-failure-patterns-distribution": "Analyze failure patterns and distributions",
+      "object-lifecycle": "Track object lifecycle and transitions"
+    };
+    return descriptions[widgetId] || "Widget description";
+  };
 
   if (loading) {
     return (
@@ -382,16 +272,16 @@ const Dashboard: React.FC = () => {
       {process.env.NODE_ENV === 'development' && (
         <div className="text-xs text-gray-500 p-2 bg-gray-50 rounded">
           <p>Selected Widgets: {selectedWidgets.join(', ')}</p>
-          <p>Available Widgets: {availableWidgets.length}</p>
-          <p>Filtered Widgets: {selectedWidgetData.length}</p>
+          <p>Pinned Widgets: {pinnedWidgets.join(', ')}</p>
+          <p>Temp Pinned Widgets: {tempPinnedWidgets.join(', ')}</p>
           <p>Has Changes: {hasChanges.toString()}</p>
         </div>
       )}
 
       {/* Widgets Section */}
-      {selectedWidgetData.length > 0 ? (
+      {selectedWidgets.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {selectedWidgetData.map(renderWidget)}
+          {selectedWidgets.map(renderWidget)}
         </div>
       ) : (
         <Card className="p-12 text-center">
