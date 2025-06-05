@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -37,7 +36,6 @@ const CATEGORY_WIDGETS = {
     { id: "timing-violations-table", name: "Timing Violations Table", description: "Detailed timing violations data" },
     { id: "sop-deviation-patterns", name: "SOP Deviation Patterns", description: "SOP deviation pattern analysis" },
     { id: "resource-performance", name: "Resource Performance", description: "Monitor resource efficiency and utilization" },
-    { id: "timing-analysis", name: "Timing Analysis Overview", description: "Analyze timing patterns and deviations" },
     { id: "activity-pair-threshold", name: "Activity Pair Threshold", description: "Activity pair threshold analysis" },
     { id: "case-complexity-analysis", name: "Case Complexity Analysis", description: "Comprehensive case complexity analysis" }
   ],
@@ -47,7 +45,6 @@ const CATEGORY_WIDGETS = {
   "CCM": [
     { id: "controls-identified-count", name: "Controls Identified Count", description: "Count of identified controls" },
     { id: "controls-description", name: "Controls Description", description: "Description of control mechanisms" },
-    { id: "controls", name: "Controls", description: "Control system overview" },
     { id: "control-definition", name: "Control Definition", description: "Control definitions and specifications" },
     { id: "sla-analysis", name: "SLA Analysis", description: "Service Level Agreement analysis" },
     { id: "kpi", name: "KPI", description: "Key Performance Indicators" }

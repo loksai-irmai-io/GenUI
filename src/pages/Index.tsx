@@ -10,11 +10,10 @@ import ChartWidget from "@/components/widgets/ChartWidget";
 import DataTable from "@/components/widgets/DataTable";
 import InfoCard from "@/components/widgets/InfoCard";
 import SOPWidget from "@/components/widgets/SOPWidget";
-import TimingAnalysisTable from "@/components/widgets/TimingAnalysisTable";
 import ResourcePerformanceTable from "@/components/widgets/ResourcePerformanceTable";
 import DataVisualizationWidget from "@/components/widgets/DataVisualizationWidget";
 
-const DEFAULT_WIDGETS = ["resource-performance", "process-failure-patterns-distribution", "timing-analysis"];
+const DEFAULT_WIDGETS = ["resource-performance", "all-failure-patterns-count", "controls-identified-count"];
 
 const Dashboard: React.FC = () => {
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
@@ -151,13 +150,14 @@ const Dashboard: React.FC = () => {
 
     // Handle specific widget IDs that need special rendering
     switch (widgetId) {
-      case "timing-analysis":
-        return renderWidgetWithPin(<TimingAnalysisTable />);
       case "resource-performance":
         return renderWidgetWithPin(<ResourcePerformanceTable />);
       
-      // Chart widgets that use DataVisualizationWidget
+      // Chart widgets that use DataVisualizationWidget with proper types
       case "all-failure-patterns-count":
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="process-failure-patterns-bar" data={[]} />
+        );
       case "sop-deviation-count":
       case "incomplete-cases-count":
       case "long-running-cases-count":
@@ -165,11 +165,24 @@ const Dashboard: React.FC = () => {
       case "rework-activities-count":
       case "timing-violations-count":
       case "controls-identified-count":
-      case "sla-analysis":
-      case "kpi":
-      case "object-lifecycle":
         return renderWidgetWithPin(
           <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
+        );
+      case "sla-analysis":
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="sla-analysis-bar" data={[]} />
+        );
+      case "kpi":
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
+        );
+      case "object-lifecycle":
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="object-lifecycle" data={[]} />
+        );
+      case "activity-pair-threshold":
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="activity-pair-threshold" data={[]} />
         );
       
       // Table widgets with default columns
@@ -180,10 +193,8 @@ const Dashboard: React.FC = () => {
       case "reworked-activities-table":
       case "timing-violations-table":
       case "sop-deviation-patterns":
-      case "activity-pair-threshold":
       case "case-complexity-analysis":
       case "controls-description":
-      case "controls":
       case "control-definition":
         return renderWidgetWithPin(
           <DataTable 
@@ -203,41 +214,26 @@ const Dashboard: React.FC = () => {
 
   const getWidgetTitle = (widgetId: string): string => {
     const titles: Record<string, string> = {
-      "timing-analysis": "Timing Analysis",
       "resource-performance": "Resource Performance", 
-      "process-failure-patterns-distribution": "Process Failure Patterns",
-      "object-lifecycle": "Object Lifecycle",
-      "timing-violations": "Timing Violations",
-      "long-running-cases": "Long Running Cases",
-      "sop-deviation": "SOP Deviation",
-      "incomplete-cases": "Incomplete Cases",
-      "case-complexity": "Case Complexity",
-      "resource-switches": "Resource Switches",
-      "rework-activities": "Rework Activities",
-      "activity-frequency": "Activity Frequency",
-      "process-variants": "Process Variants",
-      "process-flow": "Process Flow",
-      "performance-metrics": "Performance Metrics",
-      "bottleneck-analysis": "Bottleneck Analysis",
       "all-failure-patterns-count": "All Failure Patterns Count",
+      "object-lifecycle": "Object Lifecycle",
+      "timing-violations-count": "Timing Violations Count",
+      "long-running-cases-count": "Long Running Cases Count",
       "sop-deviation-count": "SOP Deviation Count",
       "incomplete-cases-count": "Incomplete Cases Count",
-      "incomplete-cases-table": "Incomplete Cases Table",
-      "long-running-cases-count": "Long-Running Cases Count",
-      "long-running-table": "Long-Running Table",
+      "case-complexity-analysis": "Case Complexity Analysis",
       "resource-switches-count": "Resource Switches Count",
+      "rework-activities-count": "Rework Activities Count",
+      "incomplete-cases-table": "Incomplete Cases Table",
+      "long-running-table": "Long-Running Table",
       "resource-switches-count-table": "Resource Switches Count Table",
       "resource-switches-table": "Resource Switches Table",
-      "rework-activities-count": "Rework Activities Count",
       "reworked-activities-table": "Reworked Activities Table",
-      "timing-violations-count": "Timing Violations Count",
       "timing-violations-table": "Timing Violations Table",
       "sop-deviation-patterns": "SOP Deviation Patterns",
       "activity-pair-threshold": "Activity Pair Threshold",
-      "case-complexity-analysis": "Case Complexity Analysis",
       "controls-identified-count": "Controls Identified Count",
       "controls-description": "Controls Description",
-      "controls": "Controls",
       "control-definition": "Control Definition",
       "sla-analysis": "SLA Analysis",
       "kpi": "KPI"
@@ -247,41 +243,26 @@ const Dashboard: React.FC = () => {
 
   const getWidgetDescription = (widgetId: string): string => {
     const descriptions: Record<string, string> = {
-      "timing-analysis": "Analyze timing patterns and deviations",
       "resource-performance": "Monitor resource efficiency and utilization",
-      "process-failure-patterns-distribution": "Analyze failure patterns and distributions",
-      "object-lifecycle": "Track object lifecycle and transitions",
-      "timing-violations": "Track timing constraint violations",
-      "long-running-cases": "Monitor cases exceeding expected duration",
-      "sop-deviation": "Standard Operating Procedure deviations",
-      "incomplete-cases": "Track incomplete or stalled cases",
-      "case-complexity": "Measure and analyze case complexity metrics",
-      "resource-switches": "Track resource switching patterns",
-      "rework-activities": "Monitor rework and retry activities",
-      "activity-frequency": "Analyze activity occurrence patterns",
-      "process-variants": "Discover different process execution paths",
-      "process-flow": "Visualize process flow and paths",
-      "performance-metrics": "Overall performance and efficiency metrics",
-      "bottleneck-analysis": "Identify process bottlenecks and constraints",
       "all-failure-patterns-count": "Count of all failure pattern occurrences",
+      "object-lifecycle": "Track object lifecycle and transitions",
+      "timing-violations-count": "Count of timing violations",
+      "long-running-cases-count": "Count of long-running cases",
       "sop-deviation-count": "Count of SOP deviation instances",
       "incomplete-cases-count": "Count of incomplete cases",
-      "incomplete-cases-table": "Detailed table of incomplete cases",
-      "long-running-cases-count": "Count of long-running cases",
-      "long-running-table": "Detailed table of long-running cases",
+      "case-complexity-analysis": "Comprehensive case complexity analysis",
       "resource-switches-count": "Count of resource switch events",
+      "rework-activities-count": "Count of rework activities",
+      "incomplete-cases-table": "Detailed table of incomplete cases",
+      "long-running-table": "Detailed table of long-running cases",
       "resource-switches-count-table": "Resource switches count breakdown",
       "resource-switches-table": "Detailed resource switches data",
-      "rework-activities-count": "Count of rework activities",
       "reworked-activities-table": "Detailed reworked activities data",
-      "timing-violations-count": "Count of timing violations",
       "timing-violations-table": "Detailed timing violations data",
       "sop-deviation-patterns": "SOP deviation pattern analysis",
       "activity-pair-threshold": "Activity pair threshold analysis",
-      "case-complexity-analysis": "Comprehensive case complexity analysis",
       "controls-identified-count": "Count of identified controls",
       "controls-description": "Description of control mechanisms",
-      "controls": "Control system overview",
       "control-definition": "Control definitions and specifications",
       "sla-analysis": "Service Level Agreement analysis",
       "kpi": "Key Performance Indicators"
