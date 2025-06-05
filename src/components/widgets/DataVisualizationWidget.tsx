@@ -82,7 +82,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
       // Validate input data
       if (!Array.isArray(data)) {
         return (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-slate-300">
             Invalid data format for table
           </div>
         );
@@ -90,7 +90,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
 
       if (data.length === 0) {
         return (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-slate-300">
             No data available
           </div>
         );
@@ -100,7 +100,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
       const firstRow = data[0];
       if (!firstRow || typeof firstRow !== "object") {
         return (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-slate-300">
             Invalid data structure for table
           </div>
         );
@@ -112,7 +112,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
 
       if (allUndefined) {
         return (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-slate-300">
             Table contains undefined values only
           </div>
         );
@@ -139,13 +139,13 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
               : "w-full overflow-x-auto max-w-[32rem]"
           }
         >
-          <Table className="w-full">
-            <TableHeader className="bg-gray-50 dark:bg-gray-800">
-              <TableRow>
+          <Table className="w-full bg-slate-800/50 border border-slate-700">
+            <TableHeader className="bg-slate-700/80">
+              <TableRow className="border-slate-600">
                 {columns.map((col) => (
                   <TableHead
                     key={col}
-                    className="px-2 py-1 text-xs font-medium whitespace-nowrap"
+                    className="px-4 py-3 text-sm font-semibold whitespace-nowrap text-slate-200 border-slate-600"
                   >
                     {col
                       .replace(/_/g, " ")
@@ -158,10 +158,10 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
               {cleanedData.map((row, idx) => (
                 <TableRow
                   key={idx}
-                  className="border-b border-gray-100 dark:border-gray-700"
+                  className="border-b border-slate-700 hover:bg-slate-700/50"
                 >
                   {columns.map((col) => (
-                    <TableCell key={col} className="px-2 py-1 text-xs">
+                    <TableCell key={col} className="px-4 py-3 text-sm text-slate-300">
                       {(() => {
                         const value = row[col];
                         // Handle undefined/null values
@@ -197,7 +197,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
       // First, validate and clean the data
       if (!Array.isArray(data)) {
         return (
-          <div className="flex items-center justify-center h-[400px] text-gray-500">
+          <div className="flex items-center justify-center h-[400px] text-slate-300">
             Invalid data format for bar chart
           </div>
         );
@@ -226,7 +226,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
       // Final check for empty data
       if (processedData.length === 0) {
         return (
-          <div className="flex items-center justify-center h-[400px] text-gray-500">
+          <div className="flex items-center justify-center h-[400px] text-slate-300">
             No valid data available for chart visualization
           </div>
         );
@@ -240,23 +240,34 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
               margin={{ top: 16, right: 16, left: 8, bottom: 40 }}
               barCategoryGap={40}
             >
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" />
               <XAxis
                 dataKey="name"
                 angle={-20}
                 textAnchor="end"
                 height={80}
                 interval={0}
-                tick={{ fontSize: 14 }}
+                tick={{ fontSize: 12, fill: '#cbd5e1' }}
+                axisLine={{ stroke: '#64748b' }}
               />
-              <YAxis allowDecimals={false} tick={{ fontSize: 14 }} />
+              <YAxis 
+                allowDecimals={false} 
+                tick={{ fontSize: 12, fill: '#cbd5e1' }}
+                axisLine={{ stroke: '#64748b' }}
+              />
               <Tooltip
                 formatter={(value) => [value, "Value"]}
                 labelFormatter={(name) => `${name}`}
+                contentStyle={{
+                  backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                  border: '1px solid rgba(71, 85, 105, 0.5)',
+                  borderRadius: '8px',
+                  color: '#f1f5f9'
+                }}
               />
               <Bar
                 dataKey="value"
-                fill="#2563eb"
+                fill="#3b82f6"
                 minPointSize={4}
                 isAnimationActive={false}
               />
@@ -280,7 +291,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
 
       if (!isGraphData(data) || data.nodes.length === 0) {
         return (
-          <div className="flex items-center justify-center h-[400px] text-gray-500">
+          <div className="flex items-center justify-center h-[400px] text-slate-300">
             No lifecycle data available
           </div>
         );
@@ -318,7 +329,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
         (typeof data === "object" && Object.keys(data).length === 0)
       ) {
         return (
-          <div className="flex items-center justify-center h-[400px] text-gray-500">
+          <div className="flex items-center justify-center h-[400px] text-slate-300">
             No threshold data available
           </div>
         );
@@ -332,7 +343,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
 
       if (!hasData) {
         return (
-          <div className="flex items-center justify-center h-[400px] text-gray-500">
+          <div className="flex items-center justify-center h-[400px] text-slate-300">
             No valid threshold data available
           </div>
         );
@@ -367,13 +378,13 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
               : "w-full overflow-x-auto max-w-[32rem]"
           }
         >
-          <Table className="w-full">
-            <TableHeader className="bg-gray-50 dark:bg-gray-800">
-              <TableRow>
+          <Table className="w-full bg-slate-800/50 border border-slate-700">
+            <TableHeader className="bg-slate-700/80">
+              <TableRow className="border-slate-600">
                 {columns.map((col) => (
                   <TableHead
                     key={col}
-                    className="px-2 py-1 text-xs font-medium whitespace-nowrap"
+                    className="px-4 py-3 text-sm font-semibold whitespace-nowrap text-slate-200 border-slate-600"
                   >
                     {col
                       .replace(/_/g, " ")
@@ -386,10 +397,10 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
               {data.map((row, idx) => (
                 <TableRow
                   key={idx}
-                  className="border-b border-gray-100 dark:border-gray-700"
+                  className="border-b border-slate-700 hover:bg-slate-700/50"
                 >
                   {columns.map((col) => (
-                    <TableCell key={col} className="px-2 py-1 text-xs">
+                    <TableCell key={col} className="px-4 py-3 text-sm text-slate-300">
                       {typeof row[col] === "object" && row[col] !== null
                         ? JSON.stringify(row[col])
                         : String(row[col] ?? "-")}
@@ -406,7 +417,7 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
     // --- Fallback for any unrecognized type ---
     return (
       <div className="w-full h-[400px] flex items-center justify-center">
-        <span className="text-blue-700 font-semibold">
+        <span className="text-xl font-semibold text-slate-200">
           {title} Visualization
         </span>
       </div>
@@ -415,13 +426,13 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 focus-visible:ring-2 focus-visible:ring-blue-400 outline-none ${className}${
+      className={`enterprise-card p-6 focus-visible:ring-2 focus-visible:ring-blue-400 outline-none ${className}${
         maximized ? " max-w-4xl" : ""
       }`}
       tabIndex={0}
       aria-label={title}
     >
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">{title}</h3>
+      <h3 className="text-xl font-semibold text-slate-100 mb-6 tracking-tight">{title}</h3>
       {renderVisualization()}
     </div>
   );

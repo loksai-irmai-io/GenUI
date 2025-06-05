@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Table,
@@ -27,13 +28,13 @@ const DataTable: React.FC<DataTableProps> = ({
 }) => {
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 focus-visible:ring-2 focus-visible:ring-blue-400 outline-none${
+      className={`enterprise-card p-6 hover:shadow-md transition-all duration-200 focus-visible:ring-2 focus-visible:ring-blue-400 outline-none${
         maximized ? " max-w-4xl" : ""
       }`}
       tabIndex={0}
       aria-label={title}
     >
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+      <h3 className="text-xl font-semibold text-slate-100 mb-6 tracking-tight">{title}</h3>
       <div
         className={
           maximized
@@ -41,13 +42,13 @@ const DataTable: React.FC<DataTableProps> = ({
             : "overflow-x-auto max-w-[32rem]"
         }
       >
-        <Table>
-          <TableHeader>
-            <TableRow>
+        <Table className="bg-slate-800/50 border border-slate-700">
+          <TableHeader className="bg-slate-700/80">
+            <TableRow className="border-slate-600">
               {columns.map((column) => (
                 <TableHead
                   key={column.key}
-                  className="font-semibold text-gray-700"
+                  className="px-4 py-3 text-sm font-semibold text-slate-200 border-slate-600"
                 >
                   {column.label}
                 </TableHead>
@@ -56,9 +57,12 @@ const DataTable: React.FC<DataTableProps> = ({
           </TableHeader>
           <TableBody>
             {data.map((row, index) => (
-              <TableRow key={index} className="hover:bg-gray-50">
+              <TableRow 
+                key={index} 
+                className="border-b border-slate-700 hover:bg-slate-700/50 transition-colors"
+              >
                 {columns.map((column) => (
-                  <TableCell key={column.key} className="text-gray-900">
+                  <TableCell key={column.key} className="px-4 py-3 text-sm text-slate-300">
                     {typeof row[column.key] === "object" &&
                     row[column.key] !== null
                       ? JSON.stringify(row[column.key])

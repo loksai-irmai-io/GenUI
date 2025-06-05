@@ -18,15 +18,6 @@ interface SOPWidgetProps {
   maximized?: boolean;
 }
 
-const COLORS = [
-  "#3B82F6",
-  "#10B981",
-  "#F59E0B",
-  "#EF4444",
-  "#8B5CF6",
-  "#06B6D4",
-];
-
 const SOPWidget: React.FC<SOPWidgetProps> = ({
   type,
   data,
@@ -40,9 +31,9 @@ const SOPWidget: React.FC<SOPWidgetProps> = ({
   // Defensive checks
   if (!data) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center text-red-600">
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
-        <div>Data is missing or could not be loaded.</div>
+      <div className="enterprise-card p-6 text-center">
+        <h3 className="text-xl font-semibold text-slate-100 mb-4 tracking-tight">{title}</h3>
+        <div className="text-red-400">Data is missing or could not be loaded.</div>
       </div>
     );
   }
@@ -53,13 +44,13 @@ const SOPWidget: React.FC<SOPWidgetProps> = ({
       typeof data.count !== "number")
   ) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center text-red-600">
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
-        <div>
+      <div className="enterprise-card p-6 text-center">
+        <h3 className="text-xl font-semibold text-slate-100 mb-4 tracking-tight">{title}</h3>
+        <div className="text-red-400 mb-4">
           Invalid data format for SOP Deviation Count. Expected an object with a
           numeric "count" property.
         </div>
-        <pre className="text-xs text-gray-500 text-left overflow-x-auto">
+        <pre className="text-xs text-slate-400 text-left overflow-x-auto bg-slate-800/50 p-3 rounded">
           {JSON.stringify(data, null, 2)}
         </pre>
       </div>
@@ -67,12 +58,12 @@ const SOPWidget: React.FC<SOPWidgetProps> = ({
   }
   if (type === "patterns" && !Array.isArray(data)) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center text-red-600">
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
-        <div>
+      <div className="enterprise-card p-6 text-center">
+        <h3 className="text-xl font-semibold text-slate-100 mb-4 tracking-tight">{title}</h3>
+        <div className="text-red-400 mb-4">
           Invalid data format for SOP Deviation Patterns. Expected an array.
         </div>
-        <pre className="text-xs text-gray-500 text-left overflow-x-auto">
+        <pre className="text-xs text-slate-400 text-left overflow-x-auto bg-slate-800/50 p-3 rounded">
           {JSON.stringify(data, null, 2)}
         </pre>
       </div>
@@ -91,22 +82,30 @@ const SOPWidget: React.FC<SOPWidgetProps> = ({
     return (
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-          <XAxis dataKey="name" stroke="#6b7280" />
-          <YAxis stroke="#6b7280" />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.2)" />
+          <XAxis 
+            dataKey="name" 
+            tick={{ fontSize: 12, fill: '#cbd5e1' }}
+            axisLine={{ stroke: '#64748b' }}
+          />
+          <YAxis 
+            tick={{ fontSize: 12, fill: '#cbd5e1' }}
+            axisLine={{ stroke: '#64748b' }}
+          />
           <Tooltip
             contentStyle={{
-              backgroundColor: "white",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+              backgroundColor: 'rgba(30, 41, 59, 0.95)',
+              border: '1px solid rgba(71, 85, 105, 0.5)',
+              borderRadius: '8px',
+              color: '#f1f5f9',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
             }}
             formatter={(value, name) => [
               value,
               name === "value" ? "Count" : name,
             ]}
           />
-          <Bar dataKey="value" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     );
@@ -122,27 +121,27 @@ const SOPWidget: React.FC<SOPWidgetProps> = ({
             : "overflow-x-auto max-w-[32rem]"
         }
       >
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-2">Pattern</th>
-              <th className="text-left p-2">Frequency</th>
-              <th className="text-left p-2">Severity</th>
+        <table className="w-full text-sm bg-slate-800/50 border border-slate-700 rounded-lg">
+          <thead className="bg-slate-700/80">
+            <tr className="border-b border-slate-600">
+              <th className="text-left p-4 text-slate-200 font-semibold">Pattern</th>
+              <th className="text-left p-4 text-slate-200 font-semibold">Frequency</th>
+              <th className="text-left p-4 text-slate-200 font-semibold">Severity</th>
             </tr>
           </thead>
           <tbody>
             {patternsData.map((pattern, index) => (
-              <tr key={index} className="border-b">
-                <td className="p-2">{pattern.pattern_name}</td>
-                <td className="p-2">{pattern.frequency}</td>
-                <td className="p-2">
+              <tr key={index} className="border-b border-slate-700 hover:bg-slate-700/50">
+                <td className="p-4 text-slate-300">{pattern.pattern_name}</td>
+                <td className="p-4 text-slate-300">{pattern.frequency}</td>
+                <td className="p-4">
                   <span
-                    className={`px-2 py-1 rounded text-xs ${
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
                       pattern.severity === "high"
-                        ? "bg-red-100 text-red-800"
+                        ? "bg-red-900/50 text-red-300 border border-red-700"
                         : pattern.severity === "medium"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-green-100 text-green-800"
+                        ? "bg-yellow-900/50 text-yellow-300 border border-yellow-700"
+                        : "bg-green-900/50 text-green-300 border border-green-700"
                     }`}
                   >
                     {pattern.severity}
@@ -166,13 +165,13 @@ const SOPWidget: React.FC<SOPWidgetProps> = ({
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6${
+      className={`enterprise-card p-6${
         maximized ? " max-w-4xl" : ""
       } focus-visible:ring-2 focus-visible:ring-blue-400 outline-none`}
       tabIndex={0}
       aria-label={title}
     >
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+      <h3 className="text-xl font-semibold text-slate-100 mb-6 tracking-tight">{title}</h3>
       {renderVisualization()}
     </div>
   );
