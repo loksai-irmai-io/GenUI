@@ -1,4 +1,3 @@
-
 import React from "react";
 import ReactFlow, {
   Background,
@@ -192,7 +191,6 @@ export default function ProcessFlowGraph() {
           color="#cbd5e1" 
           gap={20} 
           size={1}
-          variant="dots"
         />
         <Controls 
           showInteractive={false}
