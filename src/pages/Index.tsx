@@ -311,11 +311,13 @@ const Dashboard: React.FC = () => {
     };
 
     const renderWidgetWithPin = (component: React.ReactNode) => (
-      <div key={widgetId} className="relative">
-        {component}
+      <div key={widgetId} className="relative w-full">
+        <div className="w-full">
+          {component}
+        </div>
         <button
           onClick={() => handlePinToggle(widgetId)}
-          className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors z-10"
+          className="absolute top-6 right-6 p-2 rounded-full bg-white/90 hover:bg-white shadow-lg transition-all duration-200 z-10 border border-gray-200"
           aria-label={
             tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"
           }
@@ -328,6 +330,7 @@ const Dashboard: React.FC = () => {
         </button>
       </div>
     );
+
     switch (widgetId) {
       case "resource-performance":
         return renderWidgetWithPin(<ResourcePerformanceTable />);
@@ -1069,7 +1072,7 @@ const Dashboard: React.FC = () => {
                 // Check for undefined or null values in objects
                 if (typeof data.data[0] === "object") {
                   const hasAllUndefined = Object.values(data.data[0]).every(
-                    (val) => val === undefined || val === null
+                    (val) => val === undefined
                   );
                   if (hasAllUndefined) {
                     return [];
@@ -1130,7 +1133,7 @@ const Dashboard: React.FC = () => {
                 // Check if array contains only objects with undefined values
                 if (typeof data[0] === "object" && data[0] !== null) {
                   const hasAllUndefined = Object.values(data[0]).every(
-                    (val) => val === undefined || val === null
+                    (val) => val === undefined
                   );
                   if (hasAllUndefined) {
                     return [];
