@@ -83,7 +83,7 @@ const Auth = () => {
         <CardHeader className="text-center pb-8 pt-8">
           <div className="w-20 h-20 mx-auto mb-6 rounded-2xl overflow-hidden bg-white shadow-lg border border-gray-100 flex items-center justify-center">
             <img 
-              src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
+              src="/lovable-uploads/4fa81d66-b6af-4ee2-b81c-259365c7a007.png" 
               alt="IRMAI Logo" 
               className="w-16 h-16 object-contain"
             />

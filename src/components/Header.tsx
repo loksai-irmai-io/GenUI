@@ -126,7 +126,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center justify-center">
               <img 
-                src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
+                src="/lovable-uploads/4fa81d66-b6af-4ee2-b81c-259365c7a007.png" 
                 alt="IRMAI Logo" 
                 className="w-16 h-16 object-contain"
               />
