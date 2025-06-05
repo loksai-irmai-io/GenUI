@@ -116,14 +116,15 @@ const ChartWidget: React.FC<ChartWidgetProps> = ({
                 outerRadius={100}
                 fill="#8884d8"
                 dataKey={dataKey}
-                label={({ name, percent }) =>
-                  `${name} ${(percent * 100).toFixed(0)}%`
-                }
-                labelStyle={{ 
-                  fontSize: 12, 
-                  fill: '#f1f5f9',
-                  fontWeight: 500 
-                }}
+                label={({ name, percent }) => (
+                  <text 
+                    fill="#f1f5f9" 
+                    fontSize={12} 
+                    fontWeight={500}
+                  >
+                    {`${name} ${(percent * 100).toFixed(0)}%`}
+                  </text>
+                )}
               >
                 {data.map((entry, index) => (
                   <Cell
