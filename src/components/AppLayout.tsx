@@ -18,7 +18,13 @@ import {
   Search, 
   AlertTriangle, 
   Users, 
-  Brain 
+  Brain,
+  TrendingUp,
+  Shield,
+  Settings,
+  Target,
+  Database,
+  AlertCircle
 } from "lucide-react";
 
 const sidebarTabs = [
@@ -27,6 +33,12 @@ const sidebarTabs = [
   { label: "Outlier Analysis", path: "/outlier-analysis", icon: AlertTriangle },
   { label: "CCM", path: "/ccm", icon: Users },
   { label: "Overall AI Insights", path: "/ai-insights", icon: Brain },
+  { label: "Predictive Risk Analytics", path: "/predictive-risk", icon: TrendingUp, comingSoon: true },
+  { label: "Compliance & Monitoring", path: "/compliance", icon: Shield, comingSoon: true },
+  { label: "Admin & Dependencies", path: "/admin", icon: Settings, comingSoon: true },
+  { label: "Scenario Analysis", path: "/scenario-analysis", icon: Target, comingSoon: true },
+  { label: "Risk Catalog", path: "/risk-catalog", icon: Database, comingSoon: true },
+  { label: "Incident Management", path: "/incident-management", icon: AlertCircle, comingSoon: true },
 ];
 
 interface AppLayoutProps {
@@ -99,7 +111,7 @@ const AppLayout = ({
                       <SidebarMenuButton
                         isActive={isActive}
                         onClick={() => navigate(tab.path)}
-                        className={`w-full flex items-center px-4 py-3.5 rounded-xl transition-all duration-200 text-sm font-medium group ${
+                        className={`w-full flex items-center px-4 py-3.5 rounded-xl transition-all duration-200 text-sm font-medium group relative ${
                           isActive
                             ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-900/50 border border-blue-600"
                             : "hover:bg-gradient-to-r hover:from-slate-800 hover:to-slate-700 text-slate-300 hover:text-blue-400 border border-transparent hover:border-slate-600"
@@ -108,7 +120,12 @@ const AppLayout = ({
                         <IconComponent className={`w-5 h-5 mr-3 flex-shrink-0 transition-transform duration-200 group-hover:scale-110 ${
                           isActive ? "text-white" : "text-slate-400 group-hover:text-blue-400"
                         }`} />
-                        <span className={`${isMobile ? "text-sm" : ""} truncate`}>{tab.label}</span>
+                        <span className={`${isMobile ? "text-sm" : ""} truncate flex-1`}>{tab.label}</span>
+                        {tab.comingSoon && (
+                          <span className="ml-2 px-2 py-1 text-xs bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30 font-medium">
+                            Soon
+                          </span>
+                        )}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   );
