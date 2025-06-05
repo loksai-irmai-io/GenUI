@@ -22,26 +22,35 @@ interface WidgetSelectionModalProps {
 // Comprehensive list of all available widgets organized by category
 const CATEGORY_WIDGETS = {
   "Outlier Analysis": [
-    { id: "timing-analysis", name: "Timing Analysis", description: "Analyze timing patterns and deviations" },
+    { id: "all-failure-patterns-count", name: "All Failure Patterns Count", description: "Count of all failure pattern occurrences" },
+    { id: "sop-deviation-count", name: "SOP Deviation Count", description: "Count of SOP deviation instances" },
+    { id: "incomplete-cases-count", name: "Incomplete Cases Count", description: "Count of incomplete cases" },
+    { id: "incomplete-cases-table", name: "Incomplete Cases Table", description: "Detailed table of incomplete cases" },
+    { id: "long-running-cases-count", name: "Long-Running Cases Count", description: "Count of long-running cases" },
+    { id: "long-running-table", name: "Long-Running Table", description: "Detailed table of long-running cases" },
+    { id: "resource-switches-count", name: "Resource Switches Count", description: "Count of resource switch events" },
+    { id: "resource-switches-count-table", name: "Resource Switches Count Table", description: "Resource switches count breakdown" },
+    { id: "resource-switches-table", name: "Resource Switches Table", description: "Detailed resource switches data" },
+    { id: "rework-activities-count", name: "Rework Activities Count", description: "Count of rework activities" },
+    { id: "reworked-activities-table", name: "Reworked Activities Table", description: "Detailed reworked activities data" },
+    { id: "timing-violations-count", name: "Timing Violations Count", description: "Count of timing violations" },
+    { id: "timing-violations-table", name: "Timing Violations Table", description: "Detailed timing violations data" },
+    { id: "sop-deviation-patterns", name: "SOP Deviation Patterns", description: "SOP deviation pattern analysis" },
     { id: "resource-performance", name: "Resource Performance", description: "Monitor resource efficiency and utilization" },
-    { id: "timing-violations", name: "Timing Violations", description: "Track timing constraint violations" },
-    { id: "long-running-cases", name: "Long Running Cases", description: "Monitor cases exceeding expected duration" },
-    { id: "sop-deviation", name: "SOP Deviation", description: "Standard Operating Procedure deviations" },
-    { id: "incomplete-cases", name: "Incomplete Cases", description: "Track incomplete or stalled cases" }
+    { id: "timing-analysis", name: "Timing Analysis Overview", description: "Analyze timing patterns and deviations" },
+    { id: "activity-pair-threshold", name: "Activity Pair Threshold", description: "Activity pair threshold analysis" },
+    { id: "case-complexity-analysis", name: "Case Complexity Analysis", description: "Comprehensive case complexity analysis" }
   ],
   "Process Discovery": [
-    { id: "object-lifecycle", name: "Object Lifecycle", description: "Track object lifecycle and transitions" },
-    { id: "process-flow", name: "Process Flow", description: "Visualize process flow and paths" },
-    { id: "activity-frequency", name: "Activity Frequency", description: "Analyze activity occurrence patterns" },
-    { id: "process-variants", name: "Process Variants", description: "Discover different process execution paths" }
+    { id: "object-lifecycle", name: "Object Lifecycle", description: "Track object lifecycle and transitions" }
   ],
   "CCM": [
-    { id: "process-failure-patterns-distribution", name: "Process Failure Patterns", description: "Analyze failure patterns and distributions" },
-    { id: "case-complexity", name: "Case Complexity", description: "Measure and analyze case complexity metrics" },
-    { id: "resource-switches", name: "Resource Switches", description: "Track resource switching patterns" },
-    { id: "rework-activities", name: "Rework Activities", description: "Monitor rework and retry activities" },
-    { id: "performance-metrics", name: "Performance Metrics", description: "Overall performance and efficiency metrics" },
-    { id: "bottleneck-analysis", name: "Bottleneck Analysis", description: "Identify process bottlenecks and constraints" }
+    { id: "controls-identified-count", name: "Controls Identified Count", description: "Count of identified controls" },
+    { id: "controls-description", name: "Controls Description", description: "Description of control mechanisms" },
+    { id: "controls", name: "Controls", description: "Control system overview" },
+    { id: "control-definition", name: "Control Definition", description: "Control definitions and specifications" },
+    { id: "sla-analysis", name: "SLA Analysis", description: "Service Level Agreement analysis" },
+    { id: "kpi", name: "KPI", description: "Key Performance Indicators" }
   ]
 };
 

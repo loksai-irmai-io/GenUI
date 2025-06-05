@@ -120,6 +120,12 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const getDefaultColumns = () => [
+    { key: "id", label: "ID" },
+    { key: "name", label: "Name" },
+    { key: "value", label: "Value" }
+  ];
+
   const renderWidget = (widgetId: string) => {
     const widgetProps = {
       key: widgetId,
@@ -127,98 +133,64 @@ const Dashboard: React.FC = () => {
       description: getWidgetDescription(widgetId),
     };
 
+    const renderWidgetWithPin = (component: React.ReactNode) => (
+      <div key={widgetId} className="relative">
+        {component}
+        <button
+          onClick={() => handlePinToggle(widgetId)}
+          className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors z-10"
+          aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
+        >
+          {tempPinnedWidgets.includes(widgetId) ? (
+            <PinOff className="w-4 h-4 text-gray-600" />
+          ) : (
+            <Pin className="w-4 h-4 text-gray-600" />
+          )}
+        </button>
+      </div>
+    );
+
     // Handle specific widget IDs that need special rendering
     switch (widgetId) {
       case "timing-analysis":
-        return (
-          <div key={widgetId} className="relative">
-            <TimingAnalysisTable />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
-        );
+        return renderWidgetWithPin(<TimingAnalysisTable />);
       case "resource-performance":
-        return (
-          <div key={widgetId} className="relative">
-            <ResourcePerformanceTable />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
-        );
+        return renderWidgetWithPin(<ResourcePerformanceTable />);
       case "process-failure-patterns-distribution":
-        return (
-          <div key={widgetId} className="relative">
-            <DataVisualizationWidget {...widgetProps} type="process-failure-patterns-bar" data={[]} />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
         );
       case "object-lifecycle":
-        return (
-          <div key={widgetId} className="relative">
-            <DataVisualizationWidget {...widgetProps} type="object-lifecycle" data={[]} />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
         );
-      // Data table widgets
+      
+      // Table widgets with default columns
       case "timing-violations":
       case "long-running-cases":
       case "sop-deviation":
       case "incomplete-cases":
       case "case-complexity":
-        return (
-          <div key={widgetId} className="relative">
-            <DataTable data={[]} title={getWidgetTitle(widgetId)} />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
+      case "incomplete-cases-table":
+      case "long-running-table":
+      case "resource-switches-count-table":
+      case "resource-switches-table":
+      case "reworked-activities-table":
+      case "timing-violations-table":
+      case "sop-deviation-patterns":
+      case "activity-pair-threshold":
+      case "case-complexity-analysis":
+      case "controls-description":
+      case "controls":
+      case "control-definition":
+        return renderWidgetWithPin(
+          <DataTable 
+            data={[]} 
+            title={getWidgetTitle(widgetId)} 
+            columns={getDefaultColumns()}
+          />
         );
+      
       // Chart widgets that use DataVisualizationWidget
       case "resource-switches":
       case "rework-activities":
@@ -227,39 +199,24 @@ const Dashboard: React.FC = () => {
       case "process-flow":
       case "performance-metrics":
       case "bottleneck-analysis":
-        return (
-          <div key={widgetId} className="relative">
-            <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
+      case "all-failure-patterns-count":
+      case "sop-deviation-count":
+      case "incomplete-cases-count":
+      case "long-running-cases-count":
+      case "resource-switches-count":
+      case "rework-activities-count":
+      case "timing-violations-count":
+      case "controls-identified-count":
+      case "sla-analysis":
+      case "kpi":
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
         );
+      
       default:
         // Default fallback rendering for unknown widgets
-        return (
-          <div key={widgetId} className="relative">
-            <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
         );
     }
   };
@@ -281,7 +238,29 @@ const Dashboard: React.FC = () => {
       "process-variants": "Process Variants",
       "process-flow": "Process Flow",
       "performance-metrics": "Performance Metrics",
-      "bottleneck-analysis": "Bottleneck Analysis"
+      "bottleneck-analysis": "Bottleneck Analysis",
+      "all-failure-patterns-count": "All Failure Patterns Count",
+      "sop-deviation-count": "SOP Deviation Count",
+      "incomplete-cases-count": "Incomplete Cases Count",
+      "incomplete-cases-table": "Incomplete Cases Table",
+      "long-running-cases-count": "Long-Running Cases Count",
+      "long-running-table": "Long-Running Table",
+      "resource-switches-count": "Resource Switches Count",
+      "resource-switches-count-table": "Resource Switches Count Table",
+      "resource-switches-table": "Resource Switches Table",
+      "rework-activities-count": "Rework Activities Count",
+      "reworked-activities-table": "Reworked Activities Table",
+      "timing-violations-count": "Timing Violations Count",
+      "timing-violations-table": "Timing Violations Table",
+      "sop-deviation-patterns": "SOP Deviation Patterns",
+      "activity-pair-threshold": "Activity Pair Threshold",
+      "case-complexity-analysis": "Case Complexity Analysis",
+      "controls-identified-count": "Controls Identified Count",
+      "controls-description": "Controls Description",
+      "controls": "Controls",
+      "control-definition": "Control Definition",
+      "sla-analysis": "SLA Analysis",
+      "kpi": "KPI"
     };
     return titles[widgetId] || "Widget";
   };
@@ -303,7 +282,29 @@ const Dashboard: React.FC = () => {
       "process-variants": "Discover different process execution paths",
       "process-flow": "Visualize process flow and paths",
       "performance-metrics": "Overall performance and efficiency metrics",
-      "bottleneck-analysis": "Identify process bottlenecks and constraints"
+      "bottleneck-analysis": "Identify process bottlenecks and constraints",
+      "all-failure-patterns-count": "Count of all failure pattern occurrences",
+      "sop-deviation-count": "Count of SOP deviation instances",
+      "incomplete-cases-count": "Count of incomplete cases",
+      "incomplete-cases-table": "Detailed table of incomplete cases",
+      "long-running-cases-count": "Count of long-running cases",
+      "long-running-table": "Detailed table of long-running cases",
+      "resource-switches-count": "Count of resource switch events",
+      "resource-switches-count-table": "Resource switches count breakdown",
+      "resource-switches-table": "Detailed resource switches data",
+      "rework-activities-count": "Count of rework activities",
+      "reworked-activities-table": "Detailed reworked activities data",
+      "timing-violations-count": "Count of timing violations",
+      "timing-violations-table": "Detailed timing violations data",
+      "sop-deviation-patterns": "SOP deviation pattern analysis",
+      "activity-pair-threshold": "Activity pair threshold analysis",
+      "case-complexity-analysis": "Comprehensive case complexity analysis",
+      "controls-identified-count": "Count of identified controls",
+      "controls-description": "Description of control mechanisms",
+      "controls": "Control system overview",
+      "control-definition": "Control definitions and specifications",
+      "sla-analysis": "Service Level Agreement analysis",
+      "kpi": "Key Performance Indicators"
     };
     return descriptions[widgetId] || "Widget description";
   };
