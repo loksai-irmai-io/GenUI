@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { User, Grid3X3, LogOut, Settings } from "lucide-react";
+import { User, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,19 +31,19 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200/80 shadow-sm">
-      <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl overflow-hidden bg-white shadow-md flex items-center justify-center">
+      <div className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center space-x-4">
+          <div className="w-14 h-14 rounded-xl overflow-hidden bg-white shadow-md flex items-center justify-center">
             <img 
               src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
               alt="IRMAI Logo" 
-              className="w-8 h-8 md:w-10 md:h-10 object-contain"
+              className="w-12 h-12 object-contain"
             />
           </div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">GenUI</h1>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">GenUI</h1>
         </div>
 
-        <div className="flex items-center space-x-2 md:space-x-3">
+        <div className="flex items-center space-x-3">
           <Button
             variant="outline"
             size="sm"
