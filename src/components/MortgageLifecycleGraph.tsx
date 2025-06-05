@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, TrendingUp, Clock, CheckCircle } from 'lucide-react';
+import { AlertTriangle, TrendingUp, Clock, CheckCircle, Filter, Eye } from 'lucide-react';
 import { mortgageLifecycleService, type MortgageGraphData } from '@/services/mortgageLifecycleService';
 
 interface MortgageLifecycleGraphProps {
@@ -46,7 +46,7 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
     loadData();
   }, []);
 
-  // Convert to ReactFlow format
+  // Convert to ReactFlow format with enhanced visual design
   const { reactFlowNodes, reactFlowEdges } = useMemo(() => {
     if (!graphData.nodes.length) return { reactFlowNodes: [], reactFlowEdges: [] };
 
@@ -67,15 +67,22 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
       }
     }
 
-    // Auto-layout nodes in a flow
+    // Enhanced auto-layout with better spacing and alignment
     const nodePositions = new Map<string, { x: number; y: number }>();
-    const phaseYPositions = { application: 100, credit_assessment: 200, underwriting: 300, funding: 400, closure: 500 };
+    const phaseConfig = {
+      application: { y: 50, color: '#3b82f6', gradient: 'from-blue-500 to-blue-600' },
+      credit_assessment: { y: 200, color: '#8b5cf6', gradient: 'from-purple-500 to-purple-600' },
+      underwriting: { y: 350, color: '#06b6d4', gradient: 'from-cyan-500 to-cyan-600' },
+      funding: { y: 500, color: '#10b981', gradient: 'from-emerald-500 to-emerald-600' },
+      closure: { y: 650, color: '#f59e0b', gradient: 'from-amber-500 to-amber-600' },
+      intermediate: { y: 300, color: '#6b7280', gradient: 'from-gray-500 to-gray-600' }
+    };
     
-    filteredNodes.forEach((node, index) => {
-      const phaseY = phaseYPositions[node.phase_id as keyof typeof phaseYPositions] || 300;
+    filteredNodes.forEach((node) => {
+      const phaseY = phaseConfig[node.phase_id as keyof typeof phaseConfig]?.y || 300;
       const nodesInPhase = filteredNodes.filter(n => n.phase_id === node.phase_id);
       const nodeIndex = nodesInPhase.findIndex(n => n.id === node.id);
-      const spacing = 200;
+      const spacing = Math.max(280, 800 / Math.max(nodesInPhase.length, 1));
       const startX = -(nodesInPhase.length - 1) * spacing / 2;
       
       nodePositions.set(node.id, {
@@ -84,41 +91,69 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
       });
     });
 
+    // Enhanced node design with professional styling
+    const maxFrequency = Math.max(...filteredNodes.map(n => n.frequency));
     const reactFlowNodes: Node[] = filteredNodes.map(node => {
       const position = nodePositions.get(node.id) || { x: 0, y: 0 };
+      const phaseInfo = phaseConfig[node.phase_id as keyof typeof phaseConfig];
+      const nodeSize = Math.max(120, Math.min(200, 120 + (node.frequency / maxFrequency) * 80));
+      
       return {
         id: node.id,
         type: 'default',
         position,
         data: {
           label: (
-            <div className="text-center p-2">
-              <div className="font-semibold text-xs text-slate-100 mb-1">{node.name}</div>
+            <div className="text-center p-3 min-w-[120px]">
+              <div className="font-bold text-sm text-white mb-2 leading-tight">
+                {node.name}
+              </div>
               <div className="flex items-center justify-center gap-2 text-xs">
-                <Badge variant="secondary" className="text-xs bg-slate-700 text-slate-200">
-                  {node.frequency}
+                <Badge 
+                  variant="secondary" 
+                  className="text-xs bg-white/20 text-white border-white/30 backdrop-blur-sm"
+                >
+                  {node.frequency.toLocaleString()}
                 </Badge>
                 {node.is_deviation && (
-                  <AlertTriangle className="w-3 h-3 text-red-400" />
+                  <div className="flex items-center gap-1 px-2 py-1 bg-red-500/20 rounded-full border border-red-400/30">
+                    <AlertTriangle className="w-3 h-3 text-red-300" />
+                    <span className="text-red-200 text-xs font-medium">SOP</span>
+                  </div>
                 )}
               </div>
             </div>
           )
         },
         style: {
-          background: node.color_code,
-          border: node.is_deviation ? '2px solid #ef4444' : '1px solid #374151',
-          borderRadius: 8,
-          color: '#f1f5f9',
-          minWidth: 150,
-          fontSize: 12
+          background: node.is_deviation 
+            ? 'linear-gradient(135deg, #ef4444, #dc2626)' 
+            : `linear-gradient(135deg, ${phaseInfo?.color || '#6b7280'}, ${phaseInfo?.color || '#6b7280'}dd)`,
+          border: node.is_deviation 
+            ? '2px solid #fca5a5' 
+            : `2px solid ${phaseInfo?.color || '#6b7280'}66`,
+          borderRadius: 12,
+          color: '#ffffff',
+          width: nodeSize,
+          height: Math.max(80, nodeSize * 0.6),
+          fontSize: 12,
+          boxShadow: node.is_deviation
+            ? '0 8px 32px rgba(239, 68, 68, 0.3), 0 4px 16px rgba(239, 68, 68, 0.2)'
+            : `0 8px 32px ${phaseInfo?.color || '#6b7280'}33, 0 4px 16px ${phaseInfo?.color || '#6b7280'}22`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }
       };
     });
 
-    const maxFreq = Math.max(...filteredEdges.map(e => e.frequency));
+    // Enhanced edge design with smooth curves and visual hierarchy
+    const maxEdgeFreq = Math.max(...filteredEdges.map(e => e.frequency));
     const reactFlowEdges: Edge[] = filteredEdges.map(edge => {
-      const thickness = Math.max(1, (edge.frequency / maxFreq) * 8);
+      const thickness = Math.max(2, Math.min(12, (edge.frequency / maxEdgeFreq) * 10));
+      const sourceNode = filteredNodes.find(n => n.id === edge.source_node_id);
+      const targetNode = filteredNodes.find(n => n.id === edge.target_node_id);
+      
       return {
         id: edge.id,
         source: edge.source_node_id,
@@ -127,13 +162,27 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
         animated: edge.is_sop_deviation,
         style: {
           strokeWidth: thickness,
-          stroke: edge.is_sop_deviation ? '#ef4444' : '#64748b'
+          stroke: edge.is_sop_deviation 
+            ? '#ef4444' 
+            : sourceNode?.phase_id === targetNode?.phase_id 
+              ? phaseConfig[sourceNode?.phase_id as keyof typeof phaseConfig]?.color || '#64748b'
+              : '#64748b',
+          opacity: edge.is_sop_deviation ? 0.9 : 0.7,
+          filter: edge.is_sop_deviation ? 'drop-shadow(0 2px 8px rgba(239, 68, 68, 0.4))' : 'none'
         },
-        label: edge.frequency.toString(),
+        label: edge.frequency > maxEdgeFreq * 0.1 ? edge.frequency.toLocaleString() : '',
         labelStyle: {
-          fontSize: 10,
+          fontSize: 11,
           fill: '#f1f5f9',
-          fontWeight: 600
+          fontWeight: 600,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          padding: '2px 6px',
+          borderRadius: '4px',
+          backdropFilter: 'blur(4px)'
+        },
+        labelBgStyle: {
+          fill: 'rgba(0, 0, 0, 0.6)',
+          fillOpacity: 0.8
         }
       };
     });
@@ -153,8 +202,12 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
     return (
       <div className="flex items-center justify-center h-96 text-slate-300">
         <div className="text-center">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p>Processing mortgage lifecycle data...</p>
+          <div className="relative">
+            <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="absolute inset-0 w-12 h-12 border-4 border-transparent border-t-purple-500 rounded-full animate-spin mx-auto" style={{ animationDelay: '0.3s', animationDuration: '1.2s' }}></div>
+          </div>
+          <p className="text-lg font-medium">Processing mortgage lifecycle data...</p>
+          <p className="text-sm text-slate-400 mt-1">Analyzing SOP deviations and building flow graph</p>
         </div>
       </div>
     );
@@ -169,67 +222,85 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Controls */}
+      {/* Enhanced Control Panel */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader className="pb-3">
+        <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent"></div>
+          <CardHeader className="pb-3 relative">
             <CardTitle className="text-sm text-slate-200 flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              Total Nodes
+              <CheckCircle className="w-4 h-4 text-blue-400" />
+              Process Nodes
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-100">{stats.totalNodes}</div>
-            <div className="text-xs text-slate-400">{stats.deviationNodes} with deviations</div>
+          <CardContent className="relative">
+            <div className="text-3xl font-bold text-slate-100 mb-1">{stats.totalNodes}</div>
+            <div className="text-xs text-slate-400 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3 text-amber-400" />
+              {stats.deviationNodes} deviations detected
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader className="pb-3">
+        <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent"></div>
+          <CardHeader className="pb-3 relative">
             <CardTitle className="text-sm text-slate-200 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Total Transitions
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
+              Flow Transitions
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-slate-100">{stats.totalEdges}</div>
-            <div className="text-xs text-slate-400">{stats.deviationEdges} deviation paths</div>
+          <CardContent className="relative">
+            <div className="text-3xl font-bold text-slate-100 mb-1">{stats.totalEdges}</div>
+            <div className="text-xs text-slate-400 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3 text-red-400" />
+              {stats.deviationEdges} non-standard paths
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm text-slate-200">Filter Controls</CardTitle>
+        <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent"></div>
+          <CardHeader className="pb-3 relative">
+            <CardTitle className="text-sm text-slate-200 flex items-center gap-2">
+              <Filter className="w-4 h-4 text-purple-400" />
+              View Controls
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-3 relative">
             <div className="flex items-center space-x-2">
               <Switch
                 id="deviations-only"
                 checked={showDeviationsOnly}
                 onCheckedChange={setShowDeviationsOnly}
+                className="data-[state=checked]:bg-red-500"
               />
-              <Label htmlFor="deviations-only" className="text-xs text-slate-300">
-                Show deviations only
+              <Label htmlFor="deviations-only" className="text-xs text-slate-300 flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                Deviations only
               </Label>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-slate-800/50 border-slate-700">
-          <CardHeader className="pb-3">
+        <Card className="bg-gradient-to-br from-slate-800 to-slate-900 border-slate-600 overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent"></div>
+          <CardHeader className="pb-3 relative">
             <CardTitle className="text-sm text-slate-200 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Data Validation
+              <Clock className="w-4 h-4 text-amber-400" />
+              Data Quality
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="relative">
             {validationResult && (
-              <div className="space-y-1">
-                <Badge variant={validationResult.isValid ? "default" : "destructive"} className="text-xs">
-                  {validationResult.isValid ? 'Valid' : 'Issues Found'}
+              <div className="space-y-2">
+                <Badge 
+                  variant={validationResult.isValid ? "default" : "destructive"} 
+                  className={`text-xs ${validationResult.isValid ? 'bg-green-500/20 text-green-300 border-green-500/30' : ''}`}
+                >
+                  {validationResult.isValid ? '✓ Validated' : '⚠ Issues Found'}
                 </Badge>
                 {validationResult.issues.length > 0 && (
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-amber-300">
                     {validationResult.issues.length} consistency issues
                   </div>
                 )}
@@ -239,14 +310,14 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
         </Card>
       </div>
 
-      {/* Phase Filters */}
-      <div className="flex flex-wrap gap-2">
+      {/* Enhanced Phase Filters */}
+      <div className="flex flex-wrap gap-3">
         <button
           onClick={() => setSelectedPhase(null)}
-          className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
             !selectedPhase 
-              ? 'bg-blue-600 text-white' 
-              : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25' 
+              : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
           }`}
         >
           All Phases
@@ -255,22 +326,25 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
           <button
             key={phase.id}
             onClick={() => setSelectedPhase(phase.id)}
-            className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
               selectedPhase === phase.id
-                ? 'text-white'
-                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                ? 'text-white shadow-lg'
+                : 'bg-slate-700 text-slate-300 hover:bg-slate-600 hover:text-white'
             }`}
-            style={selectedPhase === phase.id ? { backgroundColor: phase.color } : {}}
+            style={selectedPhase === phase.id ? { 
+              background: `linear-gradient(135deg, ${phase.color}, ${phase.color}dd)`,
+              boxShadow: `0 4px 20px ${phase.color}40`
+            } : {}}
           >
             {phase.name}
           </button>
         ))}
       </div>
 
-      {/* Graph */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      {/* Enhanced Graph Container */}
+      <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-600 overflow-hidden">
         <CardContent className="p-0">
-          <div style={{ width: '100%', height: '600px' }}>
+          <div style={{ width: '100%', height: '700px' }} className="relative">
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -283,33 +357,87 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
               nodesDraggable={true}
               nodesConnectable={false}
               edgesFocusable={true}
-              minZoom={0.3}
+              minZoom={0.2}
               maxZoom={2}
-              style={{ background: 'transparent' }}
+              style={{ 
+                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)'
+              }}
+              fitViewOptions={{
+                padding: 0.15,
+                includeHiddenNodes: false,
+                minZoom: 0.3,
+                maxZoom: 1.2
+              }}
             >
-              <Background color="#374151" gap={32} />
-              <Controls showInteractive={false} />
+              <Background 
+                color="#475569" 
+                gap={32} 
+                size={1}
+                style={{ opacity: 0.3 }}
+              />
+              <Controls 
+                showInteractive={false}
+                className="react-flow__controls-custom"
+                style={{
+                  background: 'rgba(15, 23, 42, 0.8)',
+                  border: '1px solid #475569',
+                  borderRadius: '8px',
+                  backdropFilter: 'blur(8px)'
+                }}
+              />
             </ReactFlow>
+            
+            {/* Floating Legend */}
+            <div className="absolute top-4 right-4 bg-slate-900/90 backdrop-blur-sm border border-slate-600 rounded-lg p-4 text-xs text-slate-300">
+              <div className="font-semibold mb-2 text-slate-200">Legend</div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-gradient-to-r from-blue-500 to-blue-600"></div>
+                  <span>Application Phase</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-gradient-to-r from-purple-500 to-purple-600"></div>
+                  <span>Credit Assessment</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-gradient-to-r from-cyan-500 to-cyan-600"></div>
+                  <span>Underwriting</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
+                  <span>Funding</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded bg-gradient-to-r from-red-500 to-red-600"></div>
+                  <span>SOP Deviation</span>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Validation Issues */}
       {validationResult && validationResult.issues.length > 0 && (
-        <Card className="bg-amber-900/20 border-amber-700">
+        <Card className="bg-gradient-to-r from-amber-900/20 to-orange-900/20 border-amber-700/50">
           <CardHeader>
             <CardTitle className="text-sm text-amber-300 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
-              Data Validation Issues
+              Data Validation Insights
             </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-1 text-xs text-amber-200">
-              {validationResult.issues.slice(0, 5).map((issue, index) => (
-                <li key={index}>• {issue}</li>
+              {validationResult.issues.slice(0, 3).map((issue, index) => (
+                <li key={index} className="flex items-start gap-2">
+                  <span className="text-amber-400 mt-0.5">•</span>
+                  <span>{issue}</span>
+                </li>
               ))}
-              {validationResult.issues.length > 5 && (
-                <li className="text-amber-300">... and {validationResult.issues.length - 5} more issues</li>
+              {validationResult.issues.length > 3 && (
+                <li className="text-amber-300 text-center pt-2 border-t border-amber-700/30">
+                  + {validationResult.issues.length - 3} additional insights available
+                </li>
               )}
             </ul>
           </CardContent>
