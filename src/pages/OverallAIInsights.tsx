@@ -327,20 +327,20 @@ const TabContent: React.FC<{ url: string; label: string }> = ({
 
   return (
     <div className="w-full">
-      <Card className="w-full">
+      <Card className="w-full bg-slate-800 border-slate-700">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900">{label}</CardTitle>
+          <CardTitle className="text-xl font-semibold text-slate-100">{label}</CardTitle>
         </CardHeader>
         <CardContent className="w-full">
           {loading ? (
-            <div className="flex items-center justify-center py-8 space-x-2 text-gray-500">
+            <div className="flex items-center justify-center py-8 space-x-2 text-slate-400">
               <Loader2 className="w-6 h-6 animate-spin" />
               <span>Loading...</span>
             </div>
           ) : error ? (
-            <div className="text-red-500 text-center py-8">{error}</div>
+            <div className="text-red-400 text-center py-8">{error}</div>
           ) : (
-            <div className="w-full max-w-none">
+            <div className="w-full max-w-none text-slate-200">
               {renderAIContent(data, label)}
             </div>
           )}
@@ -354,39 +354,41 @@ const OverallAIInsights: React.FC = () => {
   const [tab, setTab] = useState(endpoints[0].key);
   
   return (
-    <div className="w-full max-w-7xl mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Overall AI Insights</h1>
-        <p className="text-lg text-gray-600">
-          Comprehensive AI-driven analysis and insights across all process areas
-        </p>
-      </div>
-      
-      <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 w-full mb-8 h-auto p-2 bg-gray-100 rounded-lg">
-          {endpoints.map((ep) => (
-            <TabsTrigger
-              key={ep.key}
-              value={ep.key}
-              className="text-xs sm:text-sm font-medium px-2 py-3 rounded-md transition-all duration-200 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm hover:bg-gray-50"
-            >
-              <span className="text-center leading-tight">{ep.label}</span>
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        
-        <div className="w-full">
-          {endpoints.map((ep) => (
-            <TabsContent key={ep.key} value={ep.key} className="w-full mt-0">
-              {tab === ep.key && (
-                <div className="w-full">
-                  <TabContent url={ep.url} label={ep.label} />
-                </div>
-              )}
-            </TabsContent>
-          ))}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-24 pb-8">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent mb-4 tracking-tight">Overall AI Insights</h1>
+          <p className="text-lg text-slate-400">
+            Comprehensive AI-driven analysis and insights across all process areas
+          </p>
         </div>
-      </Tabs>
+        
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
+          <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 w-full mb-8 h-auto p-2 bg-slate-800 border border-slate-700 rounded-lg">
+            {endpoints.map((ep) => (
+              <TabsTrigger
+                key={ep.key}
+                value={ep.key}
+                className="text-xs sm:text-sm font-medium px-2 py-3 rounded-md transition-all duration-200 text-slate-300 data-[state=active]:bg-slate-700 data-[state=active]:text-blue-400 data-[state=active]:shadow-sm hover:bg-slate-700/50 hover:text-slate-200"
+              >
+                <span className="text-center leading-tight">{ep.label}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          
+          <div className="w-full">
+            {endpoints.map((ep) => (
+              <TabsContent key={ep.key} value={ep.key} className="w-full mt-0">
+                {tab === ep.key && (
+                  <div className="w-full">
+                    <TabContent url={ep.url} label={ep.label} />
+                  </div>
+                )}
+              </TabsContent>
+            ))}
+          </div>
+        </Tabs>
+      </div>
     </div>
   );
 };
