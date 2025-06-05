@@ -21,7 +21,6 @@ const Dashboard: React.FC = () => {
   const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
   const [availableWidgets, setAvailableWidgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -71,40 +70,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleSaveWidgets = async (newSelectedWidgets: string[], newPinnedWidgets: string[]) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from("user_preferences")
-        .upsert({
-          user_id: user.id,
-          selected_widgets: newSelectedWidgets,
-          pinned_widgets: newPinnedWidgets,
-        }, {
-          onConflict: "user_id",
-        });
-
-      if (error) throw error;
-
-      setSelectedWidgets(newSelectedWidgets);
-      setPinnedWidgets(newPinnedWidgets);
-
-      toast({
-        title: "Preferences Saved",
-        description: "Your widget preferences have been updated successfully.",
-      });
-    } catch (error) {
-      console.error("Error saving widget preferences:", error);
-      toast({
-        title: "Error Saving Preferences",
-        description: "Failed to save your widget preferences.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const renderWidget = (widget: any) => {
     const widgetProps = {
       key: widget.id,
@@ -120,7 +85,7 @@ const Dashboard: React.FC = () => {
       case "info_card":
         return <InfoCard {...widgetProps} value="N/A" />;
       case "sop":
-        return <SOPWidget {...widgetProps} type="count" data={{ count: 0, percentage: 0 }} visualizationType="bar" />;
+        return <SOPWidget {...widgetProps} type="count" data={{ count: 0, percentage: 0, threshold: 0 }} visualizationType="bar" />;
       case "timing_analysis":
         return <TimingAnalysisTable {...widgetProps} />;
       case "resource_performance":
@@ -164,13 +129,6 @@ const Dashboard: React.FC = () => {
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Dashboard</h1>
           <p className="text-lg text-gray-600">Monitor your key metrics and insights</p>
         </div>
-        <Button
-          onClick={() => setIsWidgetModalOpen(true)}
-          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 shadow-lg"
-        >
-          <Settings className="w-4 h-4" />
-          <span>Configure Widgets</span>
-        </Button>
       </div>
 
       {/* Widgets Section */}
@@ -188,25 +146,12 @@ const Dashboard: React.FC = () => {
             <p className="text-gray-600 mb-6">
               Get started by selecting widgets to display on your dashboard. Choose from various charts, tables, and analytics tools.
             </p>
-            <Button
-              onClick={() => setIsWidgetModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Configure Widgets
-            </Button>
+            <p className="text-sm text-gray-500">
+              Use the "Configure Widgets" button in the header to select your widgets.
+            </p>
           </div>
         </Card>
       )}
-
-      {/* Widget Selection Modal */}
-      <WidgetSelectionModal
-        isOpen={isWidgetModalOpen}
-        onClose={() => setIsWidgetModalOpen(false)}
-        onSave={handleSaveWidgets}
-        selectedWidgets={selectedWidgets}
-        pinnedWidgets={pinnedWidgets}
-      />
     </div>
   );
 };

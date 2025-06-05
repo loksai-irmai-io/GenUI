@@ -31,12 +31,10 @@ const sidebarTabs = [
 
 interface AppLayoutProps {
   children: React.ReactNode;
-  onSelectWidgets?: () => void;
 }
 
 const AppLayout = ({
   children,
-  onSelectWidgets = () => {},
 }: AppLayoutProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,9 +65,11 @@ const AppLayout = ({
     setChatbotVisualizations([]);
   }, []);
 
-  const handleSelectWidgets = useCallback(() => {
-    onSelectWidgets();
-  }, [onSelectWidgets]);
+  // Simple handler for widget refresh
+  const handleWidgetRefresh = useCallback(() => {
+    // This can be used to trigger refresh of widgets if needed
+    console.log("Widget configuration updated");
+  }, []);
 
   return (
     <SidebarProvider>
@@ -118,7 +118,7 @@ const AppLayout = ({
           </SidebarContent>
         </Sidebar>
         <SidebarInset className="flex-1 flex flex-col min-w-0 bg-transparent">
-          <Header onSelectWidgets={handleSelectWidgets} />
+          <Header onSelectWidgets={handleWidgetRefresh} />
           <main className="flex-1 p-8 overflow-auto min-w-0 bg-white/70 backdrop-blur-sm rounded-tl-3xl shadow-inner border-l border-t border-gray-200/60 mt-20">
             <div className="max-w-7xl mx-auto">
               {children}
