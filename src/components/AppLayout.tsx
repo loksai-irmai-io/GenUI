@@ -42,6 +42,9 @@ const AppLayout = ({
   const location = useLocation();
   const isMobile = useIsMobile();
 
+  // Widget modal state
+  const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
+
   // Global chatbot state
   const [chatbotVisualizations, setChatbotVisualizations] = useState<
     Array<{
@@ -67,6 +70,22 @@ const AppLayout = ({
     setChatbotVisualizations([]);
   }, []);
 
+  const handleSelectWidgets = useCallback(() => {
+    setIsWidgetModalOpen(true);
+    onSelectWidgets();
+  }, [onSelectWidgets]);
+
+  // Clone children and pass widget modal props if it's the Dashboard page
+  const childrenWithProps = React.Children.map(children, (child) => {
+    if (React.isValidElement(child) && location.pathname === "/") {
+      return React.cloneElement(child as React.ReactElement<any>, {
+        isWidgetModalOpen,
+        setIsWidgetModalOpen,
+      });
+    }
+    return child;
+  });
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -74,11 +93,11 @@ const AppLayout = ({
           <SidebarContent className="py-6">
             <div className="px-4 mb-8">
               <div className="flex items-center space-x-3 px-2">
-                <div className="w-10 h-10 rounded-lg overflow-hidden bg-white shadow-md flex items-center justify-center border border-gray-100">
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-white shadow-md flex items-center justify-center border border-gray-100">
                   <img 
                     src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
                     alt="IRMAI Logo" 
-                    className="w-8 h-8 object-contain"
+                    className="w-10 h-10 object-contain"
                   />
                 </div>
                 <h1 className="text-xl font-bold text-gray-900 tracking-tight">GenUI</h1>
@@ -114,10 +133,10 @@ const AppLayout = ({
           </SidebarContent>
         </Sidebar>
         <SidebarInset className="flex-1 flex flex-col min-w-0 bg-transparent">
-          <Header onSelectWidgets={onSelectWidgets} />
+          <Header onSelectWidgets={handleSelectWidgets} />
           <main className="flex-1 p-8 overflow-auto min-w-0 bg-white/70 backdrop-blur-sm rounded-tl-3xl shadow-inner border-l border-t border-gray-200/60 mt-20">
             <div className="max-w-7xl mx-auto">
-              {children}
+              {childrenWithProps}
             </div>
           </main>
         </SidebarInset>

@@ -1,7 +1,15 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Settings } from "lucide-react";
+import { User, LogOut, Settings, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,15 +37,18 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
     }
   };
 
+  // Extract username from email (part before @)
+  const username = user?.email?.split('@')[0] || 'User';
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200/80 shadow-sm">
       <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center space-x-4">
-          <div className="w-14 h-14 rounded-xl overflow-hidden bg-white shadow-md flex items-center justify-center">
+          <div className="w-16 h-16 rounded-xl overflow-hidden bg-white shadow-md flex items-center justify-center">
             <img 
               src="/lovable-uploads/f6f50dd7-f1e5-42e5-9eec-8da56daf50d1.png" 
               alt="IRMAI Logo" 
-              className="w-12 h-12 object-contain"
+              className="w-14 h-14 object-contain"
             />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">GenUI</h1>
@@ -66,20 +77,40 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
             <Settings className="w-4 h-4" />
           </Button>
 
-          <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
-            <User className="w-4 h-4" />
-            <span className="max-w-32 md:max-w-none truncate">{user?.email}</span>
-          </div>
-
-          <Button
-            onClick={handleSignOut}
-            variant="outline"
-            size="sm"
-            className="flex items-center space-x-2 hover:bg-red-50 hover:border-red-300 transition-all duration-200"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Sign Out</span>
-          </Button>
+          {/* User Profile Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 border-gray-200 transition-all duration-200"
+              >
+                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="w-3.5 h-3.5 text-blue-600" />
+                </div>
+                <span className="hidden sm:inline max-w-24 md:max-w-none truncate text-gray-700">
+                  {username}
+                </span>
+                <ChevronDown className="w-3 h-3 text-gray-500" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-white border shadow-lg">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none text-gray-900">{username}</p>
+                  <p className="text-xs leading-none text-gray-500 truncate">{user?.email}</p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
