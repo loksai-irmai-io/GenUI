@@ -137,7 +137,7 @@ const Dashboard: React.FC = () => {
   };
 
   const renderWidget = (widget: any) => {
-    const widgetId = String(widget.id); // Ensure widget ID is always a string
+    const widgetId = String(widget.id);
     const widgetProps = {
       key: widgetId,
       title: widget.widget_name,
@@ -197,57 +197,11 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
         );
-      case "all-counts":
-      case "incomplete-cases-count":
-      case "long-running-cases-count":
-      case "resource-switches-count":
-      case "controls-identified-count":
-        return (
-          <div key={widgetId} className="relative">
-            <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
-        );
       case "object-lifecycle":
       case "object-lifecycle-process":
         return (
           <div key={widgetId} className="relative">
             <DataVisualizationWidget {...widgetProps} type="object-lifecycle" data={[]} />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
-        );
-      case "sla-analysis":
-      case "controls-definition":
-      case "controls-description":
-      case "kpi":
-      case "incomplete-case-table":
-      case "long-running-table":
-      case "resource-switches-table":
-      case "resource-switches-count-table":
-      case "sop-low-percentage-patterns-table":
-        return (
-          <div key={widgetId} className="relative">
-            <DataTable title={widget.widget_name} data={[]} columns={[]} />
             <button
               onClick={() => handlePinToggle(widgetId)}
               className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
@@ -353,7 +307,7 @@ const Dashboard: React.FC = () => {
             default:
               return (
                 <div key={widgetId} className="relative">
-                  <DataVisualizationWidget {...widgetProps} type="chart" data={[]} />
+                  <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
                   <button
                     onClick={() => handlePinToggle(widgetId)}
                     className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
@@ -372,7 +326,7 @@ const Dashboard: React.FC = () => {
           // Default fallback rendering for unknown widgets
           return (
             <div key={widgetId} className="relative">
-              <DataVisualizationWidget {...widgetProps} type="chart" data={[]} />
+              <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
               <button
                 onClick={() => handlePinToggle(widgetId)}
                 className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"

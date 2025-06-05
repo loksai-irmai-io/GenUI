@@ -28,7 +28,7 @@ interface WidgetSelectionModalProps {
   pinnedWidgets: string[];
 }
 
-// Page mappings for better organization
+// Cleaned up page mappings with only valid widgets
 const PAGE_CATEGORIES = {
   "Process Discovery": ["Process Discovery"],
   "Outlier Analysis": ["Outlier Analysis"],
@@ -36,6 +36,16 @@ const PAGE_CATEGORIES = {
   "Analytics": ["Analytics", "General"],
   "Performance": ["Performance", "Resource Performance"],
   "SOP": ["SOP", "Standard Operating Procedures"]
+};
+
+// Valid widgets mapping to ensure only supported widgets are shown
+const VALID_WIDGETS = {
+  "Process Discovery": ["object-lifecycle"],
+  "Outlier Analysis": ["timing-analysis", "resource-performance"],
+  "CCM": ["process-failure-patterns-distribution"],
+  "Analytics": ["sla-analysis", "controls-definition", "kpi"],
+  "Performance": ["resource-performance", "timing-analysis"],
+  "SOP": ["sop-deviation", "sop-patterns"]
 };
 
 const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
@@ -72,11 +82,15 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
       if (error) throw error;
 
       const formattedWidgets: Widget[] = (data || []).map((widget) => ({
-        id: widget.id,
+        id: String(widget.id),
         name: widget.widget_name,
         category: widget.widget_category,
         description: widget.description || "",
-      }));
+      })).filter(widget => {
+        // Only include widgets that are in our valid widgets list
+        const page = getPageForCategory(widget.category);
+        return VALID_WIDGETS[page]?.includes(widget.id) || false;
+      });
 
       setAvailableWidgets(formattedWidgets);
     } catch (error) {
@@ -125,7 +139,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
     return acc;
   }, {} as Record<string, Widget[]>);
 
-  const pageOrder = ["Process Discovery", "Outlier Analysis", "CCM", "Analytics", "Performance", "SOP", "Other"];
+  const pageOrder = ["Process Discovery", "Outlier Analysis", "CCM", "Analytics", "Performance", "SOP"];
   const sortedPages = pageOrder.filter(page => groupedWidgets[page]?.length > 0);
 
   if (loading) {
