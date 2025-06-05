@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   BarChart,
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/table";
 
 interface DataVisualizationWidgetProps {
-  type: string; // Accept any string type
+  type: string;
   title: string;
   data: any[];
   className?: string;
@@ -86,8 +87,9 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
         </div>
       );
     }
-    // --- Bar types: render bar chart for any *-bar type ---
-    if (type.endsWith("-bar")) {
+
+    // --- Default bar chart for most widgets ---
+    if (type === "bar" || type.endsWith("-bar") || type === "process-failure-patterns-bar" || type === "sla-analysis-bar") {
       let processedData = Array.isArray(data) ? data : [];
       if (processedData.length === 0) {
         processedData = [{ name: "No Data", value: 0 }];
@@ -122,72 +124,20 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
         </div>
       );
     }
-    // --- Special case: process-failure-patterns-bar ---
-    if (type === "process-failure-patterns-bar") {
-      let processedData = Array.isArray(data) ? data : [];
-      if (processedData.length === 0) {
-        processedData = [{ name: "No Data", value: 0 }];
-      }
-      const barsData = processedData.map((d) => ({
-        ...d,
-        _showBar: d.value !== 0,
-      }));
-      const barShape = (props: any) => {
-        const { x, y, width, height, fill, payload } = props;
-        if (!payload._showBar) return null;
-        return (
-          <rect x={x} y={y} width={width} height={height} fill={fill} rx={6} />
-        );
-      };
-      return (
-        <div className="w-full h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={barsData}
-              margin={{ top: 16, right: 16, left: 8, bottom: 40 }}
-              barCategoryGap={10}
-              barSize={40}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="name"
-                angle={-20}
-                textAnchor="end"
-                height={80}
-                interval={0}
-                tick={{ fontSize: 14 }}
-              />
-              <YAxis allowDecimals={false} tick={{ fontSize: 14 }} />
-              <Tooltip />
-              <Bar
-                dataKey="value"
-                fill="#2563eb"
-                minPointSize={4}
-                isAnimationActive={false}
-                barSize={40}
-                shape={barShape}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      );
-    }
-    // --- Special case: object-lifecycle and generic graph types ---
+
+    // --- Special case: object-lifecycle ---
     if (type === "object-lifecycle") {
       return (
         <div className="w-full h-[400px] flex items-center justify-center">
-          {/* You can replace this with a real graph component if needed */}
           <span className="text-blue-700 font-semibold">
             Object Lifecycle Graph Placeholder
           </span>
         </div>
       );
     }
-    if (
-      type === "activity-pair-threshold" ||
-      type === "activity-pair-threshold-table" ||
-      type === "activity-pair-threshold-graph"
-    ) {
+
+    // --- Special case: activity-pair-threshold ---
+    if (type === "activity-pair-threshold") {
       return (
         <div className="w-full h-[400px] flex items-center justify-center">
           <span className="text-blue-700 font-semibold">
@@ -196,46 +146,13 @@ const DataVisualizationWidget: React.FC<DataVisualizationWidgetProps> = ({
         </div>
       );
     }
-    // --- SLA Analysis Bar ---
-    if (type === "sla-analysis-bar") {
-      let processedData = Array.isArray(data) ? data : [];
-      if (processedData.length === 0) {
-        processedData = [{ name: "No Data", value: 0 }];
-      }
-      return (
-        <div className="w-full h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={processedData}
-              margin={{ top: 16, right: 16, left: 8, bottom: 40 }}
-              barCategoryGap={40}
-            >
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="name"
-                angle={-20}
-                textAnchor="end"
-                height={80}
-                interval={0}
-                tick={{ fontSize: 14 }}
-              />
-              <YAxis allowDecimals={false} tick={{ fontSize: 14 }} />
-              <Tooltip />
-              <Bar
-                dataKey="value"
-                fill="#2563eb"
-                minPointSize={4}
-                isAnimationActive={false}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      );
-    }
-    // --- Fallback ---
+
+    // --- Fallback for any unrecognized type ---
     return (
-      <div className="flex items-center justify-center h-full text-gray-500">
-        Unsupported visualization type
+      <div className="w-full h-[400px] flex items-center justify-center">
+        <span className="text-blue-700 font-semibold">
+          {title} Visualization
+        </span>
       </div>
     );
   };

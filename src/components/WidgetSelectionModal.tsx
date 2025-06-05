@@ -6,18 +6,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Save, X, Pin, PinOff } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-interface Widget {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-}
 
 interface WidgetSelectionModalProps {
   isOpen: boolean;
@@ -27,7 +18,7 @@ interface WidgetSelectionModalProps {
   pinnedWidgets: string[];
 }
 
-// Structured categories with their specific widgets
+// Comprehensive list of all available widgets organized by category
 const CATEGORY_WIDGETS = {
   "Outlier Analysis": [
     {
@@ -53,11 +44,6 @@ const CATEGORY_WIDGETS = {
       id: "process-failure-patterns-distribution",
       name: "Process Failure Patterns",
       description: "Analyze failure patterns and distributions",
-    },
-    {
-      id: "sla-analysis-bar",
-      name: "SLA Analysis",
-      description: "Average activity duration metrics in hours",
     },
   ],
 };
@@ -117,7 +103,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent
-        className="max-w-4xl max-h-[80vh] overflow-y-auto"
+        className="max-w-6xl max-h-[85vh] overflow-y-auto"
         aria-label="Widget Selection Modal"
       >
         <DialogHeader>
@@ -158,7 +144,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
                       )}
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                      <h4 className="font-medium text-gray-900 flex items-center gap-2 flex-wrap">
                         {widget.name}
                         <Badge
                           variant="outline"

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Pin, PinOff } from "lucide-react";
@@ -11,11 +10,10 @@ import ChartWidget from "@/components/widgets/ChartWidget";
 import DataTable from "@/components/widgets/DataTable";
 import InfoCard from "@/components/widgets/InfoCard";
 import SOPWidget from "@/components/widgets/SOPWidget";
-import TimingAnalysisTable from "@/components/widgets/TimingAnalysisTable";
 import ResourcePerformanceTable from "@/components/widgets/ResourcePerformanceTable";
 import DataVisualizationWidget from "@/components/widgets/DataVisualizationWidget";
 
-const DEFAULT_WIDGETS = ["resource-performance", "process-failure-patterns-distribution", "timing-analysis"];
+const DEFAULT_WIDGETS = ["resource-performance", "all-failure-patterns-count", "controls-identified-count"];
 
 const Dashboard: React.FC = () => {
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
@@ -23,6 +21,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [hasChanges, setHasChanges] = useState(false);
   const [tempPinnedWidgets, setTempPinnedWidgets] = useState<string[]>([]);
+  const [hasUserSelection, setHasUserSelection] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,9 +32,11 @@ const Dashboard: React.FC = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        // No user logged in - show default widgets
         setSelectedWidgets(DEFAULT_WIDGETS);
         setPinnedWidgets(DEFAULT_WIDGETS);
         setTempPinnedWidgets(DEFAULT_WIDGETS);
+        setHasUserSelection(false);
         setLoading(false);
         return;
       }
@@ -48,27 +49,35 @@ const Dashboard: React.FC = () => {
 
       if (error && error.code !== "PGRST116") {
         console.error("Error fetching user preferences:", error);
+        // Error fetching - show default widgets
         setSelectedWidgets(DEFAULT_WIDGETS);
         setPinnedWidgets(DEFAULT_WIDGETS);
         setTempPinnedWidgets(DEFAULT_WIDGETS);
+        setHasUserSelection(false);
         setLoading(false);
         return;
       }
 
       if (data && data.selected_widgets && data.selected_widgets.length > 0) {
-        setSelectedWidgets(data.selected_widgets || []);
+        // User has custom selections - use them instead of defaults
+        setSelectedWidgets(data.selected_widgets);
         setPinnedWidgets(data.pinned_widgets || []);
         setTempPinnedWidgets(data.pinned_widgets || []);
+        setHasUserSelection(true);
       } else {
+        // User exists but no custom selections - show default widgets
         setSelectedWidgets(DEFAULT_WIDGETS);
         setPinnedWidgets(DEFAULT_WIDGETS);
         setTempPinnedWidgets(DEFAULT_WIDGETS);
+        setHasUserSelection(false);
       }
     } catch (error) {
       console.error("Error fetching user preferences:", error);
+      // Error - show default widgets
       setSelectedWidgets(DEFAULT_WIDGETS);
       setPinnedWidgets(DEFAULT_WIDGETS);
       setTempPinnedWidgets(DEFAULT_WIDGETS);
+      setHasUserSelection(false);
     } finally {
       setLoading(false);
     }
@@ -105,6 +114,7 @@ const Dashboard: React.FC = () => {
       setSelectedWidgets(tempPinnedWidgets);
       setPinnedWidgets(tempPinnedWidgets);
       setHasChanges(false);
+      setHasUserSelection(true); // User now has custom selections
 
       toast({
         title: "Changes Saved",
@@ -120,6 +130,12 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const getDefaultColumns = () => [
+    { key: "id", label: "ID" },
+    { key: "name", label: "Name" },
+    { key: "value", label: "Value" }
+  ];
+
   const renderWidget = (widgetId: string) => {
     const widgetProps = {
       key: widgetId,
@@ -127,113 +143,141 @@ const Dashboard: React.FC = () => {
       description: getWidgetDescription(widgetId),
     };
 
+    const renderWidgetWithPin = (component: React.ReactNode) => (
+      <div key={widgetId} className="relative">
+        {component}
+        <button
+          onClick={() => handlePinToggle(widgetId)}
+          className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors z-10"
+          aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
+        >
+          {tempPinnedWidgets.includes(widgetId) ? (
+            <PinOff className="w-4 h-4 text-gray-600" />
+          ) : (
+            <Pin className="w-4 h-4 text-gray-600" />
+          )}
+        </button>
+      </div>
+    );
+
     // Handle specific widget IDs that need special rendering
     switch (widgetId) {
-      case "timing-analysis":
-        return (
-          <div key={widgetId} className="relative">
-            <TimingAnalysisTable />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
-        );
       case "resource-performance":
-        return (
-          <div key={widgetId} className="relative">
-            <ResourcePerformanceTable />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
+        return renderWidgetWithPin(<ResourcePerformanceTable />);
+      
+      // Chart widgets that use DataVisualizationWidget with proper types
+      case "all-failure-patterns-count":
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="process-failure-patterns-bar" data={[]} />
         );
-      case "process-failure-patterns-distribution":
-        return (
-          <div key={widgetId} className="relative">
-            <DataVisualizationWidget {...widgetProps} type="process-failure-patterns-bar" data={[]} />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
+      case "sop-deviation-count":
+      case "incomplete-cases-count":
+      case "long-running-cases-count":
+      case "resource-switches-count":
+      case "rework-activities-count":
+      case "timing-violations-count":
+      case "controls-identified-count":
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
+        );
+      case "sla-analysis":
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="sla-analysis-bar" data={[]} />
+        );
+      case "kpi":
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
         );
       case "object-lifecycle":
-        return (
-          <div key={widgetId} className="relative">
-            <DataVisualizationWidget {...widgetProps} type="object-lifecycle" data={[]} />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="object-lifecycle" data={[]} />
         );
+      case "activity-pair-threshold":
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="activity-pair-threshold" data={[]} />
+        );
+      
+      // Table widgets with default columns
+      case "incomplete-cases-table":
+      case "long-running-table":
+      case "resource-switches-count-table":
+      case "resource-switches-table":
+      case "reworked-activities-table":
+      case "timing-violations-table":
+      case "sop-deviation-patterns":
+      case "case-complexity-analysis":
+      case "controls-description":
+      case "control-definition":
+        return renderWidgetWithPin(
+          <DataTable 
+            data={[]} 
+            title={getWidgetTitle(widgetId)} 
+            columns={getDefaultColumns()}
+          />
+        );
+      
       default:
         // Default fallback rendering for unknown widgets
-        return (
-          <div key={widgetId} className="relative">
-            <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
-            <button
-              onClick={() => handlePinToggle(widgetId)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
-              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
-            >
-              {tempPinnedWidgets.includes(widgetId) ? (
-                <PinOff className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Pin className="w-4 h-4 text-gray-600" />
-              )}
-            </button>
-          </div>
+        return renderWidgetWithPin(
+          <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
         );
     }
   };
 
   const getWidgetTitle = (widgetId: string): string => {
     const titles: Record<string, string> = {
-      "timing-analysis": "Timing Analysis",
-      "resource-performance": "Resource Performance",
-      "process-failure-patterns-distribution": "Process Failure Patterns",
-      "object-lifecycle": "Object Lifecycle"
+      "resource-performance": "Resource Performance", 
+      "all-failure-patterns-count": "All Failure Patterns Count",
+      "object-lifecycle": "Object Lifecycle",
+      "timing-violations-count": "Timing Violations Count",
+      "long-running-cases-count": "Long Running Cases Count",
+      "sop-deviation-count": "SOP Deviation Count",
+      "incomplete-cases-count": "Incomplete Cases Count",
+      "case-complexity-analysis": "Case Complexity Analysis",
+      "resource-switches-count": "Resource Switches Count",
+      "rework-activities-count": "Rework Activities Count",
+      "incomplete-cases-table": "Incomplete Cases Table",
+      "long-running-table": "Long-Running Table",
+      "resource-switches-count-table": "Resource Switches Count Table",
+      "resource-switches-table": "Resource Switches Table",
+      "reworked-activities-table": "Reworked Activities Table",
+      "timing-violations-table": "Timing Violations Table",
+      "sop-deviation-patterns": "SOP Deviation Patterns",
+      "activity-pair-threshold": "Activity Pair Threshold",
+      "controls-identified-count": "Controls Identified Count",
+      "controls-description": "Controls Description",
+      "control-definition": "Control Definition",
+      "sla-analysis": "SLA Analysis",
+      "kpi": "KPI"
     };
     return titles[widgetId] || "Widget";
   };
 
   const getWidgetDescription = (widgetId: string): string => {
     const descriptions: Record<string, string> = {
-      "timing-analysis": "Analyze timing patterns and deviations",
       "resource-performance": "Monitor resource efficiency and utilization",
-      "process-failure-patterns-distribution": "Analyze failure patterns and distributions",
-      "object-lifecycle": "Track object lifecycle and transitions"
+      "all-failure-patterns-count": "Count of all failure pattern occurrences",
+      "object-lifecycle": "Track object lifecycle and transitions",
+      "timing-violations-count": "Count of timing violations",
+      "long-running-cases-count": "Count of long-running cases",
+      "sop-deviation-count": "Count of SOP deviation instances",
+      "incomplete-cases-count": "Count of incomplete cases",
+      "case-complexity-analysis": "Comprehensive case complexity analysis",
+      "resource-switches-count": "Count of resource switch events",
+      "rework-activities-count": "Count of rework activities",
+      "incomplete-cases-table": "Detailed table of incomplete cases",
+      "long-running-table": "Detailed table of long-running cases",
+      "resource-switches-count-table": "Resource switches count breakdown",
+      "resource-switches-table": "Detailed resource switches data",
+      "reworked-activities-table": "Detailed reworked activities data",
+      "timing-violations-table": "Detailed timing violations data",
+      "sop-deviation-patterns": "SOP deviation pattern analysis",
+      "activity-pair-threshold": "Activity pair threshold analysis",
+      "controls-identified-count": "Count of identified controls",
+      "controls-description": "Description of control mechanisms",
+      "control-definition": "Control definitions and specifications",
+      "sla-analysis": "Service Level Agreement analysis",
+      "kpi": "Key Performance Indicators"
     };
     return descriptions[widgetId] || "Widget description";
   };
@@ -275,6 +319,7 @@ const Dashboard: React.FC = () => {
           <p>Pinned Widgets: {pinnedWidgets.join(', ')}</p>
           <p>Temp Pinned Widgets: {tempPinnedWidgets.join(', ')}</p>
           <p>Has Changes: {hasChanges.toString()}</p>
+          <p>Has User Selection: {hasUserSelection.toString()}</p>
         </div>
       )}
 
