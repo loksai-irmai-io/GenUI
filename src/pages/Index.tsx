@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Pin, PinOff } from "lucide-react";
@@ -156,21 +155,24 @@ const Dashboard: React.FC = () => {
         return renderWidgetWithPin(<TimingAnalysisTable />);
       case "resource-performance":
         return renderWidgetWithPin(<ResourcePerformanceTable />);
-      case "process-failure-patterns-distribution":
-        return renderWidgetWithPin(
-          <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
-        );
+      
+      // Chart widgets that use DataVisualizationWidget
+      case "all-failure-patterns-count":
+      case "sop-deviation-count":
+      case "incomplete-cases-count":
+      case "long-running-cases-count":
+      case "resource-switches-count":
+      case "rework-activities-count":
+      case "timing-violations-count":
+      case "controls-identified-count":
+      case "sla-analysis":
+      case "kpi":
       case "object-lifecycle":
         return renderWidgetWithPin(
           <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
         );
       
       // Table widgets with default columns
-      case "timing-violations":
-      case "long-running-cases":
-      case "sop-deviation":
-      case "incomplete-cases":
-      case "case-complexity":
       case "incomplete-cases-table":
       case "long-running-table":
       case "resource-switches-count-table":
@@ -189,28 +191,6 @@ const Dashboard: React.FC = () => {
             title={getWidgetTitle(widgetId)} 
             columns={getDefaultColumns()}
           />
-        );
-      
-      // Chart widgets that use DataVisualizationWidget
-      case "resource-switches":
-      case "rework-activities":
-      case "activity-frequency":
-      case "process-variants":
-      case "process-flow":
-      case "performance-metrics":
-      case "bottleneck-analysis":
-      case "all-failure-patterns-count":
-      case "sop-deviation-count":
-      case "incomplete-cases-count":
-      case "long-running-cases-count":
-      case "resource-switches-count":
-      case "rework-activities-count":
-      case "timing-violations-count":
-      case "controls-identified-count":
-      case "sla-analysis":
-      case "kpi":
-        return renderWidgetWithPin(
-          <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
         );
       
       default:
