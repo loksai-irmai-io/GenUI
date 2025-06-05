@@ -7,18 +7,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Save, X, Pin, PinOff } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-interface Widget {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-}
 
 interface WidgetSelectionModalProps {
   isOpen: boolean;
@@ -28,17 +19,29 @@ interface WidgetSelectionModalProps {
   pinnedWidgets: string[];
 }
 
-// Structured categories with their specific widgets
+// Comprehensive list of all available widgets organized by category
 const CATEGORY_WIDGETS = {
   "Outlier Analysis": [
     { id: "timing-analysis", name: "Timing Analysis", description: "Analyze timing patterns and deviations" },
-    { id: "resource-performance", name: "Resource Performance", description: "Monitor resource efficiency and utilization" }
+    { id: "resource-performance", name: "Resource Performance", description: "Monitor resource efficiency and utilization" },
+    { id: "timing-violations", name: "Timing Violations", description: "Track timing constraint violations" },
+    { id: "long-running-cases", name: "Long Running Cases", description: "Monitor cases exceeding expected duration" },
+    { id: "sop-deviation", name: "SOP Deviation", description: "Standard Operating Procedure deviations" },
+    { id: "incomplete-cases", name: "Incomplete Cases", description: "Track incomplete or stalled cases" }
   ],
   "Process Discovery": [
-    { id: "object-lifecycle", name: "Object Lifecycle", description: "Track object lifecycle and transitions" }
+    { id: "object-lifecycle", name: "Object Lifecycle", description: "Track object lifecycle and transitions" },
+    { id: "process-flow", name: "Process Flow", description: "Visualize process flow and paths" },
+    { id: "activity-frequency", name: "Activity Frequency", description: "Analyze activity occurrence patterns" },
+    { id: "process-variants", name: "Process Variants", description: "Discover different process execution paths" }
   ],
   "CCM": [
-    { id: "process-failure-patterns-distribution", name: "Process Failure Patterns", description: "Analyze failure patterns and distributions" }
+    { id: "process-failure-patterns-distribution", name: "Process Failure Patterns", description: "Analyze failure patterns and distributions" },
+    { id: "case-complexity", name: "Case Complexity", description: "Measure and analyze case complexity metrics" },
+    { id: "resource-switches", name: "Resource Switches", description: "Track resource switching patterns" },
+    { id: "rework-activities", name: "Rework Activities", description: "Monitor rework and retry activities" },
+    { id: "performance-metrics", name: "Performance Metrics", description: "Overall performance and efficiency metrics" },
+    { id: "bottleneck-analysis", name: "Bottleneck Analysis", description: "Identify process bottlenecks and constraints" }
   ]
 };
 
@@ -94,7 +97,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent
-        className="max-w-4xl max-h-[80vh] overflow-y-auto"
+        className="max-w-6xl max-h-[85vh] overflow-y-auto"
         aria-label="Widget Selection Modal"
       >
         <DialogHeader>
@@ -114,7 +117,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
                 </Badge>
               </div>
               
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {widgets.map((widget) => (
                   <div
                     key={widget.id}
@@ -135,7 +138,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
                       )}
                     </div>
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                      <h4 className="font-medium text-gray-900 flex items-center gap-2 flex-wrap">
                         {widget.name}
                         <Badge variant="outline" className="text-xs font-normal">
                           {category}

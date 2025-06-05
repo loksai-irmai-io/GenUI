@@ -197,6 +197,52 @@ const Dashboard: React.FC = () => {
             </button>
           </div>
         );
+      // Data table widgets
+      case "timing-violations":
+      case "long-running-cases":
+      case "sop-deviation":
+      case "incomplete-cases":
+      case "case-complexity":
+        return (
+          <div key={widgetId} className="relative">
+            <DataTable data={[]} title={getWidgetTitle(widgetId)} />
+            <button
+              onClick={() => handlePinToggle(widgetId)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
+              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
+            >
+              {tempPinnedWidgets.includes(widgetId) ? (
+                <PinOff className="w-4 h-4 text-gray-600" />
+              ) : (
+                <Pin className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+          </div>
+        );
+      // Chart widgets that use DataVisualizationWidget
+      case "resource-switches":
+      case "rework-activities":
+      case "activity-frequency":
+      case "process-variants":
+      case "process-flow":
+      case "performance-metrics":
+      case "bottleneck-analysis":
+        return (
+          <div key={widgetId} className="relative">
+            <DataVisualizationWidget {...widgetProps} type="bar" data={[]} />
+            <button
+              onClick={() => handlePinToggle(widgetId)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white shadow-sm transition-colors"
+              aria-label={tempPinnedWidgets.includes(widgetId) ? "Unpin widget" : "Pin widget"}
+            >
+              {tempPinnedWidgets.includes(widgetId) ? (
+                <PinOff className="w-4 h-4 text-gray-600" />
+              ) : (
+                <Pin className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+          </div>
+        );
       default:
         // Default fallback rendering for unknown widgets
         return (
@@ -221,9 +267,21 @@ const Dashboard: React.FC = () => {
   const getWidgetTitle = (widgetId: string): string => {
     const titles: Record<string, string> = {
       "timing-analysis": "Timing Analysis",
-      "resource-performance": "Resource Performance",
+      "resource-performance": "Resource Performance", 
       "process-failure-patterns-distribution": "Process Failure Patterns",
-      "object-lifecycle": "Object Lifecycle"
+      "object-lifecycle": "Object Lifecycle",
+      "timing-violations": "Timing Violations",
+      "long-running-cases": "Long Running Cases",
+      "sop-deviation": "SOP Deviation",
+      "incomplete-cases": "Incomplete Cases",
+      "case-complexity": "Case Complexity",
+      "resource-switches": "Resource Switches",
+      "rework-activities": "Rework Activities",
+      "activity-frequency": "Activity Frequency",
+      "process-variants": "Process Variants",
+      "process-flow": "Process Flow",
+      "performance-metrics": "Performance Metrics",
+      "bottleneck-analysis": "Bottleneck Analysis"
     };
     return titles[widgetId] || "Widget";
   };
@@ -233,7 +291,19 @@ const Dashboard: React.FC = () => {
       "timing-analysis": "Analyze timing patterns and deviations",
       "resource-performance": "Monitor resource efficiency and utilization",
       "process-failure-patterns-distribution": "Analyze failure patterns and distributions",
-      "object-lifecycle": "Track object lifecycle and transitions"
+      "object-lifecycle": "Track object lifecycle and transitions",
+      "timing-violations": "Track timing constraint violations",
+      "long-running-cases": "Monitor cases exceeding expected duration",
+      "sop-deviation": "Standard Operating Procedure deviations",
+      "incomplete-cases": "Track incomplete or stalled cases",
+      "case-complexity": "Measure and analyze case complexity metrics",
+      "resource-switches": "Track resource switching patterns",
+      "rework-activities": "Monitor rework and retry activities",
+      "activity-frequency": "Analyze activity occurrence patterns",
+      "process-variants": "Discover different process execution paths",
+      "process-flow": "Visualize process flow and paths",
+      "performance-metrics": "Overall performance and efficiency metrics",
+      "bottleneck-analysis": "Identify process bottlenecks and constraints"
     };
     return descriptions[widgetId] || "Widget description";
   };
