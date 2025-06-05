@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -31,15 +30,36 @@ interface WidgetSelectionModalProps {
 // Structured categories with their specific widgets
 const CATEGORY_WIDGETS = {
   "Outlier Analysis": [
-    { id: "timing-analysis", name: "Timing Analysis", description: "Analyze timing patterns and deviations" },
-    { id: "resource-performance", name: "Resource Performance", description: "Monitor resource efficiency and utilization" }
+    {
+      id: "timing-analysis",
+      name: "Timing Analysis",
+      description: "Analyze timing patterns and deviations",
+    },
+    {
+      id: "resource-performance",
+      name: "Resource Performance",
+      description: "Monitor resource efficiency and utilization",
+    },
   ],
   "Process Discovery": [
-    { id: "object-lifecycle", name: "Object Lifecycle", description: "Track object lifecycle and transitions" }
+    {
+      id: "object-lifecycle",
+      name: "Object Lifecycle",
+      description: "Track object lifecycle and transitions",
+    },
   ],
-  "CCM": [
-    { id: "process-failure-patterns-distribution", name: "Process Failure Patterns", description: "Analyze failure patterns and distributions" }
-  ]
+  CCM: [
+    {
+      id: "process-failure-patterns-distribution",
+      name: "Process Failure Patterns",
+      description: "Analyze failure patterns and distributions",
+    },
+    {
+      id: "sla-analysis-bar",
+      name: "SLA Analysis",
+      description: "Average activity duration metrics in hours",
+    },
+  ],
 };
 
 const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
@@ -49,7 +69,8 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   selectedWidgets,
   pinnedWidgets,
 }) => {
-  const [localPinnedWidgets, setLocalPinnedWidgets] = useState<string[]>(pinnedWidgets);
+  const [localPinnedWidgets, setLocalPinnedWidgets] =
+    useState<string[]>(pinnedWidgets);
   const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
 
@@ -63,11 +84,13 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
       const newPinned = prev.includes(widgetId)
         ? prev.filter((id) => id !== widgetId)
         : [...prev, widgetId];
-      
+
       // Check if there are changes compared to the original pinned widgets
-      const hasNewChanges = JSON.stringify(newPinned.sort()) !== JSON.stringify(pinnedWidgets.sort());
+      const hasNewChanges =
+        JSON.stringify(newPinned.sort()) !==
+        JSON.stringify(pinnedWidgets.sort());
       setHasChanges(hasNewChanges);
-      
+
       return newPinned;
     });
   };
@@ -77,7 +100,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
     onSave(localPinnedWidgets, localPinnedWidgets);
     setHasChanges(false);
     onClose();
-    
+
     toast({
       title: "Preferences Saved",
       description: "Your widget preferences have been updated successfully.",
@@ -110,10 +133,10 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-bold text-gray-900">{category}</h2>
                 <Badge variant="secondary" className="text-xs">
-                  {widgets.length} widget{widgets.length !== 1 ? 's' : ''}
+                  {widgets.length} widget{widgets.length !== 1 ? "s" : ""}
                 </Badge>
               </div>
-              
+
               <div className="grid grid-cols-1 gap-4">
                 {widgets.map((widget) => (
                   <div
@@ -137,11 +160,17 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900 flex items-center gap-2">
                         {widget.name}
-                        <Badge variant="outline" className="text-xs font-normal">
+                        <Badge
+                          variant="outline"
+                          className="text-xs font-normal"
+                        >
                           {category}
                         </Badge>
                         {localPinnedWidgets.includes(widget.id) && (
-                          <Badge variant="default" className="text-xs bg-blue-600">
+                          <Badge
+                            variant="default"
+                            className="text-xs bg-blue-600"
+                          >
                             Pinned
                           </Badge>
                         )}
