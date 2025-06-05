@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,11 +104,44 @@ const Dashboard: React.FC = () => {
           </div>
         );
       case "chart-widget":
-        return <ChartWidget key={widgetId} />;
+        return (
+          <ChartWidget 
+            key={widgetId}
+            type="line"
+            title="Performance Chart"
+            data={[
+              { name: "Jan", value: 400 },
+              { name: "Feb", value: 300 },
+              { name: "Mar", value: 200 },
+              { name: "Apr", value: 278 },
+              { name: "May", value: 189 },
+              { name: "Jun", value: 239 }
+            ]}
+          />
+        );
       case "sop-widget":
-        return <SOPWidget key={widgetId} />;
+        return (
+          <SOPWidget 
+            key={widgetId}
+            type="count"
+            data={{ count: 23, percentage: 15.2 }}
+            visualizationType="bar"
+            title="SOP Deviations"
+          />
+        );
       case "data-viz":
-        return <DataVisualizationWidget key={widgetId} />;
+        return (
+          <DataVisualizationWidget 
+            key={widgetId}
+            type="bar"
+            title="Data Visualization"
+            data={[
+              { name: "Category A", value: 100 },
+              { name: "Category B", value: 200 },
+              { name: "Category C", value: 150 }
+            ]}
+          />
+        );
       case "timing-analysis":
         return <TimingAnalysisTable key={widgetId} />;
       case "resource-performance":
