@@ -16,16 +16,12 @@ import TimingAnalysisTable from "@/components/widgets/TimingAnalysisTable";
 import ResourcePerformanceTable from "@/components/widgets/ResourcePerformanceTable";
 import DataVisualizationWidget from "@/components/widgets/DataVisualizationWidget";
 
-interface DashboardProps {
-  isWidgetModalOpen: boolean;
-  setIsWidgetModalOpen: (open: boolean) => void;
-}
-
-const Dashboard: React.FC<DashboardProps> = ({ isWidgetModalOpen, setIsWidgetModalOpen }) => {
+const Dashboard: React.FC = () => {
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
   const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
   const [availableWidgets, setAvailableWidgets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -124,7 +120,7 @@ const Dashboard: React.FC<DashboardProps> = ({ isWidgetModalOpen, setIsWidgetMod
       case "info_card":
         return <InfoCard {...widgetProps} value="N/A" />;
       case "sop":
-        return <SOPWidget {...widgetProps} type="deviation" data={[]} visualizationType="table" />;
+        return <SOPWidget {...widgetProps} type="count" data={{ count: 0, percentage: 0 }} visualizationType="bar" />;
       case "timing_analysis":
         return <TimingAnalysisTable {...widgetProps} />;
       case "resource_performance":

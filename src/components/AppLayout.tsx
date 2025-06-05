@@ -42,9 +42,6 @@ const AppLayout = ({
   const location = useLocation();
   const isMobile = useIsMobile();
 
-  // Widget modal state
-  const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
-
   // Global chatbot state
   const [chatbotVisualizations, setChatbotVisualizations] = useState<
     Array<{
@@ -71,33 +68,8 @@ const AppLayout = ({
   }, []);
 
   const handleSelectWidgets = useCallback(() => {
-    setIsWidgetModalOpen(true);
     onSelectWidgets();
   }, [onSelectWidgets]);
-
-  // Clone children and pass widget modal props if it's the Dashboard page
-  const childrenWithProps = React.Children.map(children, (child) => {
-    if (React.isValidElement(child)) {
-      // Check if we're on the dashboard route and the child is the Routes component
-      if (location.pathname === "/" && child.type && typeof child.type === 'object' && 'type' in child.type) {
-        // We need to pass props to the Index component inside Routes
-        return React.cloneElement(child, {
-          children: React.Children.map(child.props.children, (routeChild) => {
-            if (React.isValidElement(routeChild) && routeChild.props.path === "/") {
-              return React.cloneElement(routeChild, {
-                element: React.cloneElement(routeChild.props.element, {
-                  isWidgetModalOpen,
-                  setIsWidgetModalOpen,
-                })
-              });
-            }
-            return routeChild;
-          })
-        });
-      }
-    }
-    return child;
-  });
 
   return (
     <SidebarProvider>
@@ -149,7 +121,7 @@ const AppLayout = ({
           <Header onSelectWidgets={handleSelectWidgets} />
           <main className="flex-1 p-8 overflow-auto min-w-0 bg-white/70 backdrop-blur-sm rounded-tl-3xl shadow-inner border-l border-t border-gray-200/60 mt-20">
             <div className="max-w-7xl mx-auto">
-              {childrenWithProps}
+              {children}
             </div>
           </main>
         </SidebarInset>
