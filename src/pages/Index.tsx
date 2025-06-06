@@ -45,31 +45,28 @@ const AVAILABLE_WIDGETS = [
   { id: "kpi", name: "KPI", component: "KPI" },
   
   // Dashboard Essentials
-  { id: "info-cards", name: "Key Metrics", component: "InfoCards" },
   { id: "sla-analysis-bar", name: "SLA Analysis", component: "SLAAnalysisBar" },
   { id: "process-failure-patterns", name: "Process Failure Patterns", component: "ProcessFailurePatterns" },
-  
-  // Legacy
-  { id: "chart-widget", name: "Performance Chart", component: "ChartWidget" },
-  { id: "sop-widget", name: "SOP Deviations", component: "SOPWidget" },
-  { id: "data-viz", name: "Data Visualization", component: "DataVisualizationWidget" },
 ];
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  // Set default widgets including the three requested ones
+  // Set new default widgets: SLA Analysis bar, Process Failure Patterns, and Resource Performance
   const [selectedWidgets, setSelectedWidgets] = useState<string[]>([
-    "info-cards", 
     "sla-analysis-bar", 
     "process-failure-patterns", 
-    "mortgage-lifecycle"
+    "resource-performance"
   ]);
   const [pinnedWidgets, setPinnedWidgets] = useState<string[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const [controlsData, setControlsData] = useState<any[]>([]);
   const [slaAnalysisData, setSlaAnalysisData] = useState<any[]>([]);
   const [processFailureData, setProcessFailureData] = useState<any[]>([]);
+  const [incompleteCasesData, setIncompleteCasesData] = useState<any[]>([]);
+  const [longRunningData, setLongRunningData] = useState<any[]>([]);
+  const [timingViolationsData, setTimingViolationsData] = useState<any[]>([]);
+  const [sopDeviationData, setSopDeviationData] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -78,6 +75,10 @@ const Dashboard: React.FC = () => {
     fetchControlsData();
     fetchSLAAnalysisData();
     fetchProcessFailureData();
+    fetchIncompleteCasesData();
+    fetchLongRunningData();
+    fetchTimingViolationsData();
+    fetchSOPDeviationData();
   }, [user, refreshKey]);
 
   const fetchControlsData = async () => {
@@ -153,6 +154,50 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const fetchIncompleteCasesData = async () => {
+    try {
+      const response = await fetch('/incompletecases.json');
+      const data = await response.json();
+      setIncompleteCasesData(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching incomplete cases data:", error);
+      setIncompleteCasesData([]);
+    }
+  };
+
+  const fetchLongRunningData = async () => {
+    try {
+      const response = await fetch('/longrunning_case.json');
+      const data = await response.json();
+      setLongRunningData(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching long running data:", error);
+      setLongRunningData([]);
+    }
+  };
+
+  const fetchTimingViolationsData = async () => {
+    try {
+      const response = await fetch('/timingviolations_table.json');
+      const data = await response.json();
+      setTimingViolationsData(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching timing violations data:", error);
+      setTimingViolationsData([]);
+    }
+  };
+
+  const fetchSOPDeviationData = async () => {
+    try {
+      const response = await fetch('/sopdeviation.json');
+      const data = await response.json();
+      setSopDeviationData(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching SOP deviation data:", error);
+      setSopDeviationData([]);
+    }
+  };
+
   const fetchUserPreferences = async () => {
     try {
       if (!user) {
@@ -183,42 +228,6 @@ const Dashboard: React.FC = () => {
     console.log(`[Dashboard] Rendering widget: ${widgetId}`);
     
     switch (widgetId) {
-      case "info-cards":
-        return (
-          <div key={widgetId} className="w-full">
-            <h2 className="text-2xl font-bold text-slate-100 mb-6 tracking-tight">Key Metrics Overview</h2>
-            <InfoCardGrid>
-              <InfoCard 
-                title="Total Cases" 
-                value="1,247" 
-                change={12.5}
-                changeType="increase"
-                subtitle="Active mortgage applications"
-              />
-              <InfoCard 
-                title="Processing Time" 
-                value="8.3 days" 
-                change={-5.2}
-                changeType="decrease"
-                subtitle="Average case duration"
-              />
-              <InfoCard 
-                title="Success Rate" 
-                value="94.2%" 
-                change={2.1}
-                changeType="increase"
-                subtitle="Completed successfully"
-              />
-              <InfoCard 
-                title="Pending Reviews" 
-                value="89" 
-                change={0}
-                changeType="neutral"
-                subtitle="Awaiting approval"
-              />
-            </InfoCardGrid>
-          </div>
-        );
       case "sla-analysis-bar":
         return (
           <DataVisualizationWidget 
@@ -237,6 +246,8 @@ const Dashboard: React.FC = () => {
             data={processFailureData}
           />
         );
+      case "resource-performance":
+        return <ResourcePerformanceTable key={widgetId} />;
       case "mortgage-lifecycle":
         return (
           <div key={widgetId} className="w-full">
@@ -268,74 +279,35 @@ const Dashboard: React.FC = () => {
             size="medium"
           />
         );
-      case "resource-performance":
-        return <ResourcePerformanceTable key={widgetId} />;
-      case "chart-widget":
-        return (
-          <ChartWidget 
-            key={widgetId}
-            type="line"
-            title="Performance Chart"
-            data={[
-              { name: "Jan", value: 400 },
-              { name: "Feb", value: 300 },
-              { name: "Mar", value: 200 },
-              { name: "Apr", value: 278 },
-              { name: "May", value: 189 },
-              { name: "Jun", value: 239 }
-            ]}
-          />
-        );
-      case "sop-widget":
-        return (
-          <SOPWidget 
-            key={widgetId}
-            type="count"
-            data={{ count: 23, percentage: 15.2, threshold: "30%" }}
-            visualizationType="bar"
-            title="SOP Deviations"
-          />
-        );
-      case "data-viz":
-        return (
-          <DataVisualizationWidget 
-            key={widgetId}
-            type="bar"
-            title="Data Visualization"
-            data={[
-              { name: "Category A", value: 100 },
-              { name: "Category B", value: 200 },
-              { name: "Category C", value: 150 }
-            ]}
-          />
-        );
-      // Add placeholder implementations for other widgets
       case "sop-deviation-count":
+        const sopCount = sopDeviationData.length;
         return (
           <InfoCard
             key={widgetId}
             title="SOP Deviation Count"
-            value="23"
+            value={sopCount.toString()}
             subtitle="Standard operating procedure deviations"
             size="medium"
           />
         );
       case "incomplete-cases-count":
+        const incompleteCount = incompleteCasesData.length;
         return (
           <InfoCard
             key={widgetId}
             title="Incomplete Cases Count"
-            value="45"
+            value={incompleteCount.toString()}
             subtitle="Cases that remain incomplete"
             size="medium"
           />
         );
       case "long-running-cases-count":
+        const longRunningCount = longRunningData.length;
         return (
           <InfoCard
             key={widgetId}
             title="Long-Running Cases Count"
-            value="12"
+            value={longRunningCount.toString()}
             subtitle="Cases taking longer than expected"
             size="medium"
           />
@@ -361,23 +333,63 @@ const Dashboard: React.FC = () => {
           />
         );
       case "timing-violations-count":
+        const timingCount = timingViolationsData.length;
         return (
           <InfoCard
             key={widgetId}
             title="Timing Violations Count"
-            value="56"
+            value={timingCount.toString()}
             subtitle="Identified timing violations"
             size="medium"
           />
         );
-      // Add basic table implementations for other widgets as placeholders
       case "incomplete-case-table":
+        const incompleteCols = incompleteCasesData.length > 0 ? 
+          Object.keys(incompleteCasesData[0]).map(key => ({ key, label: key })) : [];
+        return (
+          <DataTable 
+            key={widgetId}
+            title="Incomplete Cases Table"
+            data={incompleteCasesData}
+            columns={incompleteCols}
+          />
+        );
       case "long-running-table":
+        const longRunningCols = longRunningData.length > 0 ? 
+          Object.keys(longRunningData[0]).map(key => ({ key, label: key })) : [];
+        return (
+          <DataTable 
+            key={widgetId}
+            title="Long-Running Cases Table"
+            data={longRunningData}
+            columns={longRunningCols}
+          />
+        );
+      case "timing-violations-table":
+        const timingCols = timingViolationsData.length > 0 ? 
+          Object.keys(timingViolationsData[0]).map(key => ({ key, label: key })) : [];
+        return (
+          <DataTable 
+            key={widgetId}
+            title="Timing Violations Table"
+            data={timingViolationsData}
+            columns={timingCols}
+          />
+        );
+      case "sop-deviation-patterns":
+        const sopCols = sopDeviationData.length > 0 ? 
+          Object.keys(sopDeviationData[0]).map(key => ({ key, label: key })) : [];
+        return (
+          <DataTable 
+            key={widgetId}
+            title="SOP Deviation Patterns"
+            data={sopDeviationData}
+            columns={sopCols}
+          />
+        );
       case "resource-switches-table":
       case "resource-switches-count-table":
       case "reworked-activities-table":
-      case "timing-violations-table":
-      case "sop-deviation-patterns":
       case "activity-pair-threshold":
       case "case-complexity-analysis":
       case "controls-description":

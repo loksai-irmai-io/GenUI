@@ -20,7 +20,7 @@ interface WidgetSelectionModalProps {
   pinnedWidgets: string[];
 }
 
-// Comprehensive widget definitions organized by category and page relevance
+// Clean widget definitions organized by main categories only
 const ALL_WIDGETS = {
   "Process Discovery": [
     {
@@ -133,6 +133,12 @@ const ALL_WIDGETS = {
       description: "Detailed analysis of case complexity factors and metrics",
       relevantPages: ["/", "/outlier-analysis"],
     },
+    {
+      id: "process-failure-patterns",
+      name: "Process Failure Patterns Distribution",
+      description: "Distribution chart showing different types of process failures",
+      relevantPages: ["/", "/outlier-analysis"],
+    },
   ],
   "CCM": [
     {
@@ -166,50 +172,16 @@ const ALL_WIDGETS = {
       relevantPages: ["/", "/ccm"],
     },
     {
+      id: "sla-analysis-bar",
+      name: "SLA Analysis Bar Chart",
+      description: "Service Level Agreement analysis with activity duration metrics",
+      relevantPages: ["/", "/ccm"],
+    },
+    {
       id: "kpi",
       name: "KPI",
       description: "Key Performance Indicators dashboard and metrics",
       relevantPages: ["/", "/ccm"],
-    },
-  ],
-  "Dashboard Essentials": [
-    {
-      id: "info-cards",
-      name: "Key Metrics Overview",
-      description: "Essential KPIs and metrics cards for dashboard overview",
-      relevantPages: ["/"],
-    },
-    {
-      id: "sla-analysis-bar",
-      name: "SLA Analysis Bar Chart",
-      description: "Service Level Agreement analysis with activity duration metrics",
-      relevantPages: ["/"],
-    },
-    {
-      id: "process-failure-patterns",
-      name: "Process Failure Patterns",
-      description: "Distribution chart showing different types of process failures",
-      relevantPages: ["/"],
-    },
-  ],
-  "Legacy Widgets": [
-    {
-      id: "chart-widget",
-      name: "Performance Chart",
-      description: "Basic line chart for performance tracking",
-      relevantPages: ["/"],
-    },
-    {
-      id: "sop-widget",
-      name: "SOP Deviations",
-      description: "Standard operating procedure deviation analysis",
-      relevantPages: ["/"],
-    },
-    {
-      id: "data-viz",
-      name: "Data Visualization",
-      description: "Generic data visualization widget",
-      relevantPages: ["/"],
     },
   ],
 };
@@ -232,22 +204,9 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
     setHasChanges(false);
   }, [pinnedWidgets, isOpen]);
 
-  // Filter widgets based on current page
+  // Show all widgets since this is the main configuration
   const getRelevantWidgets = () => {
-    const currentPath = location.pathname;
-    const relevantCategories: { [key: string]: any[] } = {};
-
-    Object.entries(ALL_WIDGETS).forEach(([category, widgets]) => {
-      const relevantWidgets = widgets.filter(widget => 
-        widget.relevantPages.includes(currentPath) || widget.relevantPages.includes("/")
-      );
-      
-      if (relevantWidgets.length > 0) {
-        relevantCategories[category] = relevantWidgets;
-      }
-    });
-
-    return relevantCategories;
+    return ALL_WIDGETS;
   };
 
   const handleTogglePin = (widgetId: string) => {
@@ -366,7 +325,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
 
         <div className="flex justify-between items-center pt-6 border-t border-slate-700">
           <p className="text-sm text-slate-400">
-            Click widgets to pin/unpin them on your dashboard • Showing widgets relevant to current page
+            Click widgets to pin/unpin them on your dashboard • Configure widgets from Process Discovery, Outlier Analysis, and CCM categories
           </p>
           <div className="flex space-x-3">
             <Button
