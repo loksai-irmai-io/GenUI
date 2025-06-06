@@ -88,7 +88,7 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
       });
     });
 
-    // Updated node design with new color scheme
+    // Updated node design with new text color scheme
     const maxFrequency = Math.max(...filteredNodes.map(n => n.frequency));
     const reactFlowNodes: Node[] = filteredNodes.map(node => {
       const position = nodePositions.get(node.id) || { x: 0, y: 0 };
@@ -107,20 +107,28 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
         data: {
           label: (
             <div className="text-center p-3 min-w-[120px] max-w-[180px]">
-              <div className="font-semibold text-sm text-white mb-2 leading-tight">
+              <div className="font-semibold text-sm mb-2 leading-tight" style={{ color: '#1E3A5F' }}>
                 {node.name}
               </div>
               <div className="flex items-center justify-center gap-2 text-xs">
                 <Badge 
                   variant="secondary" 
-                  className="text-xs bg-white/20 text-white border-white/30 font-medium"
+                  className="text-xs border font-medium"
+                  style={{ 
+                    backgroundColor: 'rgba(30, 58, 95, 0.1)', 
+                    color: '#1E3A5F', 
+                    borderColor: 'rgba(30, 58, 95, 0.2)' 
+                  }}
                 >
                   {node.frequency.toLocaleString()}
                 </Badge>
                 {node.is_deviation && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-blue-500/25 rounded border border-blue-400/30">
-                    <AlertTriangle className="w-3 h-3 text-blue-200" />
-                    <span className="text-blue-100 text-xs">VAR</span>
+                  <div className="flex items-center gap-1 px-2 py-1 rounded border" style={{ 
+                    backgroundColor: 'rgba(30, 58, 95, 0.1)', 
+                    borderColor: 'rgba(30, 58, 95, 0.2)' 
+                  }}>
+                    <AlertTriangle className="w-3 h-3" style={{ color: '#1E3A5F' }} />
+                    <span className="text-xs" style={{ color: '#1E3A5F' }}>VAR</span>
                   </div>
                 )}
               </div>
@@ -133,7 +141,7 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
             : `linear-gradient(135deg, ${nodeColor}, ${nodeColor}dd)`,
           border: `1px solid ${borderColor}`,
           borderRadius: 12,
-          color: '#ffffff',
+          color: '#1E3A5F',
           width: normalizedSize,
           height: Math.max(80, normalizedSize * 0.6),
           fontSize: 11,
@@ -174,9 +182,9 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
         label: edge.frequency > maxEdgeFreq * 0.15 ? edge.frequency.toLocaleString() : '',
         labelStyle: {
           fontSize: 10,
-          fill: '#e2e8f0',
+          fill: '#1E3A5F',
           fontWeight: 600,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
           padding: '2px 6px',
           borderRadius: '4px'
         }
@@ -378,29 +386,29 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
               />
             </ReactFlow>
             
-            {/* Updated Floating Legend with new colors */}
-            <div className="absolute top-6 right-6 bg-slate-900/95 backdrop-blur-sm border border-slate-600 rounded-xl p-4 text-xs text-slate-200 shadow-xl">
-              <div className="font-bold mb-3 text-slate-100 text-sm">Process Legend</div>
+            {/* Updated Floating Legend with new text colors */}
+            <div className="absolute top-6 right-6 bg-slate-900/95 backdrop-blur-sm border border-slate-600 rounded-xl p-4 text-xs shadow-xl" style={{ color: '#1E3A5F' }}>
+              <div className="font-bold mb-3 text-sm" style={{ color: '#1E3A5F' }}>Process Legend</div>
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded bg-gradient-to-r from-[#4B8BBE] to-[#4B8BBE]"></div>
-                  <span className="text-slate-200">Application Phase</span>
+                  <span style={{ color: '#1E3A5F' }}>Application Phase</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded bg-gradient-to-r from-[#72BDA3] to-[#72BDA3]"></div>
-                  <span className="text-slate-200">Credit Assessment</span>
+                  <span style={{ color: '#1E3A5F' }}>Credit Assessment</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded bg-gradient-to-r from-[#F0C808] to-[#F0C808]"></div>
-                  <span className="text-slate-200">Underwriting</span>
+                  <span style={{ color: '#1E3A5F' }}>Underwriting</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded bg-gradient-to-r from-[#8E7CC3] to-[#8E7CC3]"></div>
-                  <span className="text-slate-200">Funding</span>
+                  <span style={{ color: '#1E3A5F' }}>Funding</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded bg-gradient-to-r from-[#A2D2FF] to-[#A2D2FF]"></div>
-                  <span className="text-slate-200">Process Variation</span>
+                  <span style={{ color: '#1E3A5F' }}>Process Variation</span>
                 </div>
               </div>
             </div>
