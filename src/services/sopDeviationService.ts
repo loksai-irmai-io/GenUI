@@ -112,6 +112,64 @@ class SOPDeviationService {
       ];
     }
   }
+
+  async getTable(): Promise<any[]> {
+    try {
+      const response = await fetch('/sopdeviation.json');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const fallbackData = await response.json();
+      
+      // Convert fallback data to table format
+      return fallbackData.data.map((item: FallbackData, index: number) => ({
+        id: index + 1,
+        pattern_id: `pattern_${index + 1}`,
+        pattern_name: `Pattern ${index + 1} (${item.is_sop_deviation ? 'Deviation' : 'Standard'})`,
+        frequency: parseInt(item.pattern_count),
+        percentage: item.percentage,
+        severity: item.is_sop_deviation ? (item.percentage > 10 ? 'High' : 'Medium') : 'Low',
+        deviation_type: item.is_sop_deviation ? 'SOP Deviation' : 'Standard Process',
+        sequence_preview: item.sop_deviation_sequence_preview.join(' → ')
+      }));
+    } catch (error) {
+      console.error('Failed to load SOP deviation table data:', error);
+      // Last resort fallback
+      return [
+        {
+          id: 1,
+          pattern_id: "pattern_1",
+          pattern_name: "Standard Process Flow",
+          frequency: 6764,
+          percentage: 34.23,
+          severity: "Low",
+          deviation_type: "Standard Process",
+          sequence_preview: "Start → Document Review → Assessment → Approval"
+        },
+        {
+          id: 2,
+          pattern_id: "pattern_2", 
+          pattern_name: "Early Rejection Pattern",
+          frequency: 3100,
+          percentage: 15.68,
+          severity: "High",
+          deviation_type: "SOP Deviation",
+          sequence_preview: "Start → Quick Assessment → Immediate Rejection"
+        },
+        {
+          id: 3,
+          pattern_id: "pattern_3",
+          pattern_name: "Re-assessment Flow",
+          frequency: 2803,
+          percentage: 14.18,
+          severity: "Medium",
+          deviation_type: "SOP Deviation",
+          sequence_preview: "Start → Initial Review → Re-assessment → Final Decision"
+        }
+      ];
+    }
+  }
+
 }
 
 export const sopDeviationService = new SOPDeviationService();

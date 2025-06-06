@@ -21,6 +21,33 @@ export class IncompleteCasesService {
     const data = await response.json();
     return data.count ?? data.incomplete ?? 0;
   }
+
+  async getTable(): Promise<any[]> {
+    try {
+      // Try API first
+      const response = await fetch('http://34.60.217.109/incompletecase_table');
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.data && Array.isArray(data.data)) return data.data;
+        if (Array.isArray(data)) return data;
+        if (typeof data === 'object' && data !== null) return Object.values(data);
+      }
+    } catch (e) {
+      console.warn('API failed, falling back to local data');
+    }
+
+    // Fallback to local JSON
+    try {
+      const response = await fetch('/incompletecases.json');
+      const data = await response.json();
+      if (data && data.data && Array.isArray(data.data)) return data.data;
+      if (Array.isArray(data)) return data;
+      return [];
+    } catch (e) {
+      console.error('Failed to load incomplete cases table data');
+      return [];
+    }
+  }
 }
 
 export const incompleteCasesService = new IncompleteCasesService();
