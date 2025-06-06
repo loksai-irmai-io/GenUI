@@ -1,20 +1,39 @@
-
 import React, { useEffect, useState } from "react";
 import DataVisualizationWidget from "../components/widgets/DataVisualizationWidget";
 import DataTable from "../components/widgets/DataTable";
 import InfoCard from "../components/widgets/InfoCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const CCM = () => {
   // State for each widget
   const [controlsCount, setControlsCount] = useState<any[]>([]);
-  const [controlsDesc, setControlsDesc] = useState<any[]>([]);
-  const [controlsDef, setControlsDef] = useState<any[]>([]);
   const [slaAnalysis, setSlaAnalysis] = useState<any[]>([]);
   const [kpi, setKpi] = useState<any[]>([]);
   const [slaBarData, setSlaBarData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // New state for dropdown controls
+  const [selectedControl, setSelectedControl] = useState<string>("");
+  const [controlDefinition, setControlDefinition] = useState<any[]>([]);
+  const [controlTestConfig, setControlTestConfig] = useState<any[]>([]);
+  const [controlResults, setControlResults] = useState<any[]>([]);
+  const [controlLoading, setControlLoading] = useState(false);
+  const [controlError, setControlError] = useState<string | null>(null);
+
+  const controlOptions = [
+    { value: "initial-assessment", label: "Initial Assessment" },
+    { value: "valuation-accepted", label: "Valuation Accepted" },
+    { value: "underwriting-approved", label: "Underwriting Approved" },
+    { value: "final-approval", label: "Final Approval" },
+    { value: "signing-loan-agreement", label: "Signing of Loan Agreement" },
+    { value: "loan-funding", label: "Loan Funding" },
+    { value: "disbursement-funds", label: "Disbursement of Funds" },
+    { value: "loan-closure", label: "Loan Closure" },
+    { value: "rejected", label: "Rejected" },
+    { value: "underwriting-rejected", label: "Underwriting Rejected" },
+  ];
 
   useEffect(() => {
     setLoading(true);
@@ -23,48 +42,35 @@ const CCM = () => {
       fetch("http://34.60.217.109/controls_identified_count").then((res) =>
         res.json()
       ),
-      fetch("http://34.60.217.109/control_description?page=1&size=100").then(
-        (res) => res.json()
-      ),
-      fetch("http://34.60.217.109/control_defination?page=1&size=100").then(
-        (res) => res.json()
-      ),
       fetch("http://34.60.217.109/sla_analysis").then((res) => res.json()),
       fetch("http://34.60.217.109/kpi").then((res) => res.json()),
       fetch("http://34.60.217.109/slagraph/avg-activity-duration-bar").then(
         (res) => res.json()
       ),
     ])
-      .then(([count, desc, def, sla, kpi, slaBar]) => {
-        // Bar chart expects array of { name, value }
+      .then(([count, sla, kpi, slaBar]) => {
+        // ... keep existing code for data processing
         let countArr = Array.isArray(count)
           ? count
           : Object.entries(count).map(([name, value]) => ({ name, value }));
         setControlsCount(countArr);
-        setControlsDesc(Array.isArray(desc) ? desc : desc.data || []);
-        setControlsDef(Array.isArray(def) ? def : def.data || []);
         setSlaAnalysis(Array.isArray(sla) ? sla : sla.data || []);
         setKpi(Array.isArray(kpi) ? kpi : kpi.data || []);
-        // Bar chart expects array of { name, value }
-        // Fix: transform plotly-style data to recharts array
+        
         let barArr: any[] = [];
         if (slaBar && Array.isArray(slaBar.data)) {
-          // Plotly bar data: [{ x: [...], y: {...}, ... }]
           const bar = slaBar.data[0];
           if (bar && Array.isArray(bar.x)) {
-            // Handle encoded y values
             if (bar.y && typeof bar.y === "object" && bar.y.bdata) {
-              // Use the x values with hardcoded values based on API response
               const values = [
                 383.9, 124.5, 93.1, 88.3, 72.3, 68.2, 56.4, 51.8, 48.1, 44.3,
                 37.2, 29.5, 26.1, 18.2,
               ];
               barArr = bar.x.map((x: string, i: number) => ({
                 name: x,
-                value: values[i] || 50, // Use hardcoded values matching API response pattern
+                value: values[i] || 50,
               }));
             } else if (Array.isArray(bar.y)) {
-              // Standard format
               barArr = bar.x.map((x: string, i: number) => ({
                 name: x,
                 value: bar.y[i],
@@ -72,7 +78,6 @@ const CCM = () => {
             }
           }
         } else if (Array.isArray(slaBar)) {
-          // If the API returns an array of objects with name/value
           if (
             slaBar.length &&
             slaBar[0] &&
@@ -81,7 +86,6 @@ const CCM = () => {
           ) {
             barArr = slaBar;
           } else if (slaBar.length && slaBar[0] && slaBar[0].x && slaBar[0].y) {
-            // If the API returns [{x:[], y:[]}] directly
             barArr = slaBar[0].x.map((x: string, i: number) => ({
               name: x,
               value: slaBar[0].y[i],
@@ -94,7 +98,6 @@ const CCM = () => {
           }));
         }
 
-        // If nothing worked or barArr is empty, use fallback data
         if (!barArr || barArr.length === 0) {
           barArr = [
             { name: "Valuation Accepted", value: 383.9 },
@@ -109,6 +112,41 @@ const CCM = () => {
       .catch((e) => setError("Failed to load CCM data."))
       .finally(() => setLoading(false));
   }, []);
+
+  // Function to fetch control data based on selection
+  const fetchControlData = async (controlValue: string) => {
+    setControlLoading(true);
+    setControlError(null);
+    
+    try {
+      const baseUrl = `http://34.60.217.109/${controlValue}-clean`;
+      const [definitionRes, testConfigRes, resultsRes] = await Promise.all([
+        fetch(`${baseUrl}/definition`),
+        fetch(`${baseUrl}/test-configuration`),
+        fetch(`${baseUrl}/results`)
+      ]);
+
+      const [definition, testConfig, results] = await Promise.all([
+        definitionRes.json(),
+        testConfigRes.json(),
+        resultsRes.json()
+      ]);
+
+      setControlDefinition(Array.isArray(definition) ? definition : definition.data || []);
+      setControlTestConfig(Array.isArray(testConfig) ? testConfig : testConfig.data || []);
+      setControlResults(Array.isArray(results) ? results : results.data || []);
+    } catch (error) {
+      setControlError(`Failed to load data for ${controlValue}`);
+      console.error("Error fetching control data:", error);
+    } finally {
+      setControlLoading(false);
+    }
+  };
+
+  const handleControlSelection = (value: string) => {
+    setSelectedControl(value);
+    fetchControlData(value);
+  };
 
   // Helper to auto-generate columns from data, with better label formatting
   const getColumns = (data: any[]) =>
@@ -262,7 +300,6 @@ const CCM = () => {
       return { data: useData, columns: getColumns(useData) };
     }
     if (useData && typeof useData === "object") {
-      // Flatten nested object for better table display
       const flat = flattenObject(useData);
       const arr = Object.entries(flat).map(([key, value]) => ({
         Field: key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
@@ -329,16 +366,59 @@ const CCM = () => {
             </div>
             
             <div className="space-y-6">
-              <TableWidget
-                title="Controls Description"
-                data={controlsDesc}
-                columns={getColumns(controlsDesc)}
-              />
-              <TableWidget
-                title="Control Definition"
-                data={controlsDef}
-                columns={getColumns(controlsDef)}
-              />
+              <div className="w-full enterprise-card p-6">
+                <h3 className="text-xl font-semibold text-slate-100 mb-4 tracking-tight">Controls</h3>
+                <div className="mb-6">
+                  <Select onValueChange={handleControlSelection} value={selectedControl}>
+                    <SelectTrigger className="w-full max-w-md bg-slate-800 border-slate-600 text-slate-100">
+                      <SelectValue placeholder="Select a control to view details" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-slate-600">
+                      {controlOptions.map((option) => (
+                        <SelectItem 
+                          key={option.value} 
+                          value={option.value}
+                          className="text-slate-100 focus:bg-slate-700"
+                        >
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {controlLoading && (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                  </div>
+                )}
+
+                {controlError && (
+                  <div className="bg-red-900/50 border border-red-700 rounded-xl p-4 text-red-300 mb-4">
+                    {controlError}
+                  </div>
+                )}
+
+                {selectedControl && !controlLoading && !controlError && (
+                  <div className="space-y-6">
+                    <TableWidget
+                      title="Control Definition"
+                      data={controlDefinition}
+                      columns={getColumns(controlDefinition)}
+                    />
+                    <TableWidget
+                      title="Test Configuration"
+                      data={controlTestConfig}
+                      columns={getColumns(controlTestConfig)}
+                    />
+                    <TableWidget
+                      title="Results"
+                      data={controlResults}
+                      columns={getColumns(controlResults)}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </TabsContent>
