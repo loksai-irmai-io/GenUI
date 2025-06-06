@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
+import { useMaximizeState } from "../hooks/useMaximizeState";
 
 const CCM = () => {
   // State for each widget
@@ -32,6 +33,9 @@ const CCM = () => {
   // New state for toggle buttons
   const [testConfigAccepted, setTestConfigAccepted] = useState(false);
   const [resultsAccepted, setResultsAccepted] = useState(false);
+
+  // Add maximize state hook
+  const { toggleMaximize, isMaximized, minimizeAll } = useMaximizeState();
 
   const controlOptions = [
     { value: "initial-assessment", label: "Initial Assessment" },
@@ -647,6 +651,9 @@ const CCM = () => {
                   .reduce((sum, item) => sum + (item.value || 0), 0)
                   .toString()}
                 subtitle="Total identified controls in the process"
+                maximized={isMaximized("controls-count")}
+                widgetId="controls-count"
+                onToggleMaximize={() => toggleMaximize("controls-count")}
               />
             </div>
 
@@ -680,11 +687,11 @@ const CCM = () => {
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                   </div>
-                )}{" "}
+                )}
                 {controlError && (
                   <div className="bg-red-900/50 border border-red-700 rounded-xl p-4 text-red-300 mb-4">
                     <div className="font-semibold mb-2">API Error:</div>
-                    <div>{controlError}</div>{" "}
+                    <div>{controlError}</div>
                     {selectedControl && (
                       <div className="mt-2 text-sm text-red-400">
                         Expected endpoints:
@@ -736,27 +743,29 @@ const CCM = () => {
                 )}
                 {selectedControl && !controlLoading && (
                   <div className="space-y-6">
-                    <TableWidget
+                    <DataTable
                       title="Control Definition"
                       data={controlDefinition}
                       columns={getColumns(controlDefinition)}
-                      showToggle={false}
+                      maximized={isMaximized("control-definition")}
+                      widgetId="control-definition"
+                      onToggleMaximize={() => toggleMaximize("control-definition")}
                     />
-                    <TableWidget
+                    <DataTable
                       title="Test Configuration"
                       data={controlTestConfig}
                       columns={getColumns(controlTestConfig)}
-                      showToggle={true}
-                      toggleState={testConfigAccepted}
-                      onToggleChange={setTestConfigAccepted}
+                      maximized={isMaximized("test-configuration")}
+                      widgetId="test-configuration"
+                      onToggleMaximize={() => toggleMaximize("test-configuration")}
                     />
-                    <TableWidget
+                    <DataTable
                       title="Results"
                       data={controlResults}
                       columns={getColumns(controlResults)}
-                      showToggle={true}
-                      toggleState={resultsAccepted}
-                      onToggleChange={setResultsAccepted}
+                      maximized={isMaximized("control-results")}
+                      widgetId="control-results"
+                      onToggleMaximize={() => toggleMaximize("control-results")}
                     />
                   </div>
                 )}
@@ -775,7 +784,9 @@ const CCM = () => {
               type="incomplete-bar"
               title="Average Activity Duration (hrs)"
               data={slaBarData}
-              maximized={false}
+              maximized={isMaximized("sla-bar-chart")}
+              widgetId="sla-bar-chart"
+              onToggleMaximize={() => toggleMaximize("sla-bar-chart")}
             />
           </div>
         </TabsContent>
@@ -786,11 +797,13 @@ const CCM = () => {
               <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full mr-4"></div>
               Key Performance Indicators
             </h2>
-            <TableWidget
+            <DataTable
               title="KPI Metrics"
               data={kpi}
               columns={getColumns(kpi)}
-              showToggle={false}
+              maximized={isMaximized("kpi-table")}
+              widgetId="kpi-table"
+              onToggleMaximize={() => toggleMaximize("kpi-table")}
             />
           </div>
         </TabsContent>
