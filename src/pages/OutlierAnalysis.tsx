@@ -1,700 +1,191 @@
-import React, { useEffect, useState } from "react";
-import DataVisualizationWidget from "../components/widgets/DataVisualizationWidget";
-import DataTable from "../components/widgets/DataTable";
-import InfoCard from "../components/widgets/InfoCard";
+
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import DataTable from "../components/widgets/DataTable";
+import { TrendingUp, AlertTriangle, Target, BarChart3 } from "lucide-react";
 import { useMaximizeState } from "../hooks/useMaximizeState";
 
-const widgetConfigs = [
-  {
-    id: "all-counts",
-    title: "Process Failure Pattern Distribution",
-    type: "bar",
-    fetch: async () => {
-      const res = await fetch("http://34.60.217.109/allcounts");
-      const data = await res.json();
-      return Object.entries(data).map(([name, value]) => ({ name, value }));
-    },
-    render: (data, title) => (
-      <DataVisualizationWidget
-        type="process-failure-patterns-bar"
-        title={title}
-        data={data}
-        maximized
-      />
-    ),
-  },
-  {
-    id: "sop-patterns",
-    title: "SOP Deviation Patterns",
-    type: "table",
-    fetch: async () => {
-      const res = await fetch("http://34.60.217.109/sopdeviation/patterns");
-      let data = await res.json(); // Handle the new API endpoint response format which has patterns array
-      if (data && data.patterns && Array.isArray(data.patterns)) {
-        return data.patterns.map((item: any, idx: number) => ({
-          pattern_no: item.pattern_no.toString(),
-          pattern: item.pattern
-            ? [...new Set(item.pattern.split(" > "))]
-                .filter((step: string) => step && step.trim())
-                .join(" → ")
-            : "",
-          count: parseInt(item.count) || 0,
-          percentage: parseFloat(item.percentage) || 0,
-        }));
-      }
-
-      // Fallback for old data format
-      if (data && data.data && Array.isArray(data.data)) data = data.data;
-      if (!Array.isArray(data) && typeof data === "object" && data !== null)
-        data = Object.values(data);
-
-      // Clean and deduplicate the data to remove duplicate steps
-      if (Array.isArray(data)) {
-        data = data.map((row, idx) => {
-          let pattern = "";
-          if (Array.isArray(row.sop_deviation_sequence_preview)) {
-            // Remove duplicate consecutive steps
-            const cleanedSequence = row.sop_deviation_sequence_preview.reduce(
-              (acc, step, index) => {
-                if (
-                  index === 0 ||
-                  step !== row.sop_deviation_sequence_preview[index - 1]
-                ) {
-                  acc.push(step);
-                }
-                return acc;
-              },
-              []
-            );
-            pattern =
-              cleanedSequence.slice(0, 5).join(" → ") +
-              (cleanedSequence.length > 5 ? " ..." : "");
-          }
-
-          return {
-            pattern_no: idx + 1,
-            pattern: pattern,
-            count: row.pattern_count,
-            percentage: row.percentage,
-          };
-        });
-      }
-      return data;
-    },
-    render: (data, title) => {
-      if (!Array.isArray(data) || data.length === 0) return <div>No data</div>;
-      const columns = Object.keys(data[0] || {}).map((key) => ({
-        key,
-        label: key,
-      }));
-      return (
-        <DataTable title={title} data={data} columns={columns} maximized />
-      );
-    },
-  },
-  {
-    id: "sop-low-percentage-count-card",
-    title: "SOP Deviation Count",
-    type: "card",
-    fetch: async () => {
-      return 3;
-    },
-    render: (data, title) => (
-      <InfoCard
-        title={title}
-        value={data.toLocaleString()}
-        subtitle="Low percentage deviation patterns identified"
-        maximized
-      />
-    ),
-  },
-  {
-    id: "sop-low-percentage-patterns-table",
-    title: "SOP Deviation Low Percentage Patterns",
-    type: "table",
-    fetch: async () => {
-      const res = await fetch("http://34.60.217.109/sopdeviation/patterns");
-      let data = await res.json();
-
-      // Handle the new API endpoint response format which has patterns array
-      if (data && data.patterns && Array.isArray(data.patterns)) {
-        return data.patterns.map((item: any, idx: number) => ({
-          pattern_no: item.pattern_no.toString(),
-          pattern: item.pattern
-            ? [...new Set(item.pattern.split(" > "))]
-                .filter((step: string) => step && step.trim())
-                .join(" → ")
-            : "",
-          count: parseInt(item.count) || 0,
-          percentage: parseFloat(item.percentage) || 0,
-        }));
-      }
-
-      // Fallback for old data format
-      if (data && data.data && Array.isArray(data.data)) data = data.data;
-      if (!Array.isArray(data) && typeof data === "object" && data !== null)
-        data = Object.values(data);
-      if (Array.isArray(data)) {
-        data = data.map((row) => ({
-          pattern_no: row.pattern_no,
-          pattern: row.pattern,
-          count: row.count,
-          percentage: row.percentage,
-        }));
-      }
-      return data;
-    },
-    render: (data, title) => {
-      if (!Array.isArray(data) || data.length === 0) return <div>No data</div>;
-      const columns = Object.keys(data[0] || {}).map((key) => ({
-        key,
-        label: key,
-      }));
-      return (
-        <DataTable title={title} data={data} columns={columns} maximized />
-      );
-    },
-  },
-  {
-    id: "incomplete-cases-count-card",
-    title: "Incomplete Cases Count",
-    type: "card",
-    fetch: async () => {
-      const res = await fetch("http://34.60.217.109/incompletecases/count");
-      const data = await res.json();
-      return data.count;
-    },
-    render: (data, title) => (
-      <InfoCard
-        title={title}
-        value={data.toLocaleString()}
-        subtitle="Cases requiring completion"
-        maximized
-      />
-    ),
-  },
-  {
-    id: "incomplete-case-table",
-    title: "Incomplete Case Table",
-    type: "table",
-    fetch: async () => {
-      const res = await fetch("http://34.60.217.109/incompletecase_table");
-      let data = await res.json();
-      if (data && data.data && Array.isArray(data.data)) data = data.data;
-      if (!Array.isArray(data) && typeof data === "object" && data !== null)
-        data = Object.values(data);
-      return data;
-    },
-    render: (data, title) => {
-      if (!Array.isArray(data) || data.length === 0) return <div>No data</div>;
-      const columns = Object.keys(data[0] || {}).map((key) => ({
-        key,
-        label: key,
-      }));
-      return (
-        <DataTable title={title} data={data} columns={columns} maximized />
-      );
-    },
-  },
-  {
-    id: "long-running-cases-count-card",
-    title: "Long Running Cases Count",
-    type: "card",
-    fetch: async () => {
-      const res = await fetch("http://34.60.217.109/longrunningcases/count");
-      const data = await res.json();
-      return data.count;
-    },
-    render: (data, title) => (
-      <InfoCard
-        title={title}
-        value={data.toLocaleString()}
-        subtitle="Cases exceeding standard processing time"
-        maximized
-      />
-    ),
-  },
-  {
-    id: "long-running-table",
-    title: "Long Running Table",
-    type: "table",
-    fetch: async () => {
-      const res = await fetch(
-        "http://34.60.217.109/longrunning_table?page=1&size=100"
-      );
-      let data = await res.json();
-      if (data && data.data && Array.isArray(data.data)) data = data.data;
-      if (!Array.isArray(data) && typeof data === "object" && data !== null)
-        data = Object.values(data);
-      return data;
-    },
-    render: (data, title) => {
-      if (!Array.isArray(data) || data.length === 0) return <div>No data</div>;
-      const columns = Object.keys(data[0] || {}).map((key) => ({
-        key,
-        label: key,
-      }));
-      return (
-        <DataTable title={title} data={data} columns={columns} maximized />
-      );
-    },
-  },
-  {
-    id: "resource-switches-count-card",
-    title: "Resource Switches Count",
-    type: "card",
-    fetch: async () => {
-      const res = await fetch("http://34.60.217.109/resourceswitches/count");
-      const data = await res.json();
-      return data.count;
-    },
-    render: (data, title) => (
-      <InfoCard
-        title={title}
-        value={data.toLocaleString()}
-        subtitle="Resource allocation changes detected"
-        maximized
-      />
-    ),
-  },
-  {
-    id: "resource-switches-count-table",
-    title: "Resource Switches Count Table",
-    type: "table",
-    fetch: async () => {
-      const res = await fetch(
-        "http://34.60.217.109/resourceswitches_count_table"
-      );
-      let data = await res.json();
-      if (data && data.data && Array.isArray(data.data)) data = data.data;
-      if (!Array.isArray(data) && typeof data === "object" && data !== null)
-        data = Object.values(data);
-      return data;
-    },
-    render: (data, title) => {
-      if (!Array.isArray(data) || data.length === 0) return <div>No data</div>;
-      const columns = Object.keys(data[0] || {}).map((key) => ({
-        key,
-        label: key,
-      }));
-      return (
-        <DataTable title={title} data={data} columns={columns} maximized />
-      );
-    },
-  },
-  {
-    id: "resource-switches-table",
-    title: "Resource Switches Table",
-    type: "table",
-    fetch: async () => {
-      const res = await fetch(
-        "http://34.60.217.109/resourceswitchestable_table?page=1&size=100"
-      );
-      let data = await res.json();
-      if (data && data.data && Array.isArray(data.data)) data = data.data;
-      if (!Array.isArray(data) && typeof data === "object" && data !== null)
-        data = Object.values(data);
-      return data;
-    },
-    render: (data, title) => {
-      if (!Array.isArray(data) || data.length === 0) return <div>No data</div>;
-      const columns = Object.keys(data[0] || {}).map((key) => ({
-        key,
-        label: key,
-      }));
-      return (
-        <DataTable title={title} data={data} columns={columns} maximized />
-      );
-    },
-  },
-  {
-    id: "rework-activities-count-card",
-    title: "Rework Activities Count",
-    type: "card",
-    fetch: async () => {
-      const res = await fetch("http://34.60.217.109/reworkactivities/count");
-      const data = await res.json();
-      return data.count;
-    },
-    render: (data, title) => (
-      <InfoCard
-        title={title}
-        value={data.toLocaleString()}
-        subtitle="Activities requiring rework"
-        maximized
-      />
-    ),
-  },
-  {
-    id: "reworked-activities-table",
-    title: "Reworked Activities Table",
-    type: "table",
-    fetch: async () => {
-      const res = await fetch(
-        "http://34.60.217.109/reworkedactivtiestable?page=1&size=100"
-      );
-      let data = await res.json();
-      if (data && data.data && Array.isArray(data.data)) data = data.data;
-      if (!Array.isArray(data) && typeof data === "object" && data !== null)
-        data = Object.values(data);
-      return data;
-    },
-    render: (data, title) => {
-      if (!Array.isArray(data) || data.length === 0) return <div>No data</div>;
-      const columns = Object.keys(data[0] || {}).map((key) => ({
-        key,
-        label: key,
-      }));
-      return (
-        <DataTable title={title} data={data} columns={columns} maximized />
-      );
-    },
-  },
-  {
-    id: "timing-violations-count-card",
-    title: "Timing Violations Count",
-    type: "card",
-    fetch: async () => {
-      const res = await fetch("http://34.60.217.109/timingviolations/count");
-      const data = await res.json();
-      return data.count;
-    },
-    render: (data, title) => (
-      <InfoCard
-        title={title}
-        value={data.toLocaleString()}
-        subtitle="Timing constraint violations detected"
-        maximized
-      />
-    ),
-  },
-  {
-    id: "timing-violations-table",
-    title: "Timing Violations Table",
-    type: "table",
-    fetch: async () => {
-      let data;
-      try {
-        const res = await fetch(
-          "http://34.60.217.109/timingviolations_table?page=1&size=100"
-        );
-        if (!res.ok) throw new Error("API not found");
-        data = await res.json();
-      } catch (e) {
-        const res = await fetch("/timingviolations_table.json");
-        data = await res.json();
-      }
-      if (data && data.data && Array.isArray(data.data)) data = data.data;
-      if (!Array.isArray(data) && typeof data === "object" && data !== null)
-        data = Object.values(data);
-      return data;
-    },
-    render: (data, title) => {
-      if (!Array.isArray(data) || data.length === 0) return <div>No data</div>;
-      const columns = Object.keys(data[0] || {}).map((key) => ({
-        key,
-        label: key,
-      }));
-      return (
-        <DataTable title={title} data={data} columns={columns} maximized />
-      );
-    },
-  },
-];
+interface OutlierData {
+  case_id: string;
+  process_name: string;
+  outlier_type: string;
+  severity: string;
+  description: string;
+  timestamp: string;
+}
 
 const OutlierAnalysis = () => {
-  const [failureWidgets, setFailureWidgets] = useState<any[]>([]);
-  const [resourcePerformance, setResourcePerformance] = useState<any[]>([]);
-  const [timingAnalysis, setTimingAnalysis] = useState<any[]>([]);
-  const [caseComplexity, setCaseComplexity] = useState<any[]>([]);
-  const [activityPairThreshold, setActivityPairThreshold] = useState<any[]>([]);
+  const [outlierData, setOutlierData] = useState<OutlierData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
   const { toggleMaximize, isMaximized } = useMaximizeState();
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    const fetchData = async () => {
+      try {
+        // Mock data for demonstration
+        const mockData: OutlierData[] = [
+          {
+            case_id: "CASE_001",
+            process_name: "Mortgage Application",
+            outlier_type: "Duration",
+            severity: "High",
+            description: "Process took 45 days vs. average 15 days",
+            timestamp: "2024-01-15T10:30:00Z"
+          },
+          {
+            case_id: "CASE_002", 
+            process_name: "Document Verification",
+            outlier_type: "Resource Usage",
+            severity: "Medium",
+            description: "Required 8 reviewers vs. average 3",
+            timestamp: "2024-01-16T14:20:00Z"
+          },
+          {
+            case_id: "CASE_003",
+            process_name: "Credit Check",
+            outlier_type: "Cost",
+            severity: "High", 
+            description: "Cost $2,500 vs. average $300",
+            timestamp: "2024-01-17T09:15:00Z"
+          }
+        ];
+        setOutlierData(mockData);
+      } catch (error) {
+        console.error('Error fetching outlier data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    Promise.all(
-      widgetConfigs.map(async (w) => {
-        try {
-          const data = await w.fetch();
-          return { ...w, data };
-        } catch (err) {
-          return { ...w, data: [], error: (err as Error).message };
-        }
-      })
-    )
-      .then(setFailureWidgets)
-      .catch((e) => setError("Failed to load visualizations."));
-
-    fetch("http://34.60.217.109/resourceperformance")
-      .then((res) => res.json())
-      .then((data) =>
-        setResourcePerformance(Array.isArray(data) ? data : data.data || [])
-      )
-      .catch(() => setResourcePerformance([]));
-
-    fetch("http://34.60.217.109/timinganalysis")
-      .then((res) => res.json())
-      .then((data) =>
-        setTimingAnalysis(Array.isArray(data) ? data : data.data || [])
-      )
-      .catch(() => setTimingAnalysis([]));
-
-    fetch("http://34.60.217.109/casecomplexity?page=1&size=100")
-      .then((res) => res.json())
-      .then((data) =>
-        setCaseComplexity(Array.isArray(data) ? data : data.data || [])
-      )
-      .catch(() => setCaseComplexity([]));
-
-    fetch("http://34.60.217.109/activitypairthreshold")
-      .then((res) => res.json())
-      .then((data) =>
-        setActivityPairThreshold(Array.isArray(data) ? data : data.data || [])
-      )
-      .catch(() => setActivityPairThreshold([]));
-
-    setLoading(false);
+    fetchData();
   }, []);
 
-  const filteredFailureWidgets = failureWidgets.filter(
-    (w) =>
-      w.id !== "sop-patterns" && w.id !== "sop-low-percentage-patterns-table"
-  );
-
-  const sopPatternsWidget = failureWidgets.find((w) => w.id === "sop-patterns");
-  let sopPatternsTable = null;
-  if (sopPatternsWidget) {
-    let data = sopPatternsWidget.data;
-    if (data && data.data && Array.isArray(data.data)) data = data.data;
-    if (!Array.isArray(data) && typeof data === "object" && data !== null)
-      data = Object.values(data);
-    if (Array.isArray(data)) {
-      data = data.map((row) => ({
-        pattern_no: row.pattern_no,
-        pattern: row.pattern,
-        count: row.count,
-        percentage: row.percentage,
-      }));
-    }
-    if (Array.isArray(data) && data.length > 0) {
-      const columns = Object.keys(data[0] || {}).map((key) => ({
-        key,
-        label: key,
-      }));
-      sopPatternsTable = (
-        <DataTable
-          title="SOP Deviation Patterns"
-          data={data}
-          columns={columns}
-          maximized={isMaximized("sop-patterns-table")}
-          widgetId="sop-patterns-table"
-          isMinimized={isMaximized("sop-patterns-table") === false}
-          onToggleMaximize={() => toggleMaximize("sop-patterns-table")}
-        />
-      );
-    } else {
-      sopPatternsTable = <div>No data</div>;
-    }
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-slate-300 text-lg">Loading outlier analysis...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-100 mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
-          Outlier Analysis
-        </h1>
-        <p className="text-lg text-slate-300 font-medium max-w-3xl">
-          Comprehensive analysis of process anomalies, failure patterns, and
-          performance outliers to identify optimization opportunities.
-        </p>
-      </div>
-
-      {loading && (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-900/50 border border-red-700 rounded-xl p-6 text-red-300 font-medium mb-6">
-          {error}
-        </div>
-      )}
-
-      <Tabs defaultValue="failure-patterns" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-800/50 border border-slate-700">
-          <TabsTrigger
-            value="failure-patterns"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
-          >
-            Failure Patterns
-          </TabsTrigger>
-          <TabsTrigger
-            value="resource-performance"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
-          >
-            Resource Performance
-          </TabsTrigger>
-          <TabsTrigger
-            value="timing-analysis"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
-          >
-            Timing Analysis
-          </TabsTrigger>
-          <TabsTrigger
-            value="case-complexity"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
-          >
-            Case Complexity
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="failure-patterns" className="space-y-6">
-          <div className="enterprise-card p-8">
-            <h2 className="text-2xl font-bold text-slate-100 mb-6 flex items-center">
-              <div className="w-2 h-8 bg-gradient-to-b from-red-500 to-orange-500 rounded-full mr-4"></div>
-              Failure Patterns Analysis
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredFailureWidgets.map((w) => {
-                const widgetId = w.id;
-                const isMin = !isMaximized(widgetId);
-                
-                if (w.type === "card") {
-                  return (
-                    <InfoCard
-                      key={widgetId}
-                      title={w.title}
-                      value={w.data?.toLocaleString() || "0"}
-                      subtitle="Click to expand"
-                      maximized={isMaximized(widgetId)}
-                      widgetId={widgetId}
-                      isMinimized={isMin}
-                      onToggleMaximize={() => toggleMaximize(widgetId)}
-                    />
-                  );
-                } else if (w.type === "table") {
-                  const data = Array.isArray(w.data) ? w.data : [];
-                  const columns = data.length > 0 ? Object.keys(data[0] || {}).map((key) => ({
-                    key,
-                    label: key,
-                  })) : [];
-                  return (
-                    <DataTable
-                      key={widgetId}
-                      title={w.title}
-                      data={data}
-                      columns={columns}
-                      maximized={isMaximized(widgetId)}
-                      widgetId={widgetId}
-                      isMinimized={isMin}
-                      onToggleMaximize={() => toggleMaximize(widgetId)}
-                    />
-                  );
-                } else {
-                  return (
-                    <DataVisualizationWidget
-                      key={widgetId}
-                      type={w.type}
-                      title={w.title}
-                      data={w.data}
-                      maximized={isMaximized(widgetId)}
-                      widgetId={widgetId}
-                      isMinimized={isMin}
-                      onToggleMaximize={() => toggleMaximize(widgetId)}
-                    />
-                  );
-                }
-              })}
-              {sopPatternsTable && sopPatternsTable}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-24 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="p-2 bg-orange-500/20 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-orange-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-slate-100">Outlier Analysis</h1>
+              <p className="text-slate-400">Statistical anomaly detection and analysis</p>
             </div>
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="resource-performance" className="space-y-6">
-          <div className="enterprise-card p-8">
-            <h2 className="text-2xl font-bold text-slate-100 mb-6 flex items-center">
-              <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full mr-4"></div>
-              Resource Performance Metrics
-            </h2>
-            <DataVisualizationWidget
-              type="resource-performance-table"
-              title="Resource Performance Analysis"
-              data={resourcePerformance}
-              maximized={isMaximized("resource-performance")}
-              widgetId="resource-performance"
-              isMinimized={!isMaximized("resource-performance")}
-              onToggleMaximize={() => toggleMaximize("resource-performance")}
-            />
-          </div>
-        </TabsContent>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-800 border border-slate-700 mb-8">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-blue-600">Overview</TabsTrigger>
+            <TabsTrigger value="detailed" className="data-[state=active]:bg-blue-600">Detailed Analysis</TabsTrigger>
+            <TabsTrigger value="patterns" className="data-[state=active]:bg-blue-600">Patterns</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="timing-analysis" className="space-y-6">
-          <div className="enterprise-card p-8">
-            <h2 className="text-2xl font-bold text-slate-100 mb-6 flex items-center">
-              <div className="w-2 h-8 bg-gradient-to-b from-green-500 to-emerald-500 rounded-full mr-4"></div>
-              Timing Analysis Metrics
-            </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <DataVisualizationWidget
-                type="timing-analysis-table"
-                title="Timing Analysis Overview"
-                data={timingAnalysis}
-                maximized={isMaximized("timing-analysis")}
-                widgetId="timing-analysis"
-                isMinimized={!isMaximized("timing-analysis")}
-                onToggleMaximize={() => toggleMaximize("timing-analysis")}
-              />
-              <DataTable
-                title="Activity Pair Threshold Analysis"
-                data={activityPairThreshold}
-                columns={
-                  activityPairThreshold.length > 0
-                    ? Object.keys(activityPairThreshold[0]).map((key) => ({
-                        key,
-                        label: key,
-                      }))
-                    : []
-                }
-                maximized={isMaximized("activity-pair-threshold")}
-                widgetId="activity-pair-threshold"
-                isMinimized={!isMaximized("activity-pair-threshold")}
-                onToggleMaximize={() => toggleMaximize("activity-pair-threshold")}
-              />
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Total Outliers</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">{outlierData.length}</div>
+                  <p className="text-xs text-slate-400 mt-1">Detected anomalies</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">High Severity</CardTitle>
+                  <Target className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {outlierData.filter(item => item.severity === 'High').length}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Critical outliers</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Types Detected</CardTitle>
+                  <BarChart3 className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {new Set(outlierData.map(item => item.outlier_type)).size}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Outlier categories</p>
+                </CardContent>
+              </Card>
             </div>
-          </div>
-        </TabsContent>
 
-        <TabsContent value="case-complexity" className="space-y-6">
-          <div className="enterprise-card p-8">
-            <h2 className="text-2xl font-bold text-slate-100 mb-6 flex items-center">
-              <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full mr-4"></div>
-              Case Complexity Metrics
-            </h2>
             <DataTable
-              title="Case Complexity Analysis"
-              data={caseComplexity}
-              columns={
-                caseComplexity.length > 0
-                  ? Object.keys(caseComplexity[0]).map((key) => ({
-                      key,
-                      label: key,
-                    }))
-                  : []
-              }
-              maximized={isMaximized("case-complexity")}
-              widgetId="case-complexity"
-              isMinimized={!isMaximized("case-complexity")}
-              onToggleMaximize={() => toggleMaximize("case-complexity")}
+              title="Outlier Analysis Results"
+              data={outlierData}
+              columns={[
+                { key: "case_id", label: "Case ID" },
+                { key: "process_name", label: "Process Name" },
+                { key: "outlier_type", label: "Outlier Type" },
+                { key: "severity", label: "Severity" },
+                { key: "description", label: "Description" },
+                { key: "timestamp", label: "Timestamp" }
+              ]}
+              maximized={isMaximized("outlier-analysis-table")}
+              widgetId="outlier-analysis-table"
+              onToggleMaximize={() => toggleMaximize("outlier-analysis-table")}
             />
-          </div>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+
+          <TabsContent value="detailed" className="space-y-6">
+            <DataTable
+              title="Detailed Outlier Analysis"
+              data={outlierData}
+              columns={[
+                { key: "case_id", label: "Case ID" },
+                { key: "process_name", label: "Process Name" },
+                { key: "outlier_type", label: "Outlier Type" },
+                { key: "severity", label: "Severity" },
+                { key: "description", label: "Description" },
+                { key: "timestamp", label: "Timestamp" }
+              ]}
+              maximized={isMaximized("detailed-outlier-table")}
+              widgetId="detailed-outlier-table"
+              onToggleMaximize={() => toggleMaximize("detailed-outlier-table")}
+            />
+          </TabsContent>
+
+          <TabsContent value="patterns" className="space-y-6">
+            <DataTable
+              title="Outlier Pattern Analysis"
+              data={outlierData}
+              columns={[
+                { key: "outlier_type", label: "Pattern Type" },
+                { key: "severity", label: "Severity" },
+                { key: "description", label: "Pattern Description" }
+              ]}
+              maximized={isMaximized("pattern-analysis-table")}
+              widgetId="pattern-analysis-table"
+              onToggleMaximize={() => toggleMaximize("pattern-analysis-table")}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 };

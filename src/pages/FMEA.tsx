@@ -8,6 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieCha
 import { AlertTriangle, TrendingUp, Target, Shield, Maximize, Minimize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMaximizeState } from "../hooks/useMaximizeState";
+import DataTable from "@/components/ui/data-table";
 
 interface FMEASummary {
   timestamp: string;
@@ -155,6 +156,22 @@ const FMEA = () => {
     { name: 'Detectability', value: summaryData.detectability_rating, color: getSeverityColor(summaryData.detectability_rating) }
   ] : [];
 
+  const TableCard = ({ title, description, data, columns, widgetId }: any) => {
+    return (
+      <DataTable
+        title={title}
+        data={data}
+        columns={columns.map((col: string) => ({
+          key: col.toLowerCase().replace(' ', '_'),
+          label: col
+        }))}
+        maximized={isMaximized(widgetId)}
+        widgetId={widgetId}
+        onToggleMaximize={() => toggleMaximize(widgetId)}
+      />
+    );
+  };
+
   const MetricCard = ({ icon: Icon, title, value, subtitle, color, widgetId }: any) => {
     const maximized = isMaximized(widgetId);
     
@@ -234,71 +251,6 @@ const FMEA = () => {
           <ChartContainer config={{}} className={maximized ? "h-[600px]" : "h-[300px]"}>
             {children}
           </ChartContainer>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  const TableCard = ({ title, description, data, columns, widgetId }: any) => {
-    const maximized = isMaximized(widgetId);
-    
-    return (
-      <Card 
-        className={`bg-slate-800 border-slate-700 transition-all duration-300 ${
-          maximized ? "fixed inset-4 z-50 animate-scale-in overflow-auto" : ""
-        }`}
-      >
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-slate-100">{title}</CardTitle>
-              <CardDescription className="text-slate-400">{description}</CardDescription>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => toggleMaximize(widgetId)}
-              className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
-            >
-              {maximized ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {data.length > 0 ? (
-            <div className="w-full overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-slate-700">
-                    {columns.map((col: string) => (
-                      <TableHead key={col} className="text-slate-200">{col}</TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.map((item: any, index: number) => (
-                    <TableRow key={index} className="border-slate-700">
-                      {columns.map((col: string) => (
-                        <TableCell key={col} className="text-slate-300">
-                          {col.toLowerCase().includes('score') && typeof item[col.toLowerCase().replace(' ', '_')] === 'number' ? (
-                            <Badge style={{ backgroundColor: getSeverityColor(item[col.toLowerCase().replace(' ', '_')] || 0) }}>
-                              {item[col.toLowerCase().replace(' ', '_')] || item[col.toLowerCase().replace(' score', '_score')] || item[col]}
-                            </Badge>
-                          ) : (
-                            item[col.toLowerCase().replace(' ', '_')] || item[col.toLowerCase().replace(' score', '_score')] || item[col] || ''
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-slate-400">
-              No FMEA analysis data available
-            </div>
-          )}
         </CardContent>
       </Card>
     );

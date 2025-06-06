@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,10 +26,6 @@ const Index = () => {
   const [reworkActivitiesCount, setReworkActivitiesCount] = useState(0);
   const [timingViolationsCount, setTimingViolationsCount] = useState(0);
 
-  const [incompleteCasesData, setIncompleteCasesData] = useState<any[]>([]);
-  const [longRunningCasesData, setLongRunningCasesData] = useState<any[]>([]);
-  const [resourcePerformanceData, setResourcePerformanceData] = useState<any[]>([]);
-  const [timingAnalysisData, setTimingAnalysisData] = useState<any[]>([]);
   const [fmeaSummaryData, setFmeaSummaryData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,24 +69,6 @@ const Index = () => {
           const fmeaSummary = await fmeaSummaryRes.json();
           setFmeaSummaryData(fmeaSummary);
         }
-
-        const incompleteCasesRes = await fetch('/incompletecases.json');
-        if (incompleteCasesRes.ok) {
-          const incompleteCases = await incompleteCasesRes.json();
-          setIncompleteCasesData(Array.isArray(incompleteCases) ? incompleteCases : []);
-        }
-
-        const longRunningCasesRes = await fetch('/longrunning_case.json');
-        if (longRunningCasesRes.ok) {
-          const longRunningCases = await longRunningCasesRes.json();
-          setLongRunningCasesData(Array.isArray(longRunningCases) ? longRunningCases : []);
-        }
-
-        const timingAnalysisRes = await fetch('/timing_analysis.json');
-        if (timingAnalysisRes.ok) {
-          const timingAnalysis = await timingAnalysisRes.json();
-          setTimingAnalysisData(Array.isArray(timingAnalysis) ? timingAnalysis : []);
-        }
       } catch (error) {
         console.error('Error loading dashboard data:', error);
         setError('Failed to load dashboard data. Please try again.');
@@ -105,155 +84,88 @@ const Index = () => {
     return controlsCount.reduce((sum, item) => sum + (item.value || 0), 0);
   }, [controlsCount]);
 
-  const renderWidget = (widgetType: string) => {
-    switch (widgetType) {
-      case "controls-identified-count":
-        return (
-          <InfoCard
-            key="controls-identified-count"
-            title="Controls Identified Count"
-            value={totalControls.toString()}
-            subtitle="Total identified controls in the process"
-            maximized={isMaximized("controls-identified-count")}
-            widgetId="controls-identified-count"
-            onToggleMaximize={() => toggleMaximize("controls-identified-count")}
-          />
-        );
-      case "sop-deviation-count":
-        return (
-          <InfoCard
-            key="sop-deviation-count"
-            title="SOP Deviation Count"
-            value={sopDeviationCount.toString()}
-            subtitle="Standard operating procedure deviations"
-            maximized={isMaximized("sop-deviation-count")}
-            widgetId="sop-deviation-count"
-            onToggleMaximize={() => toggleMaximize("sop-deviation-count")}
-          />
-        );
-      case "incomplete-cases-count":
-        return (
-          <InfoCard
-            key="incomplete-cases-count"
-            title="Incomplete Cases Count"
-            value={incompleteCasesCount.toString()}
-            subtitle="Cases that remain incomplete"
-            maximized={isMaximized("incomplete-cases-count")}
-            widgetId="incomplete-cases-count"
-            onToggleMaximize={() => toggleMaximize("incomplete-cases-count")}
-          />
-        );
-      case "long-running-cases-count":
-        return (
-          <InfoCard
-            key="long-running-cases-count"
-            title="Long-Running Cases Count"
-            value={longRunningCasesCount.toString()}
-            subtitle="Cases taking longer than expected"
-            maximized={isMaximized("long-running-cases-count")}
-            widgetId="long-running-cases-count"
-            onToggleMaximize={() => toggleMaximize("long-running-cases-count")}
-          />
-        );
-      case "resource-switches-count":
-        return (
-          <InfoCard
-            key="resource-switches-count"
-            title="Resource Switches Count"
-            value={resourceSwitchesCount.toString()}
-            subtitle="Resource handovers in processes"
-            maximized={isMaximized("resource-switches-count")}
-            widgetId="resource-switches-count"
-            onToggleMaximize={() => toggleMaximize("resource-switches-count")}
-          />
-        );
-      case "rework-activities-count":
-        return (
-          <InfoCard
-            key="rework-activities-count"
-            title="Rework Activities Count"
-            value={reworkActivitiesCount.toString()}
-            subtitle="Activities that required rework"
-            maximized={isMaximized("rework-activities-count")}
-            widgetId="rework-activities-count"
-            onToggleMaximize={() => toggleMaximize("rework-activities-count")}
-          />
-        );
-      case "timing-violations-count":
-        return (
-          <InfoCard
-            key="timing-violations-count"
-            title="Timing Violations Count"
-            value={timingViolationsCount.toString()}
-            subtitle="Identified timing violations"
-            maximized={isMaximized("timing-violations-count")}
-            widgetId="timing-violations-count"
-            onToggleMaximize={() => toggleMaximize("timing-violations-count")}
-          />
-        );
-      case "incomplete-case-table":
-        return (
-          <DataTable
-            key="incomplete-case-table"
-            title="Incomplete Cases"
-            data={incompleteCasesData}
-            columns={[
-              { key: "case_id", label: "Case ID" },
-              { key: "case:concept:name", label: "Process Name" },
-              { key: "incomplete_duration_days", label: "Duration (Days)" },
-              { key: "last_activity", label: "Last Activity" },
-              { key: "last_timestamp", label: "Last Timestamp" }
-            ]}
-            maximized={isMaximized("incomplete-case-table")}
-            widgetId="incomplete-case-table"
-            onToggleMaximize={() => toggleMaximize("incomplete-case-table")}
-          />
-        );
-      case "long-running-case-table":
-        return (
-          <DataTable
-            key="long-running-case-table"
-            title="Long Running Cases"
-            data={longRunningCasesData}
-            columns={[
-              { key: "case_id", label: "Case ID" },
-              { key: "start_time", label: "Start Time" },
-              { key: "end_time", label: "End Time" },
-              { key: "duration_hours", label: "Duration (Hours)" },
-              { key: "activity_count", label: "Activity Count" }
-            ]}
-            maximized={isMaximized("long-running-case-table")}
-            widgetId="long-running-case-table"
-            onToggleMaximize={() => toggleMaximize("long-running-case-table")}
-          />
-        );
-      case "controls-visualization":
-        return (
-          <DataVisualizationWidget
-            key="controls-visualization"
-            type="bar"
-            title="Controls Distribution"
-            data={controlsCount}
-            maximized={isMaximized("controls-visualization")}
-            widgetId="controls-visualization"
-            onToggleMaximize={() => toggleMaximize("controls-visualization")}
-          />
-        );
-      case "timing-analysis-chart":
-        return (
-          <DataVisualizationWidget
-            key="timing-analysis-chart"
-            type="bar"
-            title="Timing Analysis"
-            data={timingAnalysisData}
-            maximized={isMaximized("timing-analysis-chart")}
-            widgetId="timing-analysis-chart"
-            onToggleMaximize={() => toggleMaximize("timing-analysis-chart")}
-          />
-        );
-      default:
-        return null;
-    }
+  // Default widgets only - no auto-included or unexpected widgets
+  const defaultWidgets = {
+    "controls-identified-count": (
+      <InfoCard
+        title="Controls Identified Count"
+        value={totalControls.toString()}
+        subtitle="Total identified controls in the process"
+        maximized={isMaximized("controls-identified-count")}
+        widgetId="controls-identified-count"
+        onToggleMaximize={() => toggleMaximize("controls-identified-count")}
+      />
+    ),
+    "sop-deviation-count": (
+      <InfoCard
+        title="SOP Deviation Count"
+        value={sopDeviationCount.toString()}
+        subtitle="Standard operating procedure deviations"
+        maximized={isMaximized("sop-deviation-count")}
+        widgetId="sop-deviation-count"
+        onToggleMaximize={() => toggleMaximize("sop-deviation-count")}
+      />
+    ),
+    "incomplete-cases-count": (
+      <InfoCard
+        title="Incomplete Cases Count"
+        value={incompleteCasesCount.toString()}
+        subtitle="Cases that remain incomplete"
+        maximized={isMaximized("incomplete-cases-count")}
+        widgetId="incomplete-cases-count"
+        onToggleMaximize={() => toggleMaximize("incomplete-cases-count")}
+      />
+    ),
+    "long-running-cases-count": (
+      <InfoCard
+        title="Long-Running Cases Count"
+        value={longRunningCasesCount.toString()}
+        subtitle="Cases taking longer than expected"
+        maximized={isMaximized("long-running-cases-count")}
+        widgetId="long-running-cases-count"
+        onToggleMaximize={() => toggleMaximize("long-running-cases-count")}
+      />
+    ),
+    "resource-switches-count": (
+      <InfoCard
+        title="Resource Switches Count"
+        value={resourceSwitchesCount.toString()}
+        subtitle="Resource handovers in processes"
+        maximized={isMaximized("resource-switches-count")}
+        widgetId="resource-switches-count"
+        onToggleMaximize={() => toggleMaximize("resource-switches-count")}
+      />
+    ),
+    "rework-activities-count": (
+      <InfoCard
+        title="Rework Activities Count"
+        value={reworkActivitiesCount.toString()}
+        subtitle="Activities that required rework"
+        maximized={isMaximized("rework-activities-count")}
+        widgetId="rework-activities-count"
+        onToggleMaximize={() => toggleMaximize("rework-activities-count")}
+      />
+    ),
+    "timing-violations-count": (
+      <InfoCard
+        title="Timing Violations Count"
+        value={timingViolationsCount.toString()}
+        subtitle="Identified timing violations"
+        maximized={isMaximized("timing-violations-count")}
+        widgetId="timing-violations-count"
+        onToggleMaximize={() => toggleMaximize("timing-violations-count")}
+      />
+    ),
+    "controls-visualization": (
+      <DataVisualizationWidget
+        type="bar"
+        title="Controls Distribution"
+        data={controlsCount}
+        maximized={isMaximized("controls-visualization")}
+        widgetId="controls-visualization"
+        onToggleMaximize={() => toggleMaximize("controls-visualization")}
+      />
+    )
   };
 
   if (loading) {
@@ -332,10 +244,10 @@ const Index = () => {
                 Key Performance Indicators
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {renderWidget("controls-identified-count")}
-                {renderWidget("sop-deviation-count")}
-                {renderWidget("incomplete-cases-count")}
-                {renderWidget("long-running-cases-count")}
+                {defaultWidgets["controls-identified-count"]}
+                {defaultWidgets["sop-deviation-count"]}
+                {defaultWidgets["incomplete-cases-count"]}
+                {defaultWidgets["long-running-cases-count"]}
               </div>
             </div>
 
@@ -345,15 +257,14 @@ const Index = () => {
                 Resource & Activity Metrics
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {renderWidget("resource-switches-count")}
-                {renderWidget("rework-activities-count")}
-                {renderWidget("timing-violations-count")}
+                {defaultWidgets["resource-switches-count"]}
+                {defaultWidgets["rework-activities-count"]}
+                {defaultWidgets["timing-violations-count"]}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {renderWidget("controls-visualization")}
-              {renderWidget("timing-analysis-chart")}
+            <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+              {defaultWidgets["controls-visualization"]}
             </div>
           </TabsContent>
 
@@ -364,11 +275,11 @@ const Index = () => {
                 Compliance Overview
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {renderWidget("controls-identified-count")}
-                {renderWidget("sop-deviation-count")}
-                {renderWidget("timing-violations-count")}
+                {defaultWidgets["controls-identified-count"]}
+                {defaultWidgets["sop-deviation-count"]}
+                {defaultWidgets["timing-violations-count"]}
               </div>
-              {renderWidget("controls-visualization")}
+              {defaultWidgets["controls-visualization"]}
             </div>
           </TabsContent>
 
@@ -378,17 +289,12 @@ const Index = () => {
                 <div className="w-2 h-8 bg-gradient-to-b from-orange-500 to-red-500 rounded-full mr-4"></div>
                 Performance Analysis
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {renderWidget("incomplete-cases-count")}
-                {renderWidget("long-running-cases-count")}
-                {renderWidget("resource-switches-count")}
-                {renderWidget("rework-activities-count")}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {defaultWidgets["incomplete-cases-count"]}
+                {defaultWidgets["long-running-cases-count"]}
+                {defaultWidgets["resource-switches-count"]}
+                {defaultWidgets["rework-activities-count"]}
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                {renderWidget("incomplete-case-table")}
-                {renderWidget("long-running-case-table")}
-              </div>
-              {renderWidget("timing-analysis-chart")}
             </div>
           </TabsContent>
 

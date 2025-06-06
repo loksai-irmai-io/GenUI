@@ -1,813 +1,594 @@
-import React, { useEffect, useState } from "react";
-import DataVisualizationWidget from "../components/widgets/DataVisualizationWidget";
-import DataTable from "../components/widgets/DataTable";
-import InfoCard from "../components/widgets/InfoCard";
+import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Toggle } from "@/components/ui/toggle";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import { AlertTriangle, TrendingUp, Target, Shield, Maximize, Minimize } from "lucide-react";
 import { useMaximizeState } from "../hooks/useMaximizeState";
+import DataTable from "../components/widgets/DataTable";
+import {
+  incompleteCasesService,
+  longRunningCasesService,
+  resourceSwitchesService,
+  reworkActivitiesService,
+  timingViolationsService,
+  caseComplexityService,
+  resourcePerformanceService,
+  timingAnalysisService
+} from "@/services";
+
+interface CCMData {
+  name: string;
+  value: number;
+}
 
 const CCM = () => {
-  // State for each widget
-  const [controlsCount, setControlsCount] = useState<any[]>([]);
-  const [slaAnalysis, setSlaAnalysis] = useState<any[]>([]);
-  const [kpi, setKpi] = useState<any[]>([]);
-  const [slaBarData, setSlaBarData] = useState<any[]>([]);
+  const [incompleteCasesData, setIncompleteCasesData] = useState<CCMData[]>([]);
+  const [longRunningCasesData, setLongRunningCasesData] = useState<CCMData[]>([]);
+  const [resourceSwitchesData, setResourceSwitchesData] = useState<CCMData[]>([]);
+  const [reworkActivitiesData, setReworkActivitiesData] = useState<CCMData[]>([]);
+  const [timingViolationsData, setTimingViolationsData] = useState<CCMData[]>([]);
+  const [caseComplexityData, setCaseComplexityData] = useState<CCMData[]>([]);
+
+  const [incompleteCasesTableData, setIncompleteCasesTableData] = useState<any[]>([]);
+  const [longRunningCasesTableData, setLongRunningCasesTableData] = useState<any[]>([]);
+  const [reworkActivitiesTableData, setReworkActivitiesTableData] = useState<any[]>([]);
+  const [timingViolationsTableData, setTimingViolationsTableData] = useState<any[]>([]);
+  const [caseComplexityTableData, setCaseComplexityTableData] = useState<any[]>([]);
+  const [resourcePerformanceTableData, setResourcePerformanceTableData] = useState<any[]>([]);
+  const [timingAnalysisTableData, setTimingAnalysisTableData] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // New state for dropdown controls
-  const [selectedControl, setSelectedControl] = useState<string>("");
-  const [controlDefinition, setControlDefinition] = useState<any[]>([]);
-  const [controlTestConfig, setControlTestConfig] = useState<any[]>([]);
-  const [controlResults, setControlResults] = useState<any[]>([]);
-  const [controlLoading, setControlLoading] = useState(false);
-  const [controlError, setControlError] = useState<string | null>(null);
-
-  // New state for toggle buttons
-  const [testConfigAccepted, setTestConfigAccepted] = useState(false);
-  const [resultsAccepted, setResultsAccepted] = useState(false);
-
-  // Add maximize state hook
-  const { toggleMaximize, isMaximized, minimizeAll } = useMaximizeState();
-
-  const controlOptions = [
-    { value: "initial-assessment", label: "Initial Assessment" },
-    { value: "valuation-accepted", label: "Valuation Accepted" },
-    { value: "underwriting-approved", label: "Underwriting Approved" },
-    { value: "final-approval", label: "Final Approval" },
-    { value: "signing-loan-agreement", label: "Signing of Loan Agreement" },
-    { value: "loan-funding", label: "Loan Funding" },
-    { value: "disbursement-funds", label: "Disbursement of Funds" },
-    { value: "loan-closure", label: "Loan Closure" },
-    { value: "rejected", label: "Rejected" },
-    { value: "underwriting-rejected", label: "Underwriting Rejected" },
-  ];
+  const { toggleMaximize, isMaximized } = useMaximizeState();
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    Promise.all([
-      fetch("http://34.60.217.109/controls_identified_count").then((res) =>
-        res.json()
-      ),
-      fetch("http://34.60.217.109/sla_analysis").then((res) => res.json()),
-      fetch("http://34.60.217.109/kpi").then((res) => res.json()),
-      fetch("http://34.60.217.109/slagraph/avg-activity-duration-bar").then(
-        (res) => res.json()
-      ),
-    ])
-      .then(([count, sla, kpi, slaBar]) => {
-        let countArr = Array.isArray(count)
-          ? count
-          : Object.entries(count).map(([name, value]) => ({ name, value }));
-        setControlsCount(countArr);
-        setSlaAnalysis(Array.isArray(sla) ? sla : sla.data || []);
-        setKpi(Array.isArray(kpi) ? kpi : kpi.data || []);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-        let barArr: any[] = [];
-        if (slaBar && Array.isArray(slaBar.data)) {
-          const bar = slaBar.data[0];
-          if (bar && Array.isArray(bar.x)) {
-            if (bar.y && typeof bar.y === "object" && bar.y.bdata) {
-              const values = [
-                383.9, 124.5, 93.1, 88.3, 72.3, 68.2, 56.4, 51.8, 48.1, 44.3,
-                37.2, 29.5, 26.1, 18.2,
-              ];
-              barArr = bar.x.map((x: string, i: number) => ({
-                name: x,
-                value: values[i] || 50,
-              }));
-            } else if (Array.isArray(bar.y)) {
-              barArr = bar.x.map((x: string, i: number) => ({
-                name: x,
-                value: bar.y[i],
-              }));
-            }
-          }
-        } else if (Array.isArray(slaBar)) {
-          if (
-            slaBar.length &&
-            slaBar[0] &&
-            slaBar[0].name !== undefined &&
-            slaBar[0].value !== undefined
-          ) {
-            barArr = slaBar;
-          } else if (slaBar.length && slaBar[0] && slaBar[0].x && slaBar[0].y) {
-            barArr = slaBar[0].x.map((x: string, i: number) => ({
-              name: x,
-              value: slaBar[0].y[i],
-            }));
-          }
-        } else if (slaBar && typeof slaBar === "object") {
-          barArr = Object.entries(slaBar).map(([name, value]) => ({
-            name,
-            value,
-          }));
-        }
+        const [
+          incompleteCases,
+          longRunningCases,
+          resourceSwitches,
+          reworkActivities,
+          timingViolations,
+          caseComplexity,
+          incompleteCasesTable,
+          longRunningCasesTable,
+          reworkActivitiesTable,
+          timingViolationsTable,
+          caseComplexityTable,
+          resourcePerformanceTable,
+          timingAnalysisTable
+        ] = await Promise.all([
+          incompleteCasesService.getCountBar(),
+          longRunningCasesService.getCountBar(),
+          resourceSwitchesService.getCountBar(),
+          reworkActivitiesService.getCountBar(),
+          timingViolationsService.getCountBar(),
+          caseComplexityService.getCountBar(),
+          incompleteCasesService.getTable(),
+          longRunningCasesService.getTable(),
+          reworkActivitiesService.getTable(),
+          timingViolationsService.getTable(),
+          caseComplexityService.getTable(),
+          resourcePerformanceService.getTable(),
+          timingAnalysisService.getTable()
+        ]);
 
-        if (!barArr || barArr.length === 0) {
-          barArr = [
-            { name: "Valuation Accepted", value: 383.9 },
-            { name: "Valuation Issues", value: 124.5 },
-            { name: "Final Approval", value: 72.3 },
-            { name: "Pre-Approval", value: 48.1 },
-          ];
-        }
+        setIncompleteCasesData(incompleteCases);
+        setLongRunningCasesData(longRunningCases);
+        setResourceSwitchesData(resourceSwitches);
+        setReworkActivitiesData(reworkActivities);
+        setTimingViolationsData(timingViolations);
+        setCaseComplexityData(caseComplexity);
 
-        setSlaBarData(barArr && barArr.length > 0 ? barArr : []);
-      })
-      .catch((e) => setError("Failed to load CCM data."))
-      .finally(() => setLoading(false));
-  }, []); // Function to fetch control data based on selection
-  const fetchControlData = async (controlValue: string) => {
-    setControlLoading(true);
-    setControlError(null);
+        setIncompleteCasesTableData(incompleteCasesTable);
+        setLongRunningCasesTableData(longRunningCasesTable);
+        setReworkActivitiesTableData(reworkActivitiesTable);
+        setTimingViolationsTableData(timingViolationsTable);
+        setCaseComplexityTableData(caseComplexityTable);
+        setResourcePerformanceTableData(resourcePerformanceTable);
+        setTimingAnalysisTableData(timingAnalysisTable);
 
-    console.log(`Attempting to fetch data for control: ${controlValue}`);
-
-    try {
-      // Define endpoint patterns based on control type
-      let endpoints: string[] = [];
-
-      if (controlValue === "valuation-accepted") {
-        endpoints = [
-          "http://34.60.217.109/valuation-accepted/definition",
-          "http://34.60.217.109/valuation-accepted/test-configuration",
-          "http://34.60.217.109/valuation-accepted/results",
-        ];
-      } else if (controlValue === "underwriting-approved") {
-        endpoints = [
-          "http://34.60.217.109/underwriting-approval/definition",
-          "http://34.60.217.109/underwriting-approval/test-configuration",
-          "http://34.60.217.109/underwriting-approval/results",
-        ];
-      } else {
-        // Default pattern for other controls (existing implementation)
-        const baseUrl = `http://34.60.217.109/${controlValue}-clean`;
-        endpoints = [
-          `${baseUrl}/definition`,
-          `${baseUrl}/test-configuration`,
-          `${baseUrl}/results`,
-        ];
+      } catch (error) {
+        console.error('Error loading CCM data:', error);
+        setError('Failed to load CCM data. Please try again.');
+      } finally {
+        setLoading(false);
       }
-
-      console.log("Fetching from endpoints:", endpoints);
-      const [definitionRes, testConfigRes, resultsRes] = await Promise.all([
-        fetch(endpoints[0], {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          mode: "cors",
-        }).catch((err) => {
-          console.error(
-            `Failed to fetch definition from ${endpoints[0]}:`,
-            err
-          );
-          throw err;
-        }),
-        fetch(endpoints[1], {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          mode: "cors",
-        }).catch((err) => {
-          console.error(
-            `Failed to fetch test-configuration from ${endpoints[1]}:`,
-            err
-          );
-          throw err;
-        }),
-        fetch(endpoints[2], {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          mode: "cors",
-        }).catch((err) => {
-          console.error(`Failed to fetch results from ${endpoints[2]}:`, err);
-          throw err;
-        }),
-      ]);
-      console.log("Response statuses:", {
-        definition: definitionRes.status,
-        testConfig: testConfigRes.status,
-        results: resultsRes.status,
-      });
-
-      // Check if responses are ok
-      if (!definitionRes.ok) {
-        console.error(
-          `Definition endpoint failed with status: ${definitionRes.status}`
-        );
-      }
-      if (!testConfigRes.ok) {
-        console.error(
-          `Test config endpoint failed with status: ${testConfigRes.status}`
-        );
-      }
-      if (!resultsRes.ok) {
-        console.error(
-          `Results endpoint failed with status: ${resultsRes.status}`
-        );
-      }
-
-      const [definition, testConfig, results] = await Promise.all([
-        definitionRes.ok
-          ? definitionRes.json().catch((err) => {
-              console.error("Failed to parse definition JSON:", err);
-              return [];
-            })
-          : [],
-        testConfigRes.ok
-          ? testConfigRes.json().catch((err) => {
-              console.error("Failed to parse test-configuration JSON:", err);
-              return [];
-            })
-          : [],
-        resultsRes.ok
-          ? resultsRes.json().catch((err) => {
-              console.error("Failed to parse results JSON:", err);
-              return [];
-            })
-          : [],
-      ]);
-      console.log("Parsed data:", { definition, testConfig, results });
-
-      // Convert definition object to table format
-      const definitionTableData = definition
-        ? [
-            {
-              "Control ID": definition.control_details?.["Control ID"] || "",
-              "Control Name":
-                definition.control_details?.["Control Name"] || "",
-              "Control Description":
-                definition.control_details?.["Control Description"] || "",
-              Source: definition.control_details?.["Source"] || "",
-              Department: definition.control_details?.["Department"] || "",
-              "Control Type":
-                definition.control_details?.["Control Type"] || "",
-              "Associated Risks":
-                definition.control_details?.["Associated Risks"] || "",
-              "Default Test Frequency":
-                definition.control_details?.["Default Test Frequency"] || "",
-              Activity: definition.activity_selection?.["activity"] || "",
-              "Is Control Candidate": definition.activity_selection?.[
-                "is_control_candidate"
-              ]
-                ? "Yes"
-                : "No",
-            },
-          ]
-        : [];
-
-      // Convert test config object to table format
-      const testConfigTableData = testConfig
-        ? [
-            {
-              "Domain Context": testConfig.domain_context || "",
-              "Test Period Start": testConfig.test_period?.start || "",
-              "Test Period End": testConfig.test_period?.end || "",
-              "Test Objective": testConfig.test_scenario?.test_objective || "",
-              "Expected Outcome":
-                testConfig.test_scenario?.expected_outcome || "",
-              "Sampling Notes": testConfig.test_scenario?.sampling_notes || "",
-              "Testing Plan Summary": testConfig.testing_plan_summary || "",
-              "Key Data Fields": Array.isArray(
-                testConfig.test_scenario?.key_data_fields
-              )
-                ? testConfig.test_scenario.key_data_fields.join(", ")
-                : "",
-            },
-          ]
-        : [];
-
-      // Convert results object to table format
-      const resultsTableData = results
-        ? [
-            {
-              "Control ID":
-                results.test_execution_results?.["Control ID"] || "",
-              "Control Name":
-                results.test_execution_results?.["Control Name"] || "",
-              "Test Date": results.test_execution_results?.["Test Date"] || "",
-              "Test Period Start":
-                results.test_execution_results?.["Test Period Start"] || "",
-              "Test Period End":
-                results.test_execution_results?.["Test Period End"] || "",
-              Status: results.test_execution_results?.["Status"] || "",
-              Findings: results.test_execution_results?.["Findings"] || "",
-              "AI Generated Insight":
-                results.test_execution_results?.["AI Generated Insight"] || "",
-              "Evidence Datasets": Array.isArray(results.evidence_datasets)
-                ? results.evidence_datasets.join(", ")
-                : "",
-            },
-          ]
-        : [];
-
-      setControlDefinition(definitionTableData);
-      setControlTestConfig(testConfigTableData);
-      setControlResults(resultsTableData);
-    } catch (error) {
-      const errorMessage = `Failed to load data for ${controlValue}. Please check if the API endpoints are accessible.`;
-      setControlError(errorMessage);
-      console.error("Error fetching control data:", error);
-
-      // Clear data on error instead of setting fallback
-      setControlDefinition([]);
-      setControlTestConfig([]);
-      setControlResults([]);
-    } finally {
-      setControlLoading(false);
-    }
-  };
-
-  const handleControlSelection = (value: string) => {
-    setSelectedControl(value);
-    fetchControlData(value);
-  };
-
-  // Helper to auto-generate columns from data, with better label formatting
-  const getColumns = (data: any[]) =>
-    data.length > 0
-      ? Object.keys(data[0]).map((key) => ({
-          key,
-          label: key
-            .replace(/_/g, " ")
-            .replace(/\b\w/g, (l) => l.toUpperCase()),
-        }))
-      : [];
-
-  // Helper for table cell formatting
-  const formatCell = (value: any) => {
-    if (value === null || value === undefined) return "";
-    if (typeof value === "object") return JSON.stringify(value, null, 1);
-    if (typeof value === "boolean") return value ? "Yes" : "No";
-    return String(value);
-  };
-  // Enhanced table widget with toggle button and improved column widths
-  const TableWidget = ({
-    title,
-    data,
-    columns,
-    showToggle = false,
-    toggleState,
-    onToggleChange,
-  }: any) => {
-    // Helper function to determine column width based on content type
-    const getColumnWidth = (key: string) => {
-      const lowerKey = key.toLowerCase();
-
-      // Extra wide columns for long text content
-      if (
-        lowerKey.includes("description") ||
-        lowerKey.includes("associated risks") ||
-        lowerKey.includes("findings") ||
-        lowerKey.includes("insight") ||
-        lowerKey.includes("objective") ||
-        lowerKey.includes("outcome") ||
-        lowerKey.includes("summary") ||
-        lowerKey.includes("notes")
-      ) {
-        return "min-w-[400px] max-w-[500px]";
-      }
-
-      // Wide columns for source and department fields
-      if (
-        lowerKey.includes("source") ||
-        lowerKey.includes("department") ||
-        lowerKey.includes("evidence") ||
-        lowerKey.includes("data fields")
-      ) {
-        return "min-w-[200px] max-w-[300px]";
-      }
-
-      // Medium columns for names and types
-      if (
-        lowerKey.includes("name") ||
-        lowerKey.includes("type") ||
-        lowerKey.includes("activity") ||
-        lowerKey.includes("status")
-      ) {
-        return "min-w-[150px] max-w-[200px]";
-      }
-
-      // Standard columns for IDs and dates
-      return "min-w-[120px] max-w-[150px]";
     };
 
+    loadData();
+  }, []);
+
+  const renderTable = (widgetId: string, title: string, data: any[], columns: any[]) => {
     return (
-      <div className="w-full enterprise-card p-6 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-slate-100 tracking-tight">
-            {title}
-          </h3>
-          {showToggle && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-400">
-                {toggleState ? "Accepted" : "Rejected"}
-              </span>
-              <Toggle
-                pressed={toggleState}
-                onPressedChange={onToggleChange}
-                className={`${
-                  toggleState
-                    ? "bg-green-600 text-white data-[state=on]:bg-green-600"
-                    : "bg-red-600 text-white data-[state=on]:bg-red-600"
-                } px-4 py-2 font-medium transition-colors`}
-              >
-                {toggleState ? "Accept" : "Reject"}
-              </Toggle>
-            </div>
-          )}
-        </div>
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-sm border-collapse bg-slate-800/50 border border-slate-700 rounded-lg table-auto">
-            <thead className="bg-slate-700/80">
-              <tr>
-                {columns.map((col: any) => (
-                  <th
-                    key={col.key}
-                    className={`px-6 py-4 text-left font-semibold text-slate-200 border-b border-slate-600 ${getColumnWidth(
-                      col.key
-                    )}`}
-                  >
-                    {col.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="text-center text-slate-400 py-8"
-                  >
-                    No data available
-                  </td>
-                </tr>
-              ) : (
-                data.map((row: any, idx: number) => (
-                  <tr
-                    key={idx}
-                    className="border-b border-slate-700 hover:bg-slate-700/50 transition-colors"
-                  >
-                    {columns.map((col: any) => (
-                      <td
-                        key={col.key}
-                        className={`px-6 py-4 text-slate-300 align-top ${getColumnWidth(
-                          col.key
-                        )} break-words`}
-                      >
-                        <div className="whitespace-pre-wrap leading-relaxed">
-                          {formatCell(row[col.key])}
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DataTable
+        title={title}
+        data={data}
+        columns={columns}
+        maximized={isMaximized(widgetId)}
+        widgetId={widgetId}
+        onToggleMaximize={() => toggleMaximize(widgetId)}
+      />
     );
   };
 
-  // SLA Analysis: handle object or array, with fallback data
-  const fallbackSla = {
-    SLA_Analysis: {
-      Title: "SLA Breach Analysis and Optimization",
-      Metrics: {
-        Total_Cases_Processed: 21234,
-        Average_Time_Between_Steps_hrs: 93.08,
-        Longest_Single_Step_Time_hrs: 383.98,
-        Case_With_Max_Time: {
-          Case_ID: "MORT_14752",
-          Activity: "Valuation Accepted",
-        },
-      },
-      Key_Findings: {
-        High_Duration_Activities: {
-          Observation:
-            "Majority of 'Valuation Accepted' durations are ~383.9 hours, indicating a bottleneck.",
-          Implication:
-            "Pre-Valuation process is taking approximately 16 days, which is unusually long.",
-          Valuation_Issues:
-            "Single entry found; not enough data to analyze impact, but may point to root cause.",
-        },
-        Case_Patterns: {
-          Observation:
-            "Insufficient data to detect patterns in case IDs alone.",
-          Recommendation:
-            "Link case_id to loan amount, property type, or applicant characteristics for deeper analysis.",
-        },
-        Process_Flow_Insights: {
-          Observation:
-            "Low variability in 'Valuation Accepted' durations suggests a rigid process.",
-          Implication:
-            "Consistent durations across cases point to systemic issues, not isolated incidents.",
-          Valuation_Issues_Insight:
-            "Limited data; deeper exploration required to understand contribution to delays.",
-        },
-      },
-      Recommendations: [
-        {
-          Title: "Investigate the Pre-Valuation Process",
-          Details:
-            "Map each step leading to 'Valuation Accepted', measure durations, and analyze handoffs. Check team workloads and average handling time to identify exact delay source.",
-        },
-        {
-          Title: "Analyze 'Valuation Issues'",
-          Details:
-            "Expand dataset and understand reasons, frequency, and impact of valuation issues. Conduct staff interviews to uncover root causes.",
-        },
-      ],
-      Conclusion:
-        "The current mortgage processing workflow has a major bottleneck before the 'Valuation Accepted' step. Further data and qualitative analysis are needed to optimize the process and meet SLA expectations.",
-    },
-  };
-
-  // Helper to flatten nested objects for table display
-  function flattenObject(obj: any, parentKey = "", result: any = {}) {
-    for (const key in obj) {
-      if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
-      const propName = parentKey ? `${parentKey} > ${key}` : key;
-      if (
-        typeof obj[key] === "object" &&
-        obj[key] !== null &&
-        !Array.isArray(obj[key])
-      ) {
-        flattenObject(obj[key], propName, result);
-      } else {
-        result[propName] = obj[key];
-      }
-    }
-    return result;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-slate-300 text-lg">Loading CCM data...</p>
+        </div>
+      </div>
+    );
   }
 
-  // SLA Analysis: handle object or array, with fallback
-  const getSlaTableDataAndColumns = (data: any) => {
-    let useData = data;
-    if (
-      (!useData || (Array.isArray(useData) && useData.length === 0)) &&
-      fallbackSla.SLA_Analysis
-    ) {
-      useData = fallbackSla.SLA_Analysis;
-    }
-    if (Array.isArray(useData)) {
-      return { data: useData, columns: getColumns(useData) };
-    }
-    if (useData && typeof useData === "object") {
-      const flat = flattenObject(useData);
-      const arr = Object.entries(flat).map(([key, value]) => ({
-        Field: key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-        Value:
-          typeof value === "object"
-            ? JSON.stringify(value, null, 1)
-            : String(value ?? ""),
-      }));
-      return {
-        data: arr,
-        columns: [
-          { key: "Field", label: "Field" },
-          { key: "Value", label: "Value" },
-        ],
-      };
-    }
-    return { data: [], columns: [] };
-  };
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="text-center p-8 enterprise-card max-w-md">
+          <div className="text-red-400 mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-slate-100 mb-2">Error Loading Data</h2>
+          <p className="text-slate-300 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-100 mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
-          CCM
-        </h1>
-        <p className="text-lg text-slate-300 font-medium max-w-3xl">
-          Comprehensive Control and Compliance Management dashboard with SLA
-          analysis and KPI tracking.
-        </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 pt-24 pb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-slate-100 mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 bg-clip-text text-transparent">
+            Case Cycle Management
+          </h1>
+          <p className="text-lg text-slate-300 font-medium max-w-3xl">
+            Optimize case lifecycles with real-time insights into bottlenecks, deviations, and resource allocation.
+          </p>
+        </div>
+
+        <Tabs defaultValue="incomplete-cases" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-800/50 border border-slate-700">
+            <TabsTrigger
+              value="incomplete-cases"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+            >
+              Incomplete Cases
+            </TabsTrigger>
+            <TabsTrigger
+              value="long-running"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+            >
+              Long Running Cases
+            </TabsTrigger>
+            <TabsTrigger
+              value="resource-switches"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+            >
+              Resource Switches
+            </TabsTrigger>
+            <TabsTrigger
+              value="rework-activities"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+            >
+              Rework Activities
+            </TabsTrigger>
+            <TabsTrigger
+              value="timing-violations"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+            >
+              Timing Violations
+            </TabsTrigger>
+            <TabsTrigger
+              value="case-complexity"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+            >
+              Case Complexity
+            </TabsTrigger>
+            <TabsTrigger
+              value="resource-performance"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+            >
+              Resource Performance
+            </TabsTrigger>
+            <TabsTrigger
+              value="timing-analysis"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+            >
+              Timing Analysis
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="incomplete-cases" className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Incomplete Cases</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {incompleteCasesData.reduce((sum, item) => (item.name === 'Incomplete Cases' ? item.value : sum), 0)}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Active incomplete cases</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Cases Completed</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {incompleteCasesData.reduce((sum, item) => (item.name === 'Complete Cases' ? item.value : sum), 0)}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Recently completed cases</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Completion Rate</CardTitle>
+                  <Target className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {((incompleteCasesData.reduce((sum, item) => (item.name === 'Complete Cases' ? item.value : sum), 0) /
+                      (incompleteCasesData.reduce((sum, item) => item.value + sum, 0) || 1)) * 100).toFixed(1)}%
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Current completion percentage</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-slate-100">Incomplete Cases Overview</CardTitle>
+                  <CardDescription className="text-slate-400">Visual representation of incomplete vs complete cases</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={incompleteCasesData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="name" stroke="#9ca3af" />
+                      <YAxis stroke="#9ca3af" />
+                      <Bar dataKey="value" fill="#3b82f6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+
+              {renderTable(
+                "incomplete-cases-table",
+                "Incomplete Cases Details",
+                incompleteCasesTableData,
+                [
+                  { key: "case_id", label: "Case ID" },
+                  { key: "case:concept:name", label: "Process Name" },
+                  { key: "incomplete_duration_days", label: "Duration (Days)" },
+                  { key: "last_activity", label: "Last Activity" },
+                  { key: "last_timestamp", label: "Last Timestamp" }
+                ]
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="long-running" className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Long Running Cases</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {longRunningCasesData.reduce((sum, item) => (item.name === 'Long Running Cases' ? item.value : sum), 0)}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Cases exceeding expected duration</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Regular Cases</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {longRunningCasesData.reduce((sum, item) => (item.name === 'Regular Cases' ? item.value : sum), 0)}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Cases within expected duration</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Long Running Rate</CardTitle>
+                  <Target className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {((longRunningCasesData.reduce((sum, item) => (item.name === 'Long Running Cases' ? item.value : sum), 0) /
+                      (longRunningCasesData.reduce((sum, item) => item.value + sum, 0) || 1)) * 100).toFixed(1)}%
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Percentage of long running cases</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-slate-100">Long Running Cases Overview</CardTitle>
+                <CardDescription className="text-slate-400">Visual representation of long running vs regular cases</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={longRunningCasesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Bar dataKey="value" fill="#f97316" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {renderTable(
+              "long-running-cases-table",
+              "Long Running Cases Details",
+              longRunningCasesTableData,
+              [
+                { key: "case_id", label: "Case ID" },
+                { key: "start_time", label: "Start Time" },
+                { key: "end_time", label: "End Time" },
+                { key: "duration_hours", label: "Duration (Hours)" },
+                { key: "activity_count", label: "Activity Count" }
+              ]
+            )}
+          </TabsContent>
+
+          <TabsContent value="resource-switches" className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Resource Switches</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {resourceSwitchesData.reduce((sum, item) => item.value + sum, 0)}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Total resource switches</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-slate-100">Resource Switches Overview</CardTitle>
+                <CardDescription className="text-slate-400">Visual representation of resource allocation</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={resourceSwitchesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Bar dataKey="value" fill="#82ca9d" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rework-activities" className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Rework Activities</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {reworkActivitiesData.reduce((sum, item) => item.value + sum, 0)}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Activities requiring rework</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-slate-100">Rework Activities Overview</CardTitle>
+                <CardDescription className="text-slate-400">Visual representation of rework activities</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={reworkActivitiesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Bar dataKey="value" fill="#e48352" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {renderTable(
+              "rework-activities-table",
+              "Rework Activities Details",
+              reworkActivitiesTableData,
+              [
+                { key: "case_id", label: "Case ID" },
+                { key: "activity", label: "Activity" },
+                { key: "rework_count", label: "Rework Count" },
+                { key: "original_timestamp", label: "Original Timestamp" },
+                { key: "rework_timestamp", label: "Rework Timestamp" }
+              ]
+            )}
+          </TabsContent>
+
+          <TabsContent value="timing-violations" className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Timing Violations</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-slate-400" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {timingViolationsData.reduce((sum, item) => item.value + sum, 0)}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Identified timing violations</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-slate-100">Timing Violations Overview</CardTitle>
+                <CardDescription className="text-slate-400">Visual representation of timing violations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={timingViolationsData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Bar dataKey="value" fill="#f472b6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {renderTable(
+              "timing-violations-table",
+              "Timing Violations Details",
+              timingViolationsTableData,
+              [
+                { key: "case_id", label: "Case ID" },
+                { key: "activity", label: "Activity" },
+                { key: "expected_duration", label: "Expected Duration" },
+                { key: "actual_duration", label: "Actual Duration" },
+                { key: "violation_type", label: "Violation Type" }
+              ]
+            )}
+          </TabsContent>
+
+          <TabsContent value="case-complexity" className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Simple Cases</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {caseComplexityData.reduce((sum, item) => (item.name === 'Simple' ? item.value : sum), 0)}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Simple case count</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Moderate Cases</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {caseComplexityData.reduce((sum, item) => (item.name === 'Moderate' ? item.value : sum), 0)}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Moderate case count</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-slate-800 border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-slate-200">Complex Cases</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-slate-100">
+                    {caseComplexityData.reduce((sum, item) => (item.name === 'Complex' ? item.value : sum), 0)}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Complex case count</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-slate-800 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-slate-100">Case Complexity Overview</CardTitle>
+                <CardDescription className="text-slate-400">Visual representation of case complexity distribution</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={caseComplexityData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis dataKey="name" stroke="#9ca3af" />
+                    <YAxis stroke="#9ca3af" />
+                    <Bar dataKey="value" fill="#64748b" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {renderTable(
+              "case-complexity-table",
+              "Case Complexity Analysis",
+              caseComplexityTableData,
+              [
+                { key: "case_id", label: "Case ID" },
+                { key: "complexity_level", label: "Complexity Level" },
+                { key: "activity_count", label: "Activity Count" },
+                { key: "duration_days", label: "Duration (Days)" },
+                { key: "resource_count", label: "Resource Count" }
+              ]
+            )}
+          </TabsContent>
+
+          <TabsContent value="resource-performance" className="space-y-8">
+            {renderTable(
+              "resource-performance-table",
+              "Resource Performance Analysis",
+              resourcePerformanceTableData,
+              [
+                { key: "resource_id", label: "Resource ID" },
+                { key: "resource_name", label: "Resource Name" },
+                { key: "avg_processing_time", label: "Avg Processing Time" },
+                { key: "case_count", label: "Case Count" },
+                { key: "efficiency_score", label: "Efficiency Score" }
+              ]
+            )}
+          </TabsContent>
+
+          <TabsContent value="timing-analysis" className="space-y-8">
+            {renderTable(
+              "timing-analysis-table",
+              "Detailed Timing Analysis",
+              timingAnalysisTableData,
+              [
+                { key: "activity", label: "Activity" },
+                { key: "avg_duration", label: "Average Duration" },
+                { key: "min_duration", label: "Min Duration" },
+                { key: "max_duration", label: "Max Duration" },
+                { key: "std_deviation", label: "Std Deviation" }
+              ]
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
-
-      {loading && (
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-900/50 border border-red-700 rounded-xl p-6 text-red-300 font-medium mb-6">
-          {error}
-        </div>
-      )}
-
-      <Tabs defaultValue="controls" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 mb-8 bg-slate-800/50 border border-slate-700">
-          <TabsTrigger
-            value="controls"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
-          >
-            Controls
-          </TabsTrigger>
-          <TabsTrigger
-            value="sla-analysis"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
-          >
-            SLA Analysis
-          </TabsTrigger>
-          <TabsTrigger
-            value="kpi"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
-          >
-            KPI
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="controls" className="space-y-6">
-          <div className="enterprise-card p-8">
-            <h2 className="text-2xl font-bold text-slate-100 mb-6 flex items-center">
-              <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full mr-4"></div>
-              Controls Overview
-            </h2>
-
-            <div className="mb-8">
-              <InfoCard
-                title="Controls Identified Count"
-                value={controlsCount
-                  .reduce((sum, item) => sum + (item.value || 0), 0)
-                  .toString()}
-                subtitle="Total identified controls in the process"
-                maximized={isMaximized("controls-count")}
-                widgetId="controls-count"
-                onToggleMaximize={() => toggleMaximize("controls-count")}
-              />
-            </div>
-
-            <div className="space-y-6">
-              <div className="w-full enterprise-card p-6">
-                <h3 className="text-xl font-semibold text-slate-100 mb-4 tracking-tight">
-                  Controls
-                </h3>
-                <div className="mb-6">
-                  <Select
-                    onValueChange={handleControlSelection}
-                    value={selectedControl}
-                  >
-                    <SelectTrigger className="w-full max-w-md bg-slate-800 border-slate-600 text-slate-100">
-                      <SelectValue placeholder="Select a control to view details" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-600">
-                      {controlOptions.map((option) => (
-                        <SelectItem
-                          key={option.value}
-                          value={option.value}
-                          className="text-slate-100 focus:bg-slate-700"
-                        >
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {controlLoading && (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                  </div>
-                )}
-                {controlError && (
-                  <div className="bg-red-900/50 border border-red-700 rounded-xl p-4 text-red-300 mb-4">
-                    <div className="font-semibold mb-2">API Error:</div>
-                    <div>{controlError}</div>
-                    {selectedControl && (
-                      <div className="mt-2 text-sm text-red-400">
-                        Expected endpoints:
-                        <ul className="list-disc list-inside mt-1">
-                          {selectedControl === "valuation-accepted" ? (
-                            <>
-                              <li>
-                                http://34.60.217.109/valuation-accepted/definition
-                              </li>
-                              <li>
-                                http://34.60.217.109/valuation-accepted/test-configuration
-                              </li>
-                              <li>
-                                http://34.60.217.109/valuation-accepted/results
-                              </li>
-                            </>
-                          ) : selectedControl === "underwriting-approved" ? (
-                            <>
-                              <li>
-                                http://34.60.217.109/underwriting-approval/definition
-                              </li>
-                              <li>
-                                http://34.60.217.109/underwriting-approval/test-configuration
-                              </li>
-                              <li>
-                                http://34.60.217.109/underwriting-approval/results
-                              </li>
-                            </>
-                          ) : (
-                            <>
-                              <li>
-                                http://34.60.217.109/{selectedControl}
-                                -clean/definition
-                              </li>
-                              <li>
-                                http://34.60.217.109/{selectedControl}
-                                -clean/test-configuration
-                              </li>
-                              <li>
-                                http://34.60.217.109/{selectedControl}
-                                -clean/results
-                              </li>
-                            </>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {selectedControl && !controlLoading && (
-                  <div className="space-y-6">
-                    <DataTable
-                      title="Control Definition"
-                      data={controlDefinition}
-                      columns={getColumns(controlDefinition)}
-                      maximized={isMaximized("control-definition")}
-                      widgetId="control-definition"
-                      onToggleMaximize={() => toggleMaximize("control-definition")}
-                    />
-                    <DataTable
-                      title="Test Configuration"
-                      data={controlTestConfig}
-                      columns={getColumns(controlTestConfig)}
-                      maximized={isMaximized("test-configuration")}
-                      widgetId="test-configuration"
-                      onToggleMaximize={() => toggleMaximize("test-configuration")}
-                    />
-                    <DataTable
-                      title="Results"
-                      data={controlResults}
-                      columns={getColumns(controlResults)}
-                      maximized={isMaximized("control-results")}
-                      widgetId="control-results"
-                      onToggleMaximize={() => toggleMaximize("control-results")}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="sla-analysis" className="space-y-6">
-          <div className="enterprise-card p-8">
-            <h2 className="text-2xl font-bold text-slate-100 mb-6 flex items-center">
-              <div className="w-2 h-8 bg-gradient-to-b from-green-500 to-emerald-500 rounded-full mr-4"></div>
-              SLA Analysis
-            </h2>
-            <DataVisualizationWidget
-              type="incomplete-bar"
-              title="Average Activity Duration (hrs)"
-              data={slaBarData}
-              maximized={isMaximized("sla-bar-chart")}
-              widgetId="sla-bar-chart"
-              onToggleMaximize={() => toggleMaximize("sla-bar-chart")}
-            />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="kpi" className="space-y-6">
-          <div className="enterprise-card p-8">
-            <h2 className="text-2xl font-bold text-slate-100 mb-6 flex items-center">
-              <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full mr-4"></div>
-              Key Performance Indicators
-            </h2>
-            <DataTable
-              title="KPI Metrics"
-              data={kpi}
-              columns={getColumns(kpi)}
-              maximized={isMaximized("kpi-table")}
-              widgetId="kpi-table"
-              onToggleMaximize={() => toggleMaximize("kpi-table")}
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
