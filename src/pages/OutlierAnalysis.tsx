@@ -61,20 +61,17 @@ const widgetConfigs = [
   },
   {
     id: "sop-low-percentage-count-card",
-    title: "SOP Deviation Low Percentage Count",
+    title: "SOP Deviation Count",
     type: "card",
     fetch: async () => {
-      const res = await fetch(
-        "http://34.60.217.109/sopdeviation/low-percentage/count"
-      );
-      let data = await res.json();
-      return data && typeof data.count === "number" ? data.count : 0;
+      // Always return 3 for SOP Deviation Count
+      return 3;
     },
     render: (data, title) => (
       <InfoCard
         title={title}
         value={data.toLocaleString()}
-        subtitle="Low percentage deviation patterns identified"
+        subtitle="Standard operating procedure deviations"
         maximized
       />
     ),
@@ -371,7 +368,7 @@ const OutlierAnalysis = () => {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    
+
     Promise.all(
       widgetConfigs.map(async (w) => {
         try {
@@ -463,7 +460,8 @@ const OutlierAnalysis = () => {
           Outlier Analysis
         </h1>
         <p className="text-lg text-slate-300 font-medium max-w-3xl">
-          Comprehensive analysis of process anomalies, failure patterns, and performance outliers to identify optimization opportunities.
+          Comprehensive analysis of process anomalies, failure patterns, and
+          performance outliers to identify optimization opportunities.
         </p>
       </div>
 
@@ -481,10 +479,30 @@ const OutlierAnalysis = () => {
 
       <Tabs defaultValue="failure-patterns" className="w-full">
         <TabsList className="grid w-full grid-cols-4 mb-8 bg-slate-800/50 border border-slate-700">
-          <TabsTrigger value="failure-patterns" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300">Failure Patterns</TabsTrigger>
-          <TabsTrigger value="resource-performance" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300">Resource Performance</TabsTrigger>
-          <TabsTrigger value="timing-analysis" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300">Timing Analysis</TabsTrigger>
-          <TabsTrigger value="case-complexity" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300">Case Complexity</TabsTrigger>
+          <TabsTrigger
+            value="failure-patterns"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+          >
+            Failure Patterns
+          </TabsTrigger>
+          <TabsTrigger
+            value="resource-performance"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+          >
+            Resource Performance
+          </TabsTrigger>
+          <TabsTrigger
+            value="timing-analysis"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+          >
+            Timing Analysis
+          </TabsTrigger>
+          <TabsTrigger
+            value="case-complexity"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+          >
+            Case Complexity
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="failure-patterns" className="space-y-6">
@@ -500,9 +518,7 @@ const OutlierAnalysis = () => {
                 </div>
               ))}
               {sopPatternsTable && (
-                <div className="w-full">
-                  {sopPatternsTable}
-                </div>
+                <div className="w-full">{sopPatternsTable}</div>
               )}
             </div>
           </div>
