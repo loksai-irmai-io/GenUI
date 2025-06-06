@@ -4,6 +4,7 @@ import DataTable from "../components/widgets/DataTable";
 import InfoCard from "../components/widgets/InfoCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Toggle } from "@/components/ui/toggle";
 
 const CCM = () => {
   // State for each widget
@@ -21,6 +22,10 @@ const CCM = () => {
   const [controlResults, setControlResults] = useState<any[]>([]);
   const [controlLoading, setControlLoading] = useState(false);
   const [controlError, setControlError] = useState<string | null>(null);
+
+  // New state for toggle buttons
+  const [testConfigAccepted, setTestConfigAccepted] = useState(false);
+  const [resultsAccepted, setResultsAccepted] = useState(false);
 
   const controlOptions = [
     { value: "initial-assessment", label: "Initial Assessment" },
@@ -49,7 +54,6 @@ const CCM = () => {
       ),
     ])
       .then(([count, sla, kpi, slaBar]) => {
-        // ... keep existing code for data processing
         let countArr = Array.isArray(count)
           ? count
           : Object.entries(count).map(([name, value]) => ({ name, value }));
@@ -118,26 +122,91 @@ const CCM = () => {
     setControlLoading(true);
     setControlError(null);
     
+    console.log(`Attempting to fetch data for control: ${controlValue}`);
+    
     try {
       const baseUrl = `http://34.60.217.109/${controlValue}-clean`;
+      const endpoints = [
+        `${baseUrl}/definition`,
+        `${baseUrl}/test-configuration`,
+        `${baseUrl}/results`
+      ];
+      
+      console.log('Fetching from endpoints:', endpoints);
+      
       const [definitionRes, testConfigRes, resultsRes] = await Promise.all([
-        fetch(`${baseUrl}/definition`),
-        fetch(`${baseUrl}/test-configuration`),
-        fetch(`${baseUrl}/results`)
+        fetch(endpoints[0]).catch(err => {
+          console.error(`Failed to fetch definition from ${endpoints[0]}:`, err);
+          throw err;
+        }),
+        fetch(endpoints[1]).catch(err => {
+          console.error(`Failed to fetch test-configuration from ${endpoints[1]}:`, err);
+          throw err;
+        }),
+        fetch(endpoints[2]).catch(err => {
+          console.error(`Failed to fetch results from ${endpoints[2]}:`, err);
+          throw err;
+        })
       ]);
 
+      console.log('Response statuses:', {
+        definition: definitionRes.status,
+        testConfig: testConfigRes.status,
+        results: resultsRes.status
+      });
+
       const [definition, testConfig, results] = await Promise.all([
-        definitionRes.json(),
-        testConfigRes.json(),
-        resultsRes.json()
+        definitionRes.json().catch(err => {
+          console.error('Failed to parse definition JSON:', err);
+          return [];
+        }),
+        testConfigRes.json().catch(err => {
+          console.error('Failed to parse test-configuration JSON:', err);
+          return [];
+        }),
+        resultsRes.json().catch(err => {
+          console.error('Failed to parse results JSON:', err);
+          return [];
+        })
       ]);
+
+      console.log('Parsed data:', { definition, testConfig, results });
 
       setControlDefinition(Array.isArray(definition) ? definition : definition.data || []);
       setControlTestConfig(Array.isArray(testConfig) ? testConfig : testConfig.data || []);
       setControlResults(Array.isArray(results) ? results : results.data || []);
+      
     } catch (error) {
-      setControlError(`Failed to load data for ${controlValue}`);
+      const errorMessage = `Failed to load data for ${controlValue}. The API endpoints may be unavailable.`;
+      setControlError(errorMessage);
       console.error("Error fetching control data:", error);
+      
+      // Set fallback data for demo purposes
+      console.log("Setting fallback data due to API failure");
+      setControlDefinition([
+        { 
+          id: "demo-1", 
+          control_name: "Initial Assessment Control", 
+          description: "Demo data - API endpoint unavailable",
+          status: "Active"
+        }
+      ]);
+      setControlTestConfig([
+        { 
+          test_id: "test-1", 
+          test_name: "Assessment Validation", 
+          configuration: "Demo configuration - API endpoint unavailable",
+          frequency: "Daily"
+        }
+      ]);
+      setControlResults([
+        { 
+          result_id: "result-1", 
+          test_result: "Pass", 
+          execution_date: "2025-06-06",
+          notes: "Demo result - API endpoint unavailable"
+        }
+      ]);
     } finally {
       setControlLoading(false);
     }
@@ -167,10 +236,30 @@ const CCM = () => {
     return String(value);
   };
 
-  // Table wrapper for improved formatting and independent sizing
-  const TableWidget = ({ title, data, columns }: any) => (
+  // Enhanced table widget with toggle button
+  const TableWidget = ({ title, data, columns, showToggle = false, toggleState, onToggleChange }: any) => (
     <div className="w-full enterprise-card p-6 mb-6">
-      <h3 className="text-xl font-semibold text-slate-100 mb-4 tracking-tight">{title}</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold text-slate-100 tracking-tight">{title}</h3>
+        {showToggle && (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-slate-400">
+              {toggleState ? "Accepted" : "Rejected"}
+            </span>
+            <Toggle
+              pressed={toggleState}
+              onPressedChange={onToggleChange}
+              className={`${
+                toggleState 
+                  ? "bg-green-600 text-white data-[state=on]:bg-green-600" 
+                  : "bg-red-600 text-white data-[state=on]:bg-red-600"
+              } px-4 py-2 font-medium transition-colors`}
+            >
+              {toggleState ? "Accept" : "Reject"}
+            </Toggle>
+          </div>
+        )}
+      </div>
       <div className="w-full overflow-x-auto">
         <table className="w-full text-sm border-collapse bg-slate-800/50 border border-slate-700 rounded-lg">
           <thead className="bg-slate-700/80">
@@ -399,22 +488,29 @@ const CCM = () => {
                   </div>
                 )}
 
-                {selectedControl && !controlLoading && !controlError && (
+                {selectedControl && !controlLoading && (
                   <div className="space-y-6">
                     <TableWidget
                       title="Control Definition"
                       data={controlDefinition}
                       columns={getColumns(controlDefinition)}
+                      showToggle={false}
                     />
                     <TableWidget
                       title="Test Configuration"
                       data={controlTestConfig}
                       columns={getColumns(controlTestConfig)}
+                      showToggle={true}
+                      toggleState={testConfigAccepted}
+                      onToggleChange={setTestConfigAccepted}
                     />
                     <TableWidget
                       title="Results"
                       data={controlResults}
                       columns={getColumns(controlResults)}
+                      showToggle={true}
+                      toggleState={resultsAccepted}
+                      onToggleChange={setResultsAccepted}
                     />
                   </div>
                 )}
@@ -444,7 +540,7 @@ const CCM = () => {
               <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full mr-4"></div>
               Key Performance Indicators
             </h2>
-            <TableWidget title="KPI Metrics" data={kpi} columns={getColumns(kpi)} />
+            <TableWidget title="KPI Metrics" data={kpi} columns={getColumns(kpi)} showToggle={false} />
           </div>
         </TabsContent>
       </Tabs>
