@@ -3,6 +3,7 @@ import DataVisualizationWidget from "../components/widgets/DataVisualizationWidg
 import DataTable from "../components/widgets/DataTable";
 import InfoCard from "../components/widgets/InfoCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useMaximizeState } from "../hooks/useMaximizeState";
 
 const widgetConfigs = [
   {
@@ -410,6 +411,7 @@ const OutlierAnalysis = () => {
   const [activityPairThreshold, setActivityPairThreshold] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { toggleMaximize, isMaximized } = useMaximizeState();
 
   useEffect(() => {
     setLoading(true);
@@ -489,7 +491,10 @@ const OutlierAnalysis = () => {
           title="SOP Deviation Patterns"
           data={data}
           columns={columns}
-          maximized
+          maximized={isMaximized("sop-patterns-table")}
+          widgetId="sop-patterns-table"
+          isMinimized={isMaximized("sop-patterns-table") === false}
+          onToggleMaximize={() => toggleMaximize("sop-patterns-table")}
         />
       );
     } else {
@@ -555,15 +560,58 @@ const OutlierAnalysis = () => {
               <div className="w-2 h-8 bg-gradient-to-b from-red-500 to-orange-500 rounded-full mr-4"></div>
               Failure Patterns Analysis
             </h2>
-            <div className="space-y-8">
-              {filteredFailureWidgets.map((w) => (
-                <div key={w.id} className="w-full">
-                  {w.render(w.data, w.title)}
-                </div>
-              ))}
-              {sopPatternsTable && (
-                <div className="w-full">{sopPatternsTable}</div>
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredFailureWidgets.map((w) => {
+                const widgetId = w.id;
+                const isMin = !isMaximized(widgetId);
+                
+                if (w.type === "card") {
+                  return (
+                    <InfoCard
+                      key={widgetId}
+                      title={w.title}
+                      value={w.data?.toLocaleString() || "0"}
+                      subtitle="Click to expand"
+                      maximized={isMaximized(widgetId)}
+                      widgetId={widgetId}
+                      isMinimized={isMin}
+                      onToggleMaximize={() => toggleMaximize(widgetId)}
+                    />
+                  );
+                } else if (w.type === "table") {
+                  const data = Array.isArray(w.data) ? w.data : [];
+                  const columns = data.length > 0 ? Object.keys(data[0] || {}).map((key) => ({
+                    key,
+                    label: key,
+                  })) : [];
+                  return (
+                    <DataTable
+                      key={widgetId}
+                      title={w.title}
+                      data={data}
+                      columns={columns}
+                      maximized={isMaximized(widgetId)}
+                      widgetId={widgetId}
+                      isMinimized={isMin}
+                      onToggleMaximize={() => toggleMaximize(widgetId)}
+                    />
+                  );
+                } else {
+                  return (
+                    <DataVisualizationWidget
+                      key={widgetId}
+                      type={w.type}
+                      title={w.title}
+                      data={w.data}
+                      maximized={isMaximized(widgetId)}
+                      widgetId={widgetId}
+                      isMinimized={isMin}
+                      onToggleMaximize={() => toggleMaximize(widgetId)}
+                    />
+                  );
+                }
+              })}
+              {sopPatternsTable && sopPatternsTable}
             </div>
           </div>
         </TabsContent>
@@ -578,7 +626,10 @@ const OutlierAnalysis = () => {
               type="resource-performance-table"
               title="Resource Performance Analysis"
               data={resourcePerformance}
-              maximized
+              maximized={isMaximized("resource-performance")}
+              widgetId="resource-performance"
+              isMinimized={!isMaximized("resource-performance")}
+              onToggleMaximize={() => toggleMaximize("resource-performance")}
             />
           </div>
         </TabsContent>
@@ -589,12 +640,15 @@ const OutlierAnalysis = () => {
               <div className="w-2 h-8 bg-gradient-to-b from-green-500 to-emerald-500 rounded-full mr-4"></div>
               Timing Analysis Metrics
             </h2>
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <DataVisualizationWidget
                 type="timing-analysis-table"
                 title="Timing Analysis Overview"
                 data={timingAnalysis}
-                maximized
+                maximized={isMaximized("timing-analysis")}
+                widgetId="timing-analysis"
+                isMinimized={!isMaximized("timing-analysis")}
+                onToggleMaximize={() => toggleMaximize("timing-analysis")}
               />
               <DataTable
                 title="Activity Pair Threshold Analysis"
@@ -607,7 +661,10 @@ const OutlierAnalysis = () => {
                       }))
                     : []
                 }
-                maximized
+                maximized={isMaximized("activity-pair-threshold")}
+                widgetId="activity-pair-threshold"
+                isMinimized={!isMaximized("activity-pair-threshold")}
+                onToggleMaximize={() => toggleMaximize("activity-pair-threshold")}
               />
             </div>
           </div>
@@ -630,7 +687,10 @@ const OutlierAnalysis = () => {
                     }))
                   : []
               }
-              maximized
+              maximized={isMaximized("case-complexity")}
+              widgetId="case-complexity"
+              isMinimized={!isMaximized("case-complexity")}
+              onToggleMaximize={() => toggleMaximize("case-complexity")}
             />
           </div>
         </TabsContent>
