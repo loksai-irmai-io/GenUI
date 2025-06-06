@@ -767,7 +767,6 @@ const Index = () => {
             title="Controls Identified Count"
             value={totalControls.toString()}
             subtitle="Total identified controls in the process"
-            size="medium"
           />
         );
       case "sop-deviation-count":
@@ -777,7 +776,6 @@ const Index = () => {
             title="SOP Deviation Count"
             value={sopDeviationCount.toString()}
             subtitle="Standard operating procedure deviations"
-            size="medium"
           />
         );
       case "incomplete-cases-count":
@@ -787,7 +785,6 @@ const Index = () => {
             title="Incomplete Cases Count"
             value={incompleteCasesCount.toString()}
             subtitle="Cases that remain incomplete"
-            size="medium"
           />
         );
       case "long-running-cases-count":
@@ -797,7 +794,6 @@ const Index = () => {
             title="Long-Running Cases Count"
             value={longRunningCasesCount.toString()}
             subtitle="Cases taking longer than expected"
-            size="medium"
           />
         );
       case "resource-switches-count":
@@ -807,7 +803,6 @@ const Index = () => {
             title="Resource Switches Count"
             value={resourceSwitchesCount.toString()}
             subtitle="Resource handovers in processes"
-            size="medium"
           />
         );
       case "rework-activities-count":
@@ -817,7 +812,6 @@ const Index = () => {
             title="Rework Activities Count"
             value={reworkActivitiesCount.toString()}
             subtitle="Activities that required rework"
-            size="medium"
           />
         );
       case "timing-violations-count":
@@ -827,7 +821,6 @@ const Index = () => {
             title="Timing Violations Count"
             value={timingViolationsCount.toString()}
             subtitle="Identified timing violations"
-            size="medium"
           />
         );
       case "incomplete-case-table":
@@ -1154,19 +1147,16 @@ const Index = () => {
                     title="RPN Score"
                     value={fmeaSummaryData.rpn.toString()}
                     subtitle={`${fmeaSummaryData.risk_level} Risk`}
-                    size="medium"
                   />
                   <InfoCard
                     title="Severity Rating"
                     value={fmeaSummaryData.severity_rating.toString()}
                     subtitle="Impact Assessment"
-                    size="medium"
                   />
                   <InfoCard
                     title="Likelihood Rating"
                     value={fmeaSummaryData.likelihood_rating.toString()}
                     subtitle="Probability Score"
-                    size="medium"
                   />
                 </>
               )}

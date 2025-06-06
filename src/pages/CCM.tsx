@@ -647,7 +647,6 @@ const CCM = () => {
                   .reduce((sum, item) => sum + (item.value || 0), 0)
                   .toString()}
                 subtitle="Total identified controls in the process"
-                size="large"
               />
             </div>
 
