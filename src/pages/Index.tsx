@@ -22,11 +22,6 @@ const AVAILABLE_WIDGETS = [
 
   // Outlier Analysis
   {
-    id: "all-failure-patterns-count",
-    name: "All Failure Patterns Count",
-    component: "AllFailurePatternsCount",
-  },
-  {
     id: "sop-deviation-count",
     name: "SOP Deviation Count",
     component: "SOPDeviationCount",
@@ -113,11 +108,10 @@ const AVAILABLE_WIDGETS = [
     component: "ControlsIdentifiedCount",
   },
   { id: "controls", name: "Controls", component: "Controls" },
-  { id: "sla-analysis", name: "SLA Analysis", component: "SLAAnalysis" },
+  { id: "sla-analysis-bar", name: "SLA Analysis Bar Graph", component: "SLAAnalysisBar" },
   { id: "kpi", name: "KPI", component: "KPI" },
 
   // Dashboard Essentials
-  { id: "sla-analysis-bar", name: "SLA Analysis", component: "SLAAnalysisBar" },
   {
     id: "process-failure-patterns",
     name: "Process Failure Patterns",
@@ -1203,19 +1197,7 @@ const Dashboard: React.FC = () => {
 
       default:
         console.warn(`[Dashboard] Unknown widget ID: ${widgetId}`);
-        return (
-          <div key={widgetId} className="w-full">
-            <div className="enterprise-card p-6">
-              <h3 className="text-lg font-semibold text-slate-100 mb-4">
-                {AVAILABLE_WIDGETS.find((w) => w.id === widgetId)?.name ||
-                  widgetId}
-              </h3>
-              <p className="text-slate-400">
-                This widget is being implemented...
-              </p>
-            </div>
-          </div>
-        );
+        return null;
     }
   };
 

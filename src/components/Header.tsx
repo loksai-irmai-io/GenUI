@@ -148,20 +148,22 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
           </div>
 
           <div className="flex items-center space-x-3">
-            {/* Select Process Dropdown */}
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-slate-300 hidden sm:inline">Select Process:</span>
-              <Select value={selectedProcess} onValueChange={handleProcessSelect}>
-                <SelectTrigger className="w-32 sm:w-40 bg-slate-800 hover:bg-slate-700 border-slate-600 text-slate-200 focus:ring-blue-400">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-600 text-slate-200">
-                  <SelectItem value="Mortgage" className="text-slate-200 hover:bg-slate-700 focus:bg-slate-700 focus:text-slate-100">Mortgage</SelectItem>
-                  <SelectItem value="Claims" className="text-slate-200 hover:bg-slate-700 focus:bg-slate-700 focus:text-slate-100">Claims</SelectItem>
-                  <SelectItem value="Receivables" className="text-slate-200 hover:bg-slate-700 focus:bg-slate-700 focus:text-slate-100">Receivables</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Select Process Dropdown - Only visible on Dashboard page */}
+            {isDashboardPage && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-slate-300 hidden sm:inline">Select Process:</span>
+                <Select value={selectedProcess} onValueChange={handleProcessSelect}>
+                  <SelectTrigger className="w-32 sm:w-40 bg-slate-800 hover:bg-slate-700 border-slate-600 text-slate-200 focus:ring-blue-400">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-slate-600 text-slate-200">
+                    <SelectItem value="Mortgage" className="text-slate-200 hover:bg-slate-700 focus:bg-slate-700 focus:text-slate-100">Mortgage</SelectItem>
+                    <SelectItem value="Claims" className="text-slate-200 hover:bg-slate-700 focus:bg-slate-700 focus:text-slate-100">Claims</SelectItem>
+                    <SelectItem value="Receivables" className="text-slate-200 hover:bg-slate-700 focus:bg-slate-700 focus:text-slate-100">Receivables</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Configure Widgets Button - Only visible on Dashboard page */}
             {isDashboardPage && (

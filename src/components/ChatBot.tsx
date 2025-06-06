@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Send, X, MessageCircle, BarChart3, TrendingUp, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -372,7 +371,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen && (
-        <Card className="w-[380px] bg-slate-900 border-slate-700 shadow-lg rounded-md overflow-hidden flex flex-col">
+        <Card className="w-[480px] bg-slate-900 border-slate-700 shadow-lg rounded-md overflow-hidden flex flex-col">
           <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageCircle className="w-5 h-5 text-blue-400" />
@@ -404,7 +403,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
             </div>
           </div>
 
-          <CardContent className="p-4 h-[400px] overflow-y-auto flex-grow">
+          <CardContent className="p-4 h-[500px] overflow-y-auto flex-grow">
             {messages.map((message) => (
               <div
                 key={message.id}
