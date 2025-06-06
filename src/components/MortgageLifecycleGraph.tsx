@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactFlow, {
   Background,
@@ -386,29 +387,29 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
               />
             </ReactFlow>
             
-            {/* Updated Floating Legend with new text colors */}
-            <div className="absolute top-6 right-6 bg-slate-900/95 backdrop-blur-sm border border-slate-600 rounded-xl p-4 text-xs shadow-xl" style={{ color: '#1E3A5F' }}>
-              <div className="font-bold mb-3 text-sm" style={{ color: '#1E3A5F' }}>Process Legend</div>
+            {/* Floating Legend with original lighter background */}
+            <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-sm border border-gray-300 rounded-xl p-4 text-xs shadow-xl">
+              <div className="font-bold mb-3 text-sm text-gray-800">Process Legend</div>
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded bg-gradient-to-r from-[#4B8BBE] to-[#4B8BBE]"></div>
-                  <span style={{ color: '#1E3A5F' }}>Application Phase</span>
+                  <span className="text-gray-700">Application Phase</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded bg-gradient-to-r from-[#72BDA3] to-[#72BDA3]"></div>
-                  <span style={{ color: '#1E3A5F' }}>Credit Assessment</span>
+                  <span className="text-gray-700">Credit Assessment</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded bg-gradient-to-r from-[#F0C808] to-[#F0C808]"></div>
-                  <span style={{ color: '#1E3A5F' }}>Underwriting</span>
+                  <span className="text-gray-700">Underwriting</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded bg-gradient-to-r from-[#8E7CC3] to-[#8E7CC3]"></div>
-                  <span style={{ color: '#1E3A5F' }}>Funding</span>
+                  <span className="text-gray-700">Funding</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="w-4 h-4 rounded bg-gradient-to-r from-[#A2D2FF] to-[#A2D2FF]"></div>
-                  <span style={{ color: '#1E3A5F' }}>Process Variation</span>
+                  <span className="text-gray-700">Process Variation</span>
                 </div>
               </div>
             </div>
