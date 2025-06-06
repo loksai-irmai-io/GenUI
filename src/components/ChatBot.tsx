@@ -422,7 +422,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
         }
         return {
           text: "Here's the analysis of Standard Operating Procedure deviations.",
-          widget: <SOPWidget type="count" data={data} visualizationType="count" title="SOP Deviation Analysis" />,
+          widget: <SOPWidget type="count" data={data} visualizationType="bar" title="SOP Deviation Analysis" />,
         };
       }
     }
