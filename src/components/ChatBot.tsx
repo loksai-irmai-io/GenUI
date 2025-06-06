@@ -455,19 +455,16 @@ const ChatBot: React.FC<ChatBotProps> = ({
                   title="RPN Score"
                   value={fmeaSummaryData.rpn.toString()}
                   subtitle={`${fmeaSummaryData.risk_level} Risk`}
-                  size="small"
                 />
                 <InfoCard
                   title="Severity"
                   value={fmeaSummaryData.severity_rating.toString()}
                   subtitle="Impact"
-                  size="small"
                 />
                 <InfoCard
                   title="Likelihood"
                   value={fmeaSummaryData.likelihood_rating.toString()}
                   subtitle="Probability"
-                  size="small"
                 />
               </div>
             )}
@@ -506,7 +503,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
               title="Incomplete Cases Count"
               value={count.toString()}
               subtitle="Cases requiring completion"
-              size="medium"
             />
           ),
         };
@@ -545,7 +541,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
                 title="Incomplete Cases Count"
                 value={count.toString()}
                 subtitle="Cases requiring completion"
-                size="medium"
               />
               {tableData.length > 0 && (
                 <DataVisualizationWidget
@@ -574,7 +569,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
               title="Long Running Cases Count"
               value={count.toString()}
               subtitle="Cases exceeding standard processing time"
-              size="medium"
             />
           ),
         };
@@ -609,7 +603,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
               title="Long Running Cases Count"
               value={count.toString()}
               subtitle="Cases exceeding standard processing time"
-              size="medium"
             />
           ),
         };
@@ -633,7 +626,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
               title="Resource Switches Count"
               value={count.toString()}
               subtitle="Resource allocation changes detected"
-              size="medium"
             />
           ),
         };
@@ -1055,7 +1047,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
               title="Rework Activities Count"
               value={count.toString()}
               subtitle="Activities that required rework"
-              size="medium"
             />
           ),
         };
@@ -1107,7 +1098,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
               title="Timing Violations Count"
               value={count.toString()}
               subtitle="Identified timing violations"
-              size="medium"
             />
           ),
         };
@@ -1158,7 +1148,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
             title="SOP Deviation Count"
             value="3"
             subtitle="Standard operating procedure deviations"
-            size="medium"
           />
         ),
       };
@@ -1363,7 +1352,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
             title="Controls Identified Count"
             value={totalControls.toString()}
             subtitle="Total identified controls in the process"
-            size="medium"
           />
         ),
       };
@@ -1456,7 +1444,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
             title="SOP Count"
             value="3"
             subtitle="Standard operating procedures defined"
-            size="medium"
           />
         ),
       };
@@ -1476,12 +1463,11 @@ const ChatBot: React.FC<ChatBotProps> = ({
             // Transform the API data to match OutlierAnalysis.tsx format
             tableData = data.patterns.map((item: any) => ({
               pattern_no: item.pattern_no.toString(),
-              pattern: item.pattern
-                ? // Clean up duplicated steps and create a readable pattern
-                  [...new Set(item.pattern.split(" > "))]
-                    .filter((step: string) => step && step.trim())
-                    .join(" → ")
-                : "",
+              pattern:
+                // Clean up duplicated steps and create a readable pattern
+                [...new Set(item.pattern.split(" > "))]
+                  .filter((step: string) => step && step.trim())
+                  .join(" → "),
               count: parseInt(item.count) || 0,
               percentage: parseFloat(item.percentage) || 0,
             }));
@@ -1635,25 +1621,21 @@ const ChatBot: React.FC<ChatBotProps> = ({
             title="Available Charts"
             value="12+"
             subtitle="Interactive visualizations"
-            size="small"
           />
           <InfoCard
             title="Data Tables"
             value="8+"
             subtitle="Detailed analysis tables"
-            size="small"
           />
           <InfoCard
             title="Process Maps"
             value="3+"
             subtitle="Workflow diagrams"
-            size="small"
           />
           <InfoCard
             title="Dashboards"
             value="5+"
             subtitle="Executive summaries"
-            size="small"
           />
         </div>
       ),
