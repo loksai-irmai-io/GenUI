@@ -110,7 +110,91 @@ const ChatBot: React.FC<ChatBotProps> = ({
   const generateResponse = (userMessage: string): { text: string; widget?: React.ReactNode } => {
     const message = userMessage.toLowerCase();
     
-    // FMEA-related responses
+    // FMEA-related responses - Enhanced to prioritize specific analysis requests
+    if (message.includes("severity analysis") || (message.includes("fmea") && message.includes("severity"))) {
+      const severityCols = fmeaSeverityData.length > 0
+        ? Object.keys(fmeaSeverityData[0]).map((key) => ({ key, label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))
+        : [];
+      
+      const response = {
+        text: "Here's the severity analysis showing the impact assessment of different failure modes with their severity scores and justifications.",
+        widget: fmeaSeverityData.length > 0 ? (
+          <DataTable
+            title="Severity Analysis"
+            data={fmeaSeverityData}
+            columns={severityCols}
+          />
+        ) : (
+          <div className="p-4 text-center text-slate-400">
+            <p>Severity analysis data is currently being loaded...</p>
+          </div>
+        ),
+      };
+
+      // Call onDataReceived if provided
+      if (onDataReceived && fmeaSeverityData.length > 0) {
+        onDataReceived("fmea-severity", fmeaSeverityData, "FMEA Severity Analysis");
+      }
+
+      return response;
+    }
+
+    if (message.includes("likelihood analysis") || (message.includes("fmea") && (message.includes("likelihood") || message.includes("probability")))) {
+      const likelihoodCols = fmeaLikelihoodData.length > 0
+        ? Object.keys(fmeaLikelihoodData[0]).map((key) => ({ key, label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))
+        : [];
+      
+      const response = {
+        text: "Here's the likelihood analysis showing the probability assessment of failure modes occurring.",
+        widget: fmeaLikelihoodData.length > 0 ? (
+          <DataTable
+            title="Likelihood Analysis"
+            data={fmeaLikelihoodData}
+            columns={likelihoodCols}
+          />
+        ) : (
+          <div className="p-4 text-center text-slate-400">
+            <p>Likelihood analysis data is currently being loaded...</p>
+          </div>
+        ),
+      };
+
+      // Call onDataReceived if provided
+      if (onDataReceived && fmeaLikelihoodData.length > 0) {
+        onDataReceived("fmea-likelihood", fmeaLikelihoodData, "FMEA Likelihood Analysis");
+      }
+
+      return response;
+    }
+
+    if (message.includes("detectability analysis") || (message.includes("fmea") && (message.includes("detectability") || message.includes("detection")))) {
+      const detectabilityCols = fmeaDetectabilityData.length > 0
+        ? Object.keys(fmeaDetectabilityData[0]).map((key) => ({ key, label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))
+        : [];
+      
+      const response = {
+        text: "Here's the detectability analysis showing how well we can detect failure modes before they impact customers.",
+        widget: fmeaDetectabilityData.length > 0 ? (
+          <DataTable
+            title="Detectability Analysis"
+            data={fmeaDetectabilityData}
+            columns={detectabilityCols}
+          />
+        ) : (
+          <div className="p-4 text-center text-slate-400">
+            <p>Detectability analysis data is currently being loaded...</p>
+          </div>
+        ),
+      };
+
+      // Call onDataReceived if provided
+      if (onDataReceived && fmeaDetectabilityData.length > 0) {
+        onDataReceived("fmea-detectability", fmeaDetectabilityData, "FMEA Detectability Analysis");
+      }
+
+      return response;
+    }
+
     if (message.includes("fmea") || message.includes("failure mode") || message.includes("risk priority")) {
       if (message.includes("dashboard") || message.includes("overview") || message.includes("rpn")) {
         const dashboardData = fmeaSummaryData ? [
@@ -190,93 +274,9 @@ const ChatBot: React.FC<ChatBotProps> = ({
         return response;
       }
 
-      if (message.includes("severity")) {
-        const severityCols = fmeaSeverityData.length > 0
-          ? Object.keys(fmeaSeverityData[0]).map((key) => ({ key, label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))
-          : [];
-        
-        const response = {
-          text: "Here's the severity analysis showing the impact assessment of different failure modes with their severity scores and justifications.",
-          widget: fmeaSeverityData.length > 0 ? (
-            <DataTable
-              title="Severity Analysis"
-              data={fmeaSeverityData}
-              columns={severityCols}
-            />
-          ) : (
-            <div className="p-4 text-center text-slate-400">
-              <p>Severity analysis data is currently being loaded...</p>
-            </div>
-          ),
-        };
-
-        // Call onDataReceived if provided
-        if (onDataReceived && fmeaSeverityData.length > 0) {
-          onDataReceived("fmea-severity", fmeaSeverityData, "FMEA Severity Analysis");
-        }
-
-        return response;
-      }
-
-      if (message.includes("likelihood") || message.includes("probability")) {
-        const likelihoodCols = fmeaLikelihoodData.length > 0
-          ? Object.keys(fmeaLikelihoodData[0]).map((key) => ({ key, label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))
-          : [];
-        
-        const response = {
-          text: "Here's the likelihood analysis showing the probability assessment of failure modes occurring.",
-          widget: fmeaLikelihoodData.length > 0 ? (
-            <DataTable
-              title="Likelihood Analysis"
-              data={fmeaLikelihoodData}
-              columns={likelihoodCols}
-            />
-          ) : (
-            <div className="p-4 text-center text-slate-400">
-              <p>Likelihood analysis data is currently being loaded...</p>
-            </div>
-          ),
-        };
-
-        // Call onDataReceived if provided
-        if (onDataReceived && fmeaLikelihoodData.length > 0) {
-          onDataReceived("fmea-likelihood", fmeaLikelihoodData, "FMEA Likelihood Analysis");
-        }
-
-        return response;
-      }
-
-      if (message.includes("detectability") || message.includes("detection")) {
-        const detectabilityCols = fmeaDetectabilityData.length > 0
-          ? Object.keys(fmeaDetectabilityData[0]).map((key) => ({ key, label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))
-          : [];
-        
-        const response = {
-          text: "Here's the detectability analysis showing how well we can detect failure modes before they impact customers.",
-          widget: fmeaDetectabilityData.length > 0 ? (
-            <DataTable
-              title="Detectability Analysis"
-              data={fmeaDetectabilityData}
-              columns={detectabilityCols}
-            />
-          ) : (
-            <div className="p-4 text-center text-slate-400">
-              <p>Detectability analysis data is currently being loaded...</p>
-            </div>
-          ),
-        };
-
-        // Call onDataReceived if provided
-        if (onDataReceived && fmeaDetectabilityData.length > 0) {
-          onDataReceived("fmea-detectability", fmeaDetectabilityData, "FMEA Detectability Analysis");
-        }
-
-        return response;
-      }
-
       // General FMEA response
       return {
-        text: "FMEA (Failure Mode and Effects Analysis) helps identify potential failure points in our mortgage process. Would you like to see the dashboard overview, analysis table, or specific ratings (severity, likelihood, detectability)?",
+        text: "FMEA (Failure Mode and Effects Analysis) helps identify potential failure points in our mortgage process. Would you like to see the dashboard overview, analysis table, or specific ratings (severity analysis, likelihood analysis, detectability analysis)?",
       };
     }
 
@@ -346,7 +346,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
 
     // Default response
     return {
-      text: "I can help you with process analysis! Try asking about:\n• SLA analysis and performance metrics\n• Resource performance and efficiency\n• Process failure patterns\n• FMEA analysis and risk assessment\n• Outlier detection and analysis\n\nWhat would you like to explore?",
+      text: "I can help you with process analysis! Try asking about:\n• SLA analysis and performance metrics\n• Resource performance and efficiency\n• Process failure patterns\n• FMEA analysis and risk assessment (severity analysis, likelihood analysis, detectability analysis)\n• Outlier detection and analysis\n\nWhat would you like to explore?",
     };
   };
 
@@ -387,7 +387,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen && (
-        <Card className="w-[600px] bg-slate-900 border-slate-700 shadow-lg rounded-md overflow-hidden flex flex-col">
+        <Card className="w-[700px] bg-slate-900 border-slate-700 shadow-lg rounded-md overflow-hidden flex flex-col">
           <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageCircle className="w-5 h-5 text-blue-400" />
