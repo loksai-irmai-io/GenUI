@@ -192,17 +192,21 @@ const ChatBot: React.FC<ChatBotProps> = ({
 
       if (message.includes("severity")) {
         const severityCols = fmeaSeverityData.length > 0
-          ? Object.keys(fmeaSeverityData[0]).map((key) => ({ key, label: key }))
+          ? Object.keys(fmeaSeverityData[0]).map((key) => ({ key, label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))
           : [];
         
         const response = {
           text: "Here's the severity analysis showing the impact assessment of different failure modes with their severity scores and justifications.",
-          widget: (
+          widget: fmeaSeverityData.length > 0 ? (
             <DataTable
               title="Severity Analysis"
               data={fmeaSeverityData}
               columns={severityCols}
             />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>Severity analysis data is currently being loaded...</p>
+            </div>
           ),
         };
 
@@ -216,17 +220,21 @@ const ChatBot: React.FC<ChatBotProps> = ({
 
       if (message.includes("likelihood") || message.includes("probability")) {
         const likelihoodCols = fmeaLikelihoodData.length > 0
-          ? Object.keys(fmeaLikelihoodData[0]).map((key) => ({ key, label: key }))
+          ? Object.keys(fmeaLikelihoodData[0]).map((key) => ({ key, label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))
           : [];
         
         const response = {
           text: "Here's the likelihood analysis showing the probability assessment of failure modes occurring.",
-          widget: (
+          widget: fmeaLikelihoodData.length > 0 ? (
             <DataTable
               title="Likelihood Analysis"
               data={fmeaLikelihoodData}
               columns={likelihoodCols}
             />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>Likelihood analysis data is currently being loaded...</p>
+            </div>
           ),
         };
 
@@ -240,17 +248,21 @@ const ChatBot: React.FC<ChatBotProps> = ({
 
       if (message.includes("detectability") || message.includes("detection")) {
         const detectabilityCols = fmeaDetectabilityData.length > 0
-          ? Object.keys(fmeaDetectabilityData[0]).map((key) => ({ key, label: key }))
+          ? Object.keys(fmeaDetectabilityData[0]).map((key) => ({ key, label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))
           : [];
         
         const response = {
           text: "Here's the detectability analysis showing how well we can detect failure modes before they impact customers.",
-          widget: (
+          widget: fmeaDetectabilityData.length > 0 ? (
             <DataTable
               title="Detectability Analysis"
               data={fmeaDetectabilityData}
               columns={detectabilityCols}
             />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>Detectability analysis data is currently being loaded...</p>
+            </div>
           ),
         };
 
@@ -309,6 +321,10 @@ const ChatBot: React.FC<ChatBotProps> = ({
         { name: "Incomplete Cases", value: 45 },
         { name: "Long Running Cases", value: 12 },
         { name: "Resource Switches", value: 78 },
+        { name: "Timing Violations", value: 34 },
+        { name: "Rework Activities", value: 67 },
+        { name: "Quality Issues", value: 19 },
+        { name: "Compliance Failures", value: 28 }
       ];
 
       // Call onDataReceived if provided
@@ -317,7 +333,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
       }
 
       return {
-        text: "Here's a distribution of process failure patterns to help identify common issues.",
+        text: "Here's a comprehensive distribution of process failure patterns to help identify common issues across different categories.",
         widget: (
           <DataVisualizationWidget
             type="process-failure-patterns-bar"
@@ -371,12 +387,12 @@ const ChatBot: React.FC<ChatBotProps> = ({
   return (
     <div className="fixed bottom-6 right-6 z-50">
       {isOpen && (
-        <Card className="w-[480px] bg-slate-900 border-slate-700 shadow-lg rounded-md overflow-hidden flex flex-col">
+        <Card className="w-[600px] bg-slate-900 border-slate-700 shadow-lg rounded-md overflow-hidden flex flex-col">
           <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageCircle className="w-5 h-5 text-blue-400" />
               <h3 className="text-lg font-semibold text-slate-200">
-                Process Assistant
+                GenUI Assistant
               </h3>
             </div>
             <div className="flex items-center gap-2">

@@ -127,7 +127,7 @@ const AVAILABLE_WIDGETS = [
   { id: "fmea-risk-charts", name: "FMEA Risk Charts", component: "FMEARiskCharts" },
 ];
 
-const Dashboard: React.FC = () => {
+const Index = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   // Set new default widgets: SLA Analysis bar, Process Failure Patterns, and Resource Performance
@@ -676,9 +676,19 @@ const Dashboard: React.FC = () => {
           />
         );
       case "process-failure-patterns":
+        // Use more complete failure patterns data
+        const processFailureData = [
+          { name: "SOP Deviations", value: 23, color: "#ef4444" },
+          { name: "Incomplete Cases", value: 45, color: "#f59e0b" },
+          { name: "Long Running Cases", value: 12, color: "#10b981" },
+          { name: "Resource Switches", value: 78, color: "#3b82f6" },
+          { name: "Timing Violations", value: 34, color: "#8b5cf6" },
+          { name: "Rework Activities", value: 67, color: "#ec4899" },
+          { name: "Quality Issues", value: 19, color: "#06b6d4" },
+          { name: "Compliance Failures", value: 28, color: "#84cc16" }
+        ];
         return (
           <DataVisualizationWidget
-            key={widgetId}
             type="process-failure-patterns-bar"
             title="Process Failure Patterns Distribution"
             data={processFailureData}
@@ -1234,4 +1244,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard;
+export default Index;
