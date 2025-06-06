@@ -12,13 +12,13 @@ import SOPWidget from "./widgets/SOPWidget";
 import TimingAnalysisTable from "./widgets/TimingAnalysisTable";
 
 // Import actual data services
-import { fetchIncompleteCasesData } from "@/services/incompleteCasesService";
-import { fetchLongRunningCasesData } from "@/services/longRunningCasesService";
-import { fetchResourceSwitchesData } from "@/services/resourceSwitchesService";
-import { fetchReworkActivitiesData } from "@/services/reworkActivitiesService";
-import { fetchTimingViolationsData } from "@/services/timingViolationsService";
-import { fetchSOPDeviationData } from "@/services/sopDeviationService";
-import { fetchTimingAnalysisData } from "@/services/timingAnalysisService";
+import { incompleteCasesService } from "@/services/incompleteCasesService";
+import { longRunningCasesService } from "@/services/longRunningCasesService";
+import { resourceSwitchesService } from "@/services/resourceSwitchesService";
+import { reworkActivitiesService } from "@/services/reworkActivitiesService";
+import { timingViolationsService } from "@/services/timingViolationsService";
+import { sopDeviationService } from "@/services/sopDeviationService";
+import { timingAnalysisService } from "@/services/timingAnalysisService";
 
 interface Message {
   id: string;
@@ -125,13 +125,13 @@ const ChatBot: React.FC<ChatBotProps> = ({
         sopDeviation,
         timingAnalysis
       ] = await Promise.all([
-        fetchIncompleteCasesData(),
-        fetchLongRunningCasesData(),
-        fetchResourceSwitchesData(),
-        fetchReworkActivitiesData(),
-        fetchTimingViolationsData(),
-        fetchSOPDeviationData(),
-        fetchTimingAnalysisData()
+        incompleteCasesService.getCountBar(),
+        longRunningCasesService.getCountBar(),
+        resourceSwitchesService.getCountBar(),
+        reworkActivitiesService.getCountBar(),
+        timingViolationsService.getCountBar(),
+        sopDeviationService.getSOPDeviationCount(),
+        timingAnalysisService.getTable()
       ]);
 
       setRealDataCache({
@@ -422,7 +422,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
         }
         return {
           text: "Here's the analysis of Standard Operating Procedure deviations.",
-          widget: <SOPWidget />,
+          widget: <SOPWidget type="count" data={data} visualizationType="count" title="SOP Deviation Analysis" />,
         };
       }
     }
