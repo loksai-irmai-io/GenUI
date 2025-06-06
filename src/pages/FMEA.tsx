@@ -8,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieCha
 import { AlertTriangle, TrendingUp, Target, Shield, Maximize, Minimize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMaximizeState } from "../hooks/useMaximizeState";
-import DataTable from "@/components/ui/data-table";
+import DataTable from "@/components/widgets/DataTable";
 
 interface FMEASummary {
   timestamp: string;
