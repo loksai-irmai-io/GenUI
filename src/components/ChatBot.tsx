@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1015,8 +1016,8 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                       ) : msg.visualization.type === "info-card" ? (
                         <ErrorBoundary>
                           <InfoCard
-                            title={msg.visualization.data.title || msg.visualization.title}
-                            value={msg.visualization.data.count || 0}
+                            title={msg.visualization.data?.title || msg.visualization.title}
+                            value={msg.visualization.data?.count || 0}
                             subtitle="Process metric"
                             size="medium"
                           />
