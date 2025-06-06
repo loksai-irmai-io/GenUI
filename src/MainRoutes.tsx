@@ -13,6 +13,7 @@ import Admin from "./pages/Admin";
 import ScenarioAnalysis from "./pages/ScenarioAnalysis";
 import RiskCatalog from "./pages/RiskCatalog";
 import IncidentManagement from "./pages/IncidentManagement";
+import FMEA from "./pages/FMEA";
 
 const MainRoutes = () => (
   <AppLayout>
@@ -28,6 +29,7 @@ const MainRoutes = () => (
       <Route path="/scenario-analysis" element={<ScenarioAnalysis />} />
       <Route path="/risk-catalog" element={<RiskCatalog />} />
       <Route path="/incident-management" element={<IncidentManagement />} />
+      <Route path="/fmea" element={<FMEA />} />
     </Routes>
   </AppLayout>
 );

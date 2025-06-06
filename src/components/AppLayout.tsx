@@ -24,7 +24,8 @@ import {
   Settings,
   Target,
   Database,
-  AlertCircle
+  AlertCircle,
+  ClipboardCheck
 } from "lucide-react";
 
 const sidebarTabs = [
@@ -32,6 +33,7 @@ const sidebarTabs = [
   { label: "Process Discovery", path: "/process-discovery", icon: Search },
   { label: "Outlier Analysis", path: "/outlier-analysis", icon: AlertTriangle },
   { label: "CCM", path: "/ccm", icon: Users },
+  { label: "FMEA", path: "/fmea", icon: ClipboardCheck },
   { label: "Overall AI Insights", path: "/ai-insights", icon: Brain },
   { label: "Predictive Risk Analytics", path: "/predictive-risk", icon: TrendingUp, comingSoon: true },
   { label: "Compliance & Monitoring", path: "/compliance", icon: Shield, comingSoon: true },
