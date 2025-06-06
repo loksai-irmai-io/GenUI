@@ -113,7 +113,11 @@ const AVAILABLE_WIDGETS = [
     component: "ControlsIdentifiedCount",
   },
   { id: "controls", name: "Controls", component: "Controls" },
-  { id: "sla-analysis-bar", name: "SLA Analysis Bar Graph", component: "SLAAnalysisBar" },
+  {
+    id: "sla-analysis-bar",
+    name: "SLA Analysis Bar Graph",
+    component: "SLAAnalysisBar",
+  },
   { id: "kpi", name: "KPI", component: "KPI" },
 
   // Dashboard Essentials
@@ -125,11 +129,31 @@ const AVAILABLE_WIDGETS = [
 
   // FMEA
   { id: "fmea-dashboard", name: "FMEA Dashboard", component: "FMEADashboard" },
-  { id: "fmea-analysis-table", name: "FMEA Analysis Table", component: "FMEAAnalysisTable" },
-  { id: "fmea-severity-analysis", name: "Severity Analysis", component: "FMEASeverityAnalysis" },
-  { id: "fmea-likelihood-analysis", name: "Likelihood Analysis", component: "FMEALikelihoodAnalysis" },
-  { id: "fmea-detectability-analysis", name: "Detectability Analysis", component: "FMEADetectabilityAnalysis" },
-  { id: "fmea-risk-charts", name: "FMEA Risk Charts", component: "FMEARiskCharts" },
+  {
+    id: "fmea-analysis-table",
+    name: "FMEA Analysis Table",
+    component: "FMEAAnalysisTable",
+  },
+  {
+    id: "fmea-severity-analysis",
+    name: "Severity Analysis",
+    component: "FMEASeverityAnalysis",
+  },
+  {
+    id: "fmea-likelihood-analysis",
+    name: "Likelihood Analysis",
+    component: "FMEALikelihoodAnalysis",
+  },
+  {
+    id: "fmea-detectability-analysis",
+    name: "Detectability Analysis",
+    component: "FMEADetectabilityAnalysis",
+  },
+  {
+    id: "fmea-risk-charts",
+    name: "FMEA Risk Charts",
+    component: "FMEARiskCharts",
+  },
 ];
 
 const Index = () => {
@@ -272,19 +296,19 @@ const Index = () => {
 
   const fetchProcessFailureData = async () => {
     try {
-      const response = await fetch('http://34.60.217.109/allcounts');
+      const response = await fetch("http://34.60.217.109/allcounts");
       const data = await response.json();
-      console.log('Process failure data loaded:', data);
-      
+      console.log("Process failure data loaded:", data);
+
       // Convert the object to array format for visualization
       const formattedData = Object.entries(data).map(([name, value]) => ({
         name,
-        value: Number(value)
+        value: Number(value),
       }));
-      
+
       setProcessFailureData(formattedData);
     } catch (error) {
-      console.error('Error fetching process failure data:', error);
+      console.error("Error fetching process failure data:", error);
       // Fallback data if API fails
       setProcessFailureData([
         { name: "SOP Deviations", value: 23 },
@@ -294,7 +318,7 @@ const Index = () => {
         { name: "Timing Violations", value: 34 },
         { name: "Rework Activities", value: 67 },
         { name: "Quality Issues", value: 19 },
-        { name: "Compliance Failures", value: 28 }
+        { name: "Compliance Failures", value: 28 },
       ]);
     }
   };
@@ -610,43 +634,64 @@ const Index = () => {
   const fetchFMEAData = async () => {
     try {
       // Fetch FMEA summary data
-      const summaryResponse = await fetch('/latest_fmea_summary.json');
+      const summaryResponse = await fetch("/latest_fmea_summary.json");
       const summary = await summaryResponse.json();
       setFmeaSummaryData(summary);
 
       // Fetch FMEA table data
-      const tableResponse = await fetch('/fmea_table_20250605_221129.json');
+      const tableResponse = await fetch("/fmea_table_20250605_221129.json");
       const table = await tableResponse.json();
       setFmeaTableData(table);
 
       // Fetch detailed results
-      const detailedResponse = await fetch('/fmea_complete_results_20250605_221129.json');
+      const detailedResponse = await fetch(
+        "/fmea_complete_results_20250605_221129.json"
+      );
       const detailed = await detailedResponse.json();
       setFmeaDetailedResults(detailed);
 
       // Parse rating data from JSON strings
-      if (detailed.ratings && detailed.ratings.severity && detailed.ratings.severity.full_response) {
-        const severityMatch = detailed.ratings.severity.full_response.match(/```json\n([\s\S]*?)\n```/);
+      if (
+        detailed.ratings &&
+        detailed.ratings.severity &&
+        detailed.ratings.severity.full_response
+      ) {
+        const severityMatch = detailed.ratings.severity.full_response.match(
+          /```json\n([\s\S]*?)\n```/
+        );
         if (severityMatch) {
           setFmeaSeverityData(JSON.parse(severityMatch[1]));
         }
       }
 
-      if (detailed.ratings && detailed.ratings.likelihood && detailed.ratings.likelihood.full_response) {
-        const likelihoodMatch = detailed.ratings.likelihood.full_response.match(/```json\n([\s\S]*?)\n```/);
+      if (
+        detailed.ratings &&
+        detailed.ratings.likelihood &&
+        detailed.ratings.likelihood.full_response
+      ) {
+        const likelihoodMatch = detailed.ratings.likelihood.full_response.match(
+          /```json\n([\s\S]*?)\n```/
+        );
         if (likelihoodMatch) {
           setFmeaLikelihoodData(JSON.parse(likelihoodMatch[1]));
         }
       }
 
-      if (detailed.ratings && detailed.ratings.detectability && detailed.ratings.detectability.full_response) {
-        const detectabilityMatch = detailed.ratings.detectability.full_response.match(/```json\n([\s\S]*?)\n```/);
+      if (
+        detailed.ratings &&
+        detailed.ratings.detectability &&
+        detailed.ratings.detectability.full_response
+      ) {
+        const detectabilityMatch =
+          detailed.ratings.detectability.full_response.match(
+            /```json\n([\s\S]*?)\n```/
+          );
         if (detectabilityMatch) {
           setFmeaDetectabilityData(JSON.parse(detectabilityMatch[1]));
         }
       }
     } catch (error) {
-      console.error('Error fetching FMEA data:', error);
+      console.error("Error fetching FMEA data:", error);
     }
   };
 
@@ -678,7 +723,7 @@ const Index = () => {
 
   const renderWidget = (widgetId: string) => {
     console.log(`[Dashboard] Rendering widget: ${widgetId}`);
-    
+
     switch (widgetId) {
       case "sla-analysis-bar":
         return (
@@ -722,20 +767,6 @@ const Index = () => {
             title="Controls Identified Count"
             value={totalControls.toString()}
             subtitle="Total identified controls in the process"
-            size="medium"
-          />
-        );
-      case "all-failure-patterns-count":
-        const totalFailures = processFailureData.reduce(
-          (sum, item) => sum + (item.value || 0),
-          0
-        );
-        return (
-          <InfoCard
-            key={widgetId}
-            title="All Failure Patterns Count"
-            value={totalFailures.toString()}
-            subtitle="Total count of all failure patterns"
             size="medium"
           />
         );
@@ -1091,12 +1122,26 @@ const Index = () => {
           />
         );
       case "fmea-dashboard":
-        const dashboardData = fmeaSummaryData ? [
-          { name: 'Severity', value: fmeaSummaryData.severity_rating, color: '#ef4444' },
-          { name: 'Likelihood', value: fmeaSummaryData.likelihood_rating, color: '#f59e0b' },
-          { name: 'Detectability', value: fmeaSummaryData.detectability_rating, color: '#10b981' }
-        ] : [];
-        
+        const dashboardData = fmeaSummaryData
+          ? [
+              {
+                name: "Severity",
+                value: fmeaSummaryData.severity_rating,
+                color: "#ef4444",
+              },
+              {
+                name: "Likelihood",
+                value: fmeaSummaryData.likelihood_rating,
+                color: "#f59e0b",
+              },
+              {
+                name: "Detectability",
+                value: fmeaSummaryData.detectability_rating,
+                color: "#10b981",
+              },
+            ]
+          : [];
+
         return (
           <div key={widgetId} className="w-full space-y-6">
             <h2 className="text-2xl font-bold text-slate-100 mb-6 tracking-tight">
@@ -1137,9 +1182,10 @@ const Index = () => {
         );
 
       case "fmea-analysis-table":
-        const fmeaTableCols = fmeaTableData.length > 0
-          ? Object.keys(fmeaTableData[0]).map((key) => ({ key, label: key }))
-          : [];
+        const fmeaTableCols =
+          fmeaTableData.length > 0
+            ? Object.keys(fmeaTableData[0]).map((key) => ({ key, label: key }))
+            : [];
         return (
           <DataTable
             key={widgetId}
@@ -1150,9 +1196,13 @@ const Index = () => {
         );
 
       case "fmea-severity-analysis":
-        const severityCols = fmeaSeverityData.length > 0
-          ? Object.keys(fmeaSeverityData[0]).map((key) => ({ key, label: key }))
-          : [];
+        const severityCols =
+          fmeaSeverityData.length > 0
+            ? Object.keys(fmeaSeverityData[0]).map((key) => ({
+                key,
+                label: key,
+              }))
+            : [];
         return (
           <DataTable
             key={widgetId}
@@ -1163,9 +1213,13 @@ const Index = () => {
         );
 
       case "fmea-likelihood-analysis":
-        const likelihoodCols = fmeaLikelihoodData.length > 0
-          ? Object.keys(fmeaLikelihoodData[0]).map((key) => ({ key, label: key }))
-          : [];
+        const likelihoodCols =
+          fmeaLikelihoodData.length > 0
+            ? Object.keys(fmeaLikelihoodData[0]).map((key) => ({
+                key,
+                label: key,
+              }))
+            : [];
         return (
           <DataTable
             key={widgetId}
@@ -1176,9 +1230,13 @@ const Index = () => {
         );
 
       case "fmea-detectability-analysis":
-        const detectabilityCols = fmeaDetectabilityData.length > 0
-          ? Object.keys(fmeaDetectabilityData[0]).map((key) => ({ key, label: key }))
-          : [];
+        const detectabilityCols =
+          fmeaDetectabilityData.length > 0
+            ? Object.keys(fmeaDetectabilityData[0]).map((key) => ({
+                key,
+                label: key,
+              }))
+            : [];
         return (
           <DataTable
             key={widgetId}
@@ -1189,11 +1247,16 @@ const Index = () => {
         );
 
       case "fmea-risk-charts":
-        const riskChartData = fmeaSummaryData ? [
-          { name: 'Current Risk', value: fmeaSummaryData.rpn },
-          { name: 'Remaining', value: Math.max(0, 1000 - fmeaSummaryData.rpn) }
-        ] : [];
-        
+        const riskChartData = fmeaSummaryData
+          ? [
+              { name: "Current Risk", value: fmeaSummaryData.rpn },
+              {
+                name: "Remaining",
+                value: Math.max(0, 1000 - fmeaSummaryData.rpn),
+              },
+            ]
+          : [];
+
         return (
           <div key={widgetId} className="w-full">
             <h2 className="text-2xl font-bold text-slate-100 mb-6 tracking-tight">

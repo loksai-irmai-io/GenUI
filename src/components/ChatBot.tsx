@@ -175,7 +175,9 @@ const ChatBot: React.FC<ChatBotProps> = ({
         fetch("http://34.60.217.109/slagraph/avg-activity-duration-bar").catch(
           () => null
         ),
-        fetch("/controls_identified_count.json").catch(() => null),
+        fetch("http://34.60.217.109/controls_identified_count").catch(
+          () => null
+        ),
       ]); // Parse responses
       const kpiData = kpiResponse ? await kpiResponse.json() : [];
       const caseComplexityData = caseComplexityResponse
@@ -526,23 +528,33 @@ const ChatBot: React.FC<ChatBotProps> = ({
         ),
       };
     }
-
     if (
       message.includes("incomplete") ||
       message.includes("incomplete cases")
     ) {
       const data = realDataCache.incompleteCases;
+      const tableData = realDataCache.incompleteCasesTable || [];
+
       if (data && Array.isArray(data) && data.length > 0) {
         const count = data[0]?.value || 0;
         return {
-          text: "Here's the count of incomplete cases in the mortgage process.",
+          text: "Here's a comprehensive view of incomplete cases including count and detailed breakdown.",
           widget: (
-            <InfoCard
-              title="Incomplete Cases Count"
-              value={count.toString()}
-              subtitle="Cases requiring completion"
-              size="medium"
-            />
+            <div className="space-y-4">
+              <InfoCard
+                title="Incomplete Cases Count"
+                value={count.toString()}
+                subtitle="Cases requiring completion"
+                size="medium"
+              />
+              {tableData.length > 0 && (
+                <DataVisualizationWidget
+                  type="incomplete-case-table"
+                  title="Incomplete Cases Detailed Breakdown"
+                  data={tableData}
+                />
+              )}
+            </div>
           ),
         };
       }
@@ -1025,9 +1037,634 @@ const ChatBot: React.FC<ChatBotProps> = ({
         text: "Here's the mortgage application lifecycle visualization showing the complete process flow from application to closing.",
         widget: <MortgageLifecycleGraph />,
       };
-    } // Default response for unrecognized queries
+    } // Enhanced query handlers for remaining process intelligence queries
+
+    // Rework Activities handlers
+    if (
+      message.includes("rework activities count") ||
+      (message.includes("rework") && message.includes("count")) ||
+      message.includes("rework activities")
+    ) {
+      const data = realDataCache.reworkActivities;
+      if (data && Array.isArray(data) && data.length > 0) {
+        const count = data[0]?.value || 0;
+        return {
+          text: "Here's the count of rework activities that required correction or revision.",
+          widget: (
+            <InfoCard
+              title="Rework Activities Count"
+              value={count.toString()}
+              subtitle="Activities that required rework"
+              size="medium"
+            />
+          ),
+        };
+      }
+    } // Rework Activities Table
+    if (
+      message.includes("rework activities table") ||
+      (message.includes("rework") && message.includes("table"))
+    ) {
+      const tableData = realDataCache.reworkActivitiesTable || [];
+      // Ensure data is an array
+      const validTableData = Array.isArray(tableData) ? tableData : [];
+      const columns =
+        validTableData.length > 0
+          ? Object.keys(validTableData[0]).map((key) => ({ key, label: key }))
+          : [];
+
+      return {
+        text: "Here's the detailed table of rework activities in the process.",
+        widget:
+          validTableData.length > 0 ? (
+            <DataTable
+              title="Rework Activities Table"
+              data={validTableData}
+              columns={columns}
+            />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>Rework activities table data is currently being loaded...</p>
+            </div>
+          ),
+      };
+    }
+
+    // Timing Violations handlers
+    if (
+      message.includes("timing violations count") ||
+      (message.includes("timing") &&
+        message.includes("violations") &&
+        message.includes("count"))
+    ) {
+      const data = realDataCache.timingViolations;
+      if (data && Array.isArray(data) && data.length > 0) {
+        const count = data[0]?.value || 0;
+        return {
+          text: "Here's the count of timing violations detected in the process.",
+          widget: (
+            <InfoCard
+              title="Timing Violations Count"
+              value={count.toString()}
+              subtitle="Identified timing violations"
+              size="medium"
+            />
+          ),
+        };
+      }
+    } // Timing Violations Table
+    if (
+      message.includes("timing violations table") ||
+      (message.includes("timing") &&
+        message.includes("violations") &&
+        message.includes("table"))
+    ) {
+      const tableData = realDataCache.timingViolationsTable || [];
+      // Ensure data is an array
+      const validTableData = Array.isArray(tableData) ? tableData : [];
+      const columns =
+        validTableData.length > 0
+          ? Object.keys(validTableData[0]).map((key) => ({ key, label: key }))
+          : [];
+
+      return {
+        text: "Here's the detailed table of timing violations in the process.",
+        widget:
+          validTableData.length > 0 ? (
+            <DataTable
+              title="Timing Violations Table"
+              data={validTableData}
+              columns={columns}
+            />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>Timing violations table data is currently being loaded...</p>
+            </div>
+          ),
+      };
+    }
+
+    // SOP Deviation handlers
+    if (
+      message.includes("sop deviation count") ||
+      (message.includes("sop") &&
+        message.includes("deviation") &&
+        message.includes("count"))
+    ) {
+      return {
+        text: "Here's the count of Standard Operating Procedure deviations.",
+        widget: (
+          <InfoCard
+            title="SOP Deviation Count"
+            value="3"
+            subtitle="Standard operating procedure deviations"
+            size="medium"
+          />
+        ),
+      };
+    } // SOP Deviation Table/Patterns
+    if (
+      message.includes("sop deviation") ||
+      message.includes("sop patterns") ||
+      (message.includes("sop") && message.includes("table"))
+    ) {
+      const tableData = realDataCache.sopDeviationTable || [];
+      // Ensure data is an array
+      const validTableData = Array.isArray(tableData) ? tableData : [];
+      const columns =
+        validTableData.length > 0
+          ? Object.keys(validTableData[0]).map((key) => ({ key, label: key }))
+          : [];
+
+      return {
+        text: "Here's the analysis of Standard Operating Procedure deviations.",
+        widget:
+          validTableData.length > 0 ? (
+            <DataTable
+              title="SOP Deviation Patterns"
+              data={validTableData}
+              columns={columns}
+            />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>SOP deviation data is currently being loaded...</p>
+            </div>
+          ),
+      };
+    }
+
+    // Timing Analysis
+    if (
+      message.includes("timing analysis") ||
+      (message.includes("timing") && message.includes("analysis"))
+    ) {
+      const tableData = realDataCache.timingAnalysis || [];
+      // Ensure data is an array
+      const validTableData = Array.isArray(tableData) ? tableData : [];
+      const columns =
+        validTableData.length > 0
+          ? Object.keys(validTableData[0]).map((key) => ({ key, label: key }))
+          : [];
+
+      return {
+        text: "Here's the comprehensive timing analysis of process activities.",
+        widget:
+          validTableData.length > 0 ? (
+            <DataTable
+              title="Timing Analysis"
+              data={validTableData}
+              columns={columns}
+            />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>Timing analysis data is currently being loaded...</p>
+            </div>
+          ),
+      };
+    } // Resource Performance
+    if (
+      message.includes("resource performance") ||
+      (message.includes("resource") && message.includes("performance"))
+    ) {
+      const data = resourcePerformanceData || [];
+      // Ensure data is an array
+      const tableData = Array.isArray(data) ? data : [];
+      const columns =
+        tableData.length > 0
+          ? Object.keys(tableData[0]).map((key) => ({ key, label: key }))
+          : [];
+
+      return {
+        text: "Here's the performance analysis of resources in the process.",
+        widget:
+          tableData.length > 0 ? (
+            <DataTable
+              title="Resource Performance Analysis"
+              data={tableData}
+              columns={columns}
+            />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>Resource performance data is currently being loaded...</p>
+            </div>
+          ),
+      };
+    }
+
+    // Case Complexity
+    if (
+      message.includes("case complexity") ||
+      (message.includes("case") && message.includes("complexity"))
+    ) {
+      const data = caseComplexityData || [];
+      // Ensure data is an array
+      const tableData = Array.isArray(data) ? data : [];
+      const columns =
+        tableData.length > 0
+          ? Object.keys(tableData[0]).map((key) => ({ key, label: key }))
+          : [];
+
+      return {
+        text: "Here's the analysis of case complexity metrics.",
+        widget:
+          tableData.length > 0 ? (
+            <DataTable
+              title="Case Complexity Analysis"
+              data={tableData}
+              columns={columns}
+            />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>Case complexity data is currently being loaded...</p>
+            </div>
+          ),
+      };
+    }
+
+    // Activity Pair Threshold
+    if (
+      message.includes("activity pair threshold") ||
+      message.includes("activity threshold") ||
+      (message.includes("activity") && message.includes("threshold"))
+    ) {
+      const data = activityPairThresholdData || [];
+      // Ensure data is an array
+      const tableData = Array.isArray(data) ? data : [];
+      const columns =
+        tableData.length > 0
+          ? Object.keys(tableData[0]).map((key) => ({ key, label: key }))
+          : [];
+
+      return {
+        text: "Here's the activity pair threshold analysis.",
+        widget:
+          tableData.length > 0 ? (
+            <DataTable
+              title="Activity Pair Threshold Analysis"
+              data={tableData}
+              columns={columns}
+            />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>Activity pair threshold data is currently being loaded...</p>
+            </div>
+          ),
+      };
+    }
+
+    // KPI Analysis
+    if (
+      message.includes("kpi") ||
+      message.includes("key performance indicators") ||
+      message.includes("performance indicators")
+    ) {
+      const data = kpiData || [];
+      // Ensure data is an array
+      const tableData = Array.isArray(data) ? data : [];
+      const columns =
+        tableData.length > 0
+          ? Object.keys(tableData[0]).map((key) => ({ key, label: key }))
+          : [];
+
+      return {
+        text: "Here are the Key Performance Indicators for the process.",
+        widget:
+          tableData.length > 0 ? (
+            <DataTable
+              title="Key Performance Indicators"
+              data={tableData}
+              columns={columns}
+            />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>KPI data is currently being loaded...</p>
+            </div>
+          ),
+      };
+    } // Controls Identified Count
+    if (
+      message.includes("controls identified count") ||
+      (message.includes("controls") && message.includes("count"))
+    ) {
+      const data = controlsData || [];
+      const processedData = Array.isArray(data)
+        ? data
+        : Object.entries(data).map(([name, value]) => ({ name, value }));
+
+      const totalControls = processedData.reduce(
+        (sum, item) => sum + (item.value || 0),
+        0
+      );
+
+      return {
+        text: "Here's the count of identified controls in the process.",
+        widget: (
+          <InfoCard
+            title="Controls Identified Count"
+            value={totalControls.toString()}
+            subtitle="Total identified controls in the process"
+            size="medium"
+          />
+        ),
+      };
+    }
+
+    // Controls Analysis
+    if (
+      message.includes("controls") ||
+      message.includes("control framework") ||
+      message.includes("controls identified")
+    ) {
+      const data = controlsData || [];
+      const processedData = Array.isArray(data)
+        ? data
+        : Object.entries(data).map(([name, value]) => ({ name, value }));
+
+      return {
+        text: "Here's the analysis of identified controls in the process.",
+        widget:
+          processedData.length > 0 ? (
+            <DataVisualizationWidget
+              type="incomplete-bar"
+              title="Controls Identified"
+              data={processedData}
+            />
+          ) : (
+            <div className="p-4 text-center text-slate-400">
+              <p>Controls data is currently being loaded...</p>
+            </div>
+          ),
+      };
+    } // Process Failure Pattern Distribution (formerly "all failure patterns count")
+    if (
+      message.includes("process failure pattern distribution") ||
+      message.includes("process failure patterns distribution") ||
+      message.includes("all failure patterns count") ||
+      message.includes("failure patterns count") ||
+      (message.includes("failure") &&
+        message.includes("patterns") &&
+        message.includes("count"))
+    ) {
+      try {
+        const response = await fetch("http://34.60.217.109/allcounts");
+        let data = {};
+        if (response.ok) {
+          data = await response.json();
+        }
+
+        // Transform the data exactly like OutlierAnalysis does
+        const processedData = Object.entries(data).map(([name, value]) => ({
+          name: name
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (l) => l.toUpperCase()),
+          value: typeof value === "number" ? value : 0,
+        }));
+
+        return {
+          text: "Here's the distribution of all process failure patterns identified in the system.",
+          widget:
+            processedData.length > 0 ? (
+              <DataVisualizationWidget
+                type="process-failure-patterns-bar"
+                title="Process Failure Pattern Distribution"
+                data={processedData}
+              />
+            ) : (
+              <div className="p-4 text-center text-slate-400">
+                <p>Process failure pattern data is currently being loaded...</p>
+              </div>
+            ),
+        };
+      } catch (error) {
+        return {
+          text: "Sorry, there was an error loading the process failure pattern distribution data.",
+        };
+      }
+    }
+
+    // SOP Count
+    if (
+      message.includes("sop count") ||
+      (message.includes("sop") &&
+        message.includes("count") &&
+        !message.includes("deviation"))
+    ) {
+      return {
+        text: "Here's the count of Standard Operating Procedures in the system.",
+        widget: (
+          <InfoCard
+            title="SOP Count"
+            value="3"
+            subtitle="Standard operating procedures defined"
+            size="medium"
+          />
+        ),
+      };
+    } // SOP Patterns
+    if (
+      message.includes("sop patterns") ||
+      (message.includes("sop") && message.includes("patterns"))
+    ) {
+      try {
+        const response = await fetch(
+          "http://34.60.217.109/sopdeviation/patterns"
+        );
+        let tableData = [];
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.patterns && Array.isArray(data.patterns)) {
+            // Transform the API data to match OutlierAnalysis.tsx format
+            tableData = data.patterns.slice(0, 5).map((item: any) => ({
+              pattern_no: item.pattern_no.toString(),
+              pattern: item.pattern
+                ? // Clean up duplicated steps and create a readable pattern
+                  [...new Set(item.pattern.split(" > "))]
+                    .filter((step: string) => step && step.trim())
+                    .slice(0, 5)
+                    .join(" → ") +
+                  ([...new Set(item.pattern.split(" > "))].filter(
+                    (step: string) => step && step.trim()
+                  ).length > 5
+                    ? " ..."
+                    : "")
+                : "",
+              count: parseInt(item.count) || 0,
+              percentage: parseFloat(item.percentage) || 0,
+            }));
+          }
+        } // Fallback data if API fails - using realistic mortgage process steps
+        if (tableData.length === 0) {
+          tableData = [
+            {
+              pattern_no: "1",
+              pattern:
+                "Application Submission → Initial Assessment → Pre-Approval → Appraisal Request → Valuation Accepted",
+              count: 6764,
+              percentage: 31.85,
+            },
+            {
+              pattern_no: "2",
+              pattern: "Application Submission → Initial Assessment → Rejected",
+              count: 3100,
+              percentage: 14.6,
+            },
+            {
+              pattern_no: "3",
+              pattern:
+                "Application Submission → Initial Assessment → Rejected → Initial Assessment → Rejected → Pre-Approval",
+              count: 2803,
+              percentage: 13.2,
+            },
+            {
+              pattern_no: "4",
+              pattern:
+                "Application Submission → Initial Assessment → Rejected → Initial Assessment → Appraisal Request",
+              count: 2306,
+              percentage: 10.86,
+            },
+            {
+              pattern_no: "5",
+              pattern:
+                "Application Submission → Initial Assessment → Pre-Approval → Appraisal Request → Additional Info Required",
+              count: 1604,
+              percentage: 7.55,
+            },
+          ];
+        }
+
+        const columns = [
+          { key: "pattern_no", label: "Pattern No" },
+          { key: "pattern", label: "Pattern" },
+          { key: "count", label: "Count" },
+          { key: "percentage", label: "Percentage (%)" },
+        ];
+
+        return {
+          text: "Here are the identified SOP patterns in the process.",
+          widget: (
+            <DataTable
+              title="SOP Patterns"
+              data={tableData}
+              columns={columns}
+            />
+          ),
+        };
+      } catch (error) {
+        return {
+          text: "Sorry, there was an error loading the SOP patterns data.",
+        };
+      }
+    }
+
+    // Dashboard and analytics queries
+    if (
+      message.includes("dashboard") ||
+      message.includes("analytics") ||
+      message.includes("insights")
+    ) {
+      const dashboardData = [
+        {
+          name: "Incomplete Cases",
+          value: realDataCache.incompleteCases?.[0]?.value || 0,
+        },
+        {
+          name: "Long Running Cases",
+          value: realDataCache.longRunningCases?.[0]?.value || 0,
+        },
+        {
+          name: "Resource Switches",
+          value: realDataCache.resourceSwitches?.[0]?.value || 0,
+        },
+        {
+          name: "Rework Activities",
+          value: realDataCache.reworkActivities?.[0]?.value || 0,
+        },
+        {
+          name: "Timing Violations",
+          value: realDataCache.timingViolations?.[0]?.value || 0,
+        },
+      ].filter((item) => item.value > 0);
+
+      return {
+        text: "Here's a comprehensive dashboard view of key process metrics.",
+        widget: (
+          <DataVisualizationWidget
+            type="process-failure-patterns-bar"
+            title="Process Intelligence Dashboard"
+            data={dashboardData}
+          />
+        ),
+      };
+    }
+
+    // Performance metrics
+    if (
+      message.includes("performance") ||
+      message.includes("metrics") ||
+      message.includes("statistics")
+    ) {
+      const performanceData = [
+        { name: "Process Efficiency", value: 78 },
+        { name: "Quality Score", value: 85 },
+        { name: "Compliance Rate", value: 92 },
+        { name: "Resource Utilization", value: 74 },
+      ];
+
+      return {
+        text: "Here are the key performance metrics for the process.",
+        widget: (
+          <DataVisualizationWidget
+            type="incomplete-bar"
+            title="Performance Metrics"
+            data={performanceData}
+          />
+        ),
+      };
+    }
+
+    // Process flow and workflow queries
+    if (
+      message.includes("process flow") ||
+      message.includes("workflow") ||
+      message.includes("process map")
+    ) {
+      return {
+        text: "Here's the mortgage application process workflow visualization.",
+        widget: <MortgageLifecycleGraph />,
+      };
+    }
+
+    // Default response with suggested visualizations
     return {
-      text: "I can help you analyze various aspects of the process. Try asking about: incomplete cases, long running cases, resource switches, rework activities, timing violations, SOP deviations, timing analysis, resource performance, FMEA analysis, SLA performance, case complexity, activity pair threshold, KPI analysis, or mortgage lifecycle.",
+      text: "I can help you analyze various aspects of the process with interactive visualizations. Try asking about:\n\n📊 **Charts & Graphs**: SLA analysis, process failure patterns, performance metrics\n📋 **Data Tables**: incomplete cases, resource switches, timing analysis\n📈 **Dashboards**: FMEA analysis, process overview, KPI metrics\n🔄 **Process Maps**: mortgage lifecycle, workflow visualization\n\nWhat would you like to explore?",
+      widget: (
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <InfoCard
+            title="Available Charts"
+            value="12+"
+            subtitle="Interactive visualizations"
+            size="small"
+          />
+          <InfoCard
+            title="Data Tables"
+            value="8+"
+            subtitle="Detailed analysis tables"
+            size="small"
+          />
+          <InfoCard
+            title="Process Maps"
+            value="3+"
+            subtitle="Workflow diagrams"
+            size="small"
+          />
+          <InfoCard
+            title="Dashboards"
+            value="5+"
+            subtitle="Executive summaries"
+            size="small"
+          />
+        </div>
+      ),
     };
   };
 

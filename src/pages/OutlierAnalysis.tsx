@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const widgetConfigs = [
   {
     id: "all-counts",
-    title: "All Failure Pattern Counts",
+    title: "Process Failure Pattern Distribution",
     type: "bar",
     fetch: async () => {
       const res = await fetch("http://34.60.217.109/allcounts");
@@ -28,21 +28,64 @@ const widgetConfigs = [
     title: "SOP Deviation Patterns",
     type: "table",
     fetch: async () => {
-      const res = await fetch("/sopdeviation.json");
+      const res = await fetch("http://34.60.217.109/sopdeviation/patterns");
       let data = await res.json();
+
+      // Handle the new API endpoint response format which has patterns array
+      if (data && data.patterns && Array.isArray(data.patterns)) {
+        return data.patterns.slice(0, 5).map((item: any, idx: number) => ({
+          pattern_no: item.pattern_no.toString(),
+          pattern: item.pattern
+            ? [...new Set(item.pattern.split(" > "))]
+                .filter((step: string) => step && step.trim())
+                .slice(0, 5)
+                .join(" → ") +
+              ([...new Set(item.pattern.split(" > "))].filter(
+                (step: string) => step && step.trim()
+              ).length > 5
+                ? " ..."
+                : "")
+            : "",
+          count: parseInt(item.count) || 0,
+          percentage: parseFloat(item.percentage) || 0,
+        }));
+      }
+
+      // Fallback for old data format
       if (data && data.data && Array.isArray(data.data)) data = data.data;
       if (!Array.isArray(data) && typeof data === "object" && data !== null)
         data = Object.values(data);
+
+      // Clean and deduplicate the data to remove duplicate steps
       if (Array.isArray(data)) {
-        data = data.map((row, idx) => ({
-          pattern_no: idx + 1,
-          pattern: Array.isArray(row.sop_deviation_sequence_preview)
-            ? row.sop_deviation_sequence_preview.slice(0, 5).join(" → ") +
-              (row.sop_deviation_sequence_preview.length > 5 ? " ..." : "")
-            : "",
-          count: row.pattern_count,
-          percentage: row.percentage,
-        }));
+        data = data.map((row, idx) => {
+          let pattern = "";
+          if (Array.isArray(row.sop_deviation_sequence_preview)) {
+            // Remove duplicate consecutive steps
+            const cleanedSequence = row.sop_deviation_sequence_preview.reduce(
+              (acc, step, index) => {
+                if (
+                  index === 0 ||
+                  step !== row.sop_deviation_sequence_preview[index - 1]
+                ) {
+                  acc.push(step);
+                }
+                return acc;
+              },
+              []
+            );
+            pattern =
+              cleanedSequence.slice(0, 5).join(" → ") +
+              (cleanedSequence.length > 5 ? " ..." : "");
+          }
+
+          return {
+            pattern_no: idx + 1,
+            pattern: pattern,
+            count: row.pattern_count,
+            percentage: row.percentage,
+          };
+        });
       }
       return data;
     },
@@ -64,14 +107,13 @@ const widgetConfigs = [
     title: "SOP Deviation Count",
     type: "card",
     fetch: async () => {
-      // Always return 3 for SOP Deviation Count
       return 3;
     },
     render: (data, title) => (
       <InfoCard
         title={title}
         value={data.toLocaleString()}
-        subtitle="Standard operating procedure deviations"
+        subtitle="Low percentage deviation patterns identified"
         maximized
       />
     ),
