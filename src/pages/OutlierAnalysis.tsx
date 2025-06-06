@@ -29,22 +29,14 @@ const widgetConfigs = [
     type: "table",
     fetch: async () => {
       const res = await fetch("http://34.60.217.109/sopdeviation/patterns");
-      let data = await res.json();
-
-      // Handle the new API endpoint response format which has patterns array
+      let data = await res.json(); // Handle the new API endpoint response format which has patterns array
       if (data && data.patterns && Array.isArray(data.patterns)) {
-        return data.patterns.slice(0, 5).map((item: any, idx: number) => ({
+        return data.patterns.map((item: any, idx: number) => ({
           pattern_no: item.pattern_no.toString(),
           pattern: item.pattern
             ? [...new Set(item.pattern.split(" > "))]
                 .filter((step: string) => step && step.trim())
-                .slice(0, 5)
-                .join(" → ") +
-              ([...new Set(item.pattern.split(" > "))].filter(
-                (step: string) => step && step.trim()
-              ).length > 5
-                ? " ..."
-                : "")
+                .join(" → ")
             : "",
           count: parseInt(item.count) || 0,
           percentage: parseFloat(item.percentage) || 0,
@@ -91,12 +83,10 @@ const widgetConfigs = [
     },
     render: (data, title) => {
       if (!Array.isArray(data) || data.length === 0) return <div>No data</div>;
-      const columns = [
-        { key: "pattern_no", label: "Pattern No" },
-        { key: "pattern", label: "Pattern" },
-        { key: "count", label: "Count" },
-        { key: "percentage", label: "Percentage (%)" },
-      ];
+      const columns = Object.keys(data[0] || {}).map((key) => ({
+        key,
+        label: key,
+      }));
       return (
         <DataTable title={title} data={data} columns={columns} maximized />
       );
@@ -125,6 +115,22 @@ const widgetConfigs = [
     fetch: async () => {
       const res = await fetch("http://34.60.217.109/sopdeviation/patterns");
       let data = await res.json();
+
+      // Handle the new API endpoint response format which has patterns array
+      if (data && data.patterns && Array.isArray(data.patterns)) {
+        return data.patterns.map((item: any, idx: number) => ({
+          pattern_no: item.pattern_no.toString(),
+          pattern: item.pattern
+            ? [...new Set(item.pattern.split(" > "))]
+                .filter((step: string) => step && step.trim())
+                .join(" → ")
+            : "",
+          count: parseInt(item.count) || 0,
+          percentage: parseFloat(item.percentage) || 0,
+        }));
+      }
+
+      // Fallback for old data format
       if (data && data.data && Array.isArray(data.data)) data = data.data;
       if (!Array.isArray(data) && typeof data === "object" && data !== null)
         data = Object.values(data);
@@ -140,12 +146,10 @@ const widgetConfigs = [
     },
     render: (data, title) => {
       if (!Array.isArray(data) || data.length === 0) return <div>No data</div>;
-      const columns = [
-        { key: "pattern_no", label: "Pattern No" },
-        { key: "pattern", label: "Pattern" },
-        { key: "count", label: "Count" },
-        { key: "percentage", label: "Percentage (%)" },
-      ];
+      const columns = Object.keys(data[0] || {}).map((key) => ({
+        key,
+        label: key,
+      }));
       return (
         <DataTable title={title} data={data} columns={columns} maximized />
       );
@@ -476,12 +480,10 @@ const OutlierAnalysis = () => {
       }));
     }
     if (Array.isArray(data) && data.length > 0) {
-      const columns = [
-        { key: "pattern_no", label: "Pattern No" },
-        { key: "pattern", label: "Pattern" },
-        { key: "count", label: "Count" },
-        { key: "percentage", label: "Percentage (%)" },
-      ];
+      const columns = Object.keys(data[0] || {}).map((key) => ({
+        key,
+        label: key,
+      }));
       sopPatternsTable = (
         <DataTable
           title="SOP Deviation Patterns"

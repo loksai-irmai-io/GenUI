@@ -1474,19 +1474,13 @@ const ChatBot: React.FC<ChatBotProps> = ({
           const data = await response.json();
           if (data && data.patterns && Array.isArray(data.patterns)) {
             // Transform the API data to match OutlierAnalysis.tsx format
-            tableData = data.patterns.slice(0, 5).map((item: any) => ({
+            tableData = data.patterns.map((item: any) => ({
               pattern_no: item.pattern_no.toString(),
               pattern: item.pattern
                 ? // Clean up duplicated steps and create a readable pattern
                   [...new Set(item.pattern.split(" > "))]
                     .filter((step: string) => step && step.trim())
-                    .slice(0, 5)
-                    .join(" → ") +
-                  ([...new Set(item.pattern.split(" > "))].filter(
-                    (step: string) => step && step.trim()
-                  ).length > 5
-                    ? " ..."
-                    : "")
+                    .join(" → ")
                 : "",
               count: parseInt(item.count) || 0,
               percentage: parseFloat(item.percentage) || 0,
@@ -1532,12 +1526,10 @@ const ChatBot: React.FC<ChatBotProps> = ({
           ];
         }
 
-        const columns = [
-          { key: "pattern_no", label: "Pattern No" },
-          { key: "pattern", label: "Pattern" },
-          { key: "count", label: "Count" },
-          { key: "percentage", label: "Percentage (%)" },
-        ];
+        const columns =
+          tableData.length > 0
+            ? Object.keys(tableData[0]).map((key) => ({ key, label: key }))
+            : [];
 
         return {
           text: "Here are the identified SOP patterns in the process.",
