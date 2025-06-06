@@ -353,8 +353,7 @@ const CCM = () => {
     if (typeof value === "boolean") return value ? "Yes" : "No";
     return String(value);
   };
-
-  // Enhanced table widget with toggle button
+  // Enhanced table widget with toggle button and improved column widths
   const TableWidget = ({
     title,
     data,
@@ -362,77 +361,127 @@ const CCM = () => {
     showToggle = false,
     toggleState,
     onToggleChange,
-  }: any) => (
-    <div className="w-full enterprise-card p-6 mb-6">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-slate-100 tracking-tight">
-          {title}
-        </h3>
-        {showToggle && (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-400">
-              {toggleState ? "Accepted" : "Rejected"}
-            </span>
-            <Toggle
-              pressed={toggleState}
-              onPressedChange={onToggleChange}
-              className={`${
-                toggleState
-                  ? "bg-green-600 text-white data-[state=on]:bg-green-600"
-                  : "bg-red-600 text-white data-[state=on]:bg-red-600"
-              } px-4 py-2 font-medium transition-colors`}
-            >
-              {toggleState ? "Accept" : "Reject"}
-            </Toggle>
-          </div>
-        )}
-      </div>
-      <div className="w-full overflow-x-auto">
-        <table className="w-full text-sm border-collapse bg-slate-800/50 border border-slate-700 rounded-lg">
-          <thead className="bg-slate-700/80">
-            <tr>
-              {columns.map((col: any) => (
-                <th
-                  key={col.key}
-                  className="px-6 py-4 text-left font-semibold text-slate-200 border-b border-slate-600"
-                >
-                  {col.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.length === 0 ? (
+  }: any) => {
+    // Helper function to determine column width based on content type
+    const getColumnWidth = (key: string) => {
+      const lowerKey = key.toLowerCase();
+
+      // Extra wide columns for long text content
+      if (
+        lowerKey.includes("description") ||
+        lowerKey.includes("associated risks") ||
+        lowerKey.includes("findings") ||
+        lowerKey.includes("insight") ||
+        lowerKey.includes("objective") ||
+        lowerKey.includes("outcome") ||
+        lowerKey.includes("summary") ||
+        lowerKey.includes("notes")
+      ) {
+        return "min-w-[400px] max-w-[500px]";
+      }
+
+      // Wide columns for source and department fields
+      if (
+        lowerKey.includes("source") ||
+        lowerKey.includes("department") ||
+        lowerKey.includes("evidence") ||
+        lowerKey.includes("data fields")
+      ) {
+        return "min-w-[200px] max-w-[300px]";
+      }
+
+      // Medium columns for names and types
+      if (
+        lowerKey.includes("name") ||
+        lowerKey.includes("type") ||
+        lowerKey.includes("activity") ||
+        lowerKey.includes("status")
+      ) {
+        return "min-w-[150px] max-w-[200px]";
+      }
+
+      // Standard columns for IDs and dates
+      return "min-w-[120px] max-w-[150px]";
+    };
+
+    return (
+      <div className="w-full enterprise-card p-6 mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold text-slate-100 tracking-tight">
+            {title}
+          </h3>
+          {showToggle && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-400">
+                {toggleState ? "Accepted" : "Rejected"}
+              </span>
+              <Toggle
+                pressed={toggleState}
+                onPressedChange={onToggleChange}
+                className={`${
+                  toggleState
+                    ? "bg-green-600 text-white data-[state=on]:bg-green-600"
+                    : "bg-red-600 text-white data-[state=on]:bg-red-600"
+                } px-4 py-2 font-medium transition-colors`}
+              >
+                {toggleState ? "Accept" : "Reject"}
+              </Toggle>
+            </div>
+          )}
+        </div>
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-sm border-collapse bg-slate-800/50 border border-slate-700 rounded-lg table-auto">
+            <thead className="bg-slate-700/80">
               <tr>
-                <td
-                  colSpan={columns.length}
-                  className="text-center text-slate-400 py-8"
-                >
-                  No data available
-                </td>
+                {columns.map((col: any) => (
+                  <th
+                    key={col.key}
+                    className={`px-6 py-4 text-left font-semibold text-slate-200 border-b border-slate-600 ${getColumnWidth(
+                      col.key
+                    )}`}
+                  >
+                    {col.label}
+                  </th>
+                ))}
               </tr>
-            ) : (
-              data.map((row: any, idx: number) => (
-                <tr
-                  key={idx}
-                  className="border-b border-slate-700 hover:bg-slate-700/50 transition-colors"
-                >
-                  {columns.map((col: any) => (
-                    <td
-                      key={col.key}
-                      className="px-6 py-4 text-slate-300 align-top"
-                    >
-                      {formatCell(row[col.key])}
-                    </td>
-                  ))}
+            </thead>
+            <tbody>
+              {data.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="text-center text-slate-400 py-8"
+                  >
+                    No data available
+                  </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                data.map((row: any, idx: number) => (
+                  <tr
+                    key={idx}
+                    className="border-b border-slate-700 hover:bg-slate-700/50 transition-colors"
+                  >
+                    {columns.map((col: any) => (
+                      <td
+                        key={col.key}
+                        className={`px-6 py-4 text-slate-300 align-top ${getColumnWidth(
+                          col.key
+                        )} break-words`}
+                      >
+                        <div className="whitespace-pre-wrap leading-relaxed">
+                          {formatCell(row[col.key])}
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // SLA Analysis: handle object or array, with fallback data
   const fallbackSla = {
