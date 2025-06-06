@@ -70,7 +70,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
 
   // --- Visualization registry for chatbot dynamic routing ---
   const visualizationRegistry = [
-    // Process Discovery
+    // Process Discovery - Mortgage Lifecycle FIRST for priority matching
     {
       id: "mortgage-lifecycle",
       keywords: [
@@ -81,6 +81,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         "mortgage flow",
         "process flow",
         "lifecycle",
+        "mortgage application",
       ],
       fetch: async () => {
         // Mortgage lifecycle doesn't need data fetching - it's a static flow diagram
@@ -401,12 +402,18 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
     if (
       lower.includes("mortgage application lifecycle") ||
       lower.includes("mortgage lifecycle") ||
-      lower.includes("application lifecycle")
+      lower.includes("application lifecycle") ||
+      lower.includes("mortgage process") ||
+      lower.includes("mortgage flow") ||
+      (lower.includes("mortgage") && lower.includes("lifecycle"))
     ) {
       const mortgageMatch = visualizationRegistry.find(
         (viz) => viz.id === "mortgage-lifecycle"
       );
-      if (mortgageMatch) return mortgageMatch;
+      if (mortgageMatch) {
+        console.log("[ChatBot] Found mortgage lifecycle match:", mortgageMatch);
+        return mortgageMatch;
+      }
     }
 
     // Special case for "SLA Analysis" to prioritize bar chart
@@ -514,12 +521,15 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       }
       
       let match = findBestVisualizationMatch(message);
+      console.log("[ChatBot] Match found for query:", message, "->", match);
+      
       if (match) {
         let data = await match.fetch();
         console.log(`[ChatBot] Visualization data for ${match.id}:`, data);
         let visualization: Visualization | null = null;
         
         if (match.type === "mortgage-lifecycle") {
+          console.log("[ChatBot] Creating mortgage lifecycle visualization");
           visualization = {
             id: match.id,
             type: "mortgage-lifecycle",

@@ -14,16 +14,45 @@ import ResourcePerformanceTable from "@/components/widgets/ResourcePerformanceTa
 import ProcessFlowGraph from "@/components/ProcessFlowGraph";
 
 const AVAILABLE_WIDGETS = [
+  // Process Discovery
+  { id: "mortgage-lifecycle", name: "Mortgage Application Lifecycle", component: "MortgageLifecycle" },
+  
+  // Outlier Analysis
+  { id: "all-failure-patterns-count", name: "All Failure Patterns Count", component: "AllFailurePatternsCount" },
+  { id: "sop-deviation-count", name: "SOP Deviation Count", component: "SOPDeviationCount" },
+  { id: "incomplete-cases-count", name: "Incomplete Cases Count", component: "IncompleteCasesCount" },
+  { id: "incomplete-case-table", name: "Incomplete Cases Table", component: "IncompleteCaseTable" },
+  { id: "long-running-cases-count", name: "Long-Running Cases Count", component: "LongRunningCasesCount" },
+  { id: "long-running-table", name: "Long-Running Cases Table", component: "LongRunningTable" },
+  { id: "resource-switches-count", name: "Resource Switches Count", component: "ResourceSwitchesCount" },
+  { id: "resource-switches-count-table", name: "Resource Switches Count Table", component: "ResourceSwitchesCountTable" },
+  { id: "resource-switches-table", name: "Resource Switches Table", component: "ResourceSwitchesTable" },
+  { id: "rework-activities-count", name: "Rework Activities Count", component: "ReworkActivitiesCount" },
+  { id: "reworked-activities-table", name: "Reworked Activities Table", component: "ReworkedActivitiesTable" },
+  { id: "timing-violations-count", name: "Timing Violations Count", component: "TimingViolationsCount" },
+  { id: "timing-violations-table", name: "Timing Violations Table", component: "TimingViolationsTable" },
+  { id: "sop-deviation-patterns", name: "SOP Deviation Patterns", component: "SOPDeviationPatterns" },
+  { id: "resource-performance", name: "Resource Performance", component: "ResourcePerformanceTable" },
+  { id: "activity-pair-threshold", name: "Activity Pair Threshold", component: "ActivityPairThreshold" },
+  { id: "case-complexity-analysis", name: "Case Complexity Analysis", component: "CaseComplexityAnalysis" },
+  
+  // CCM
+  { id: "controls-identified-count", name: "Controls Identified Count", component: "ControlsIdentifiedCount" },
+  { id: "controls-description", name: "Controls Description", component: "ControlsDescription" },
+  { id: "controls", name: "Controls", component: "Controls" },
+  { id: "control-definition", name: "Control Definition", component: "ControlDefinition" },
+  { id: "sla-analysis", name: "SLA Analysis", component: "SLAAnalysis" },
+  { id: "kpi", name: "KPI", component: "KPI" },
+  
+  // Dashboard Essentials
   { id: "info-cards", name: "Key Metrics", component: "InfoCards" },
   { id: "sla-analysis-bar", name: "SLA Analysis", component: "SLAAnalysisBar" },
   { id: "process-failure-patterns", name: "Process Failure Patterns", component: "ProcessFailurePatterns" },
-  { id: "mortgage-lifecycle", name: "Mortgage Application Lifecycle", component: "MortgageLifecycle" },
+  
+  // Legacy
   { id: "chart-widget", name: "Performance Chart", component: "ChartWidget" },
   { id: "sop-widget", name: "SOP Deviations", component: "SOPWidget" },
   { id: "data-viz", name: "Data Visualization", component: "DataVisualizationWidget" },
-  { id: "timing-analysis", name: "Timing Analysis", component: "TimingAnalysisTable" },
-  { id: "resource-performance", name: "Resource Performance", component: "ResourcePerformanceTable" },
-  { id: "controls-identified-count", name: "Controls Identified Count", component: "ControlsIdentifiedCount" },
 ];
 
 const Dashboard: React.FC = () => {
@@ -151,6 +180,8 @@ const Dashboard: React.FC = () => {
   };
 
   const renderWidget = (widgetId: string) => {
+    console.log(`[Dashboard] Rendering widget: ${widgetId}`);
+    
     switch (widgetId) {
       case "info-cards":
         return (
@@ -215,6 +246,30 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         );
+      case "controls-identified-count":
+        const totalControls = controlsData.reduce((sum, item) => sum + item.value, 0);
+        return (
+          <InfoCard
+            key={widgetId}
+            title="Controls Identified Count"
+            value={totalControls.toString()}
+            subtitle="Total identified controls in the process"
+            size="medium"
+          />
+        );
+      case "all-failure-patterns-count":
+        const totalFailures = processFailureData.reduce((sum, item) => sum + (item.value || 0), 0);
+        return (
+          <InfoCard
+            key={widgetId}
+            title="All Failure Patterns Count"
+            value={totalFailures.toString()}
+            subtitle="Total count of all failure patterns"
+            size="medium"
+          />
+        );
+      case "resource-performance":
+        return <ResourcePerformanceTable key={widgetId} />;
       case "chart-widget":
         return (
           <ChartWidget 
@@ -254,22 +309,94 @@ const Dashboard: React.FC = () => {
             ]}
           />
         );
-      case "timing-analysis":
-        return <TimingAnalysisTable key={widgetId} />;
-      case "resource-performance":
-        return <ResourcePerformanceTable key={widgetId} />;
-      case "controls-identified-count":
-        const totalControls = controlsData.reduce((sum, item) => sum + item.value, 0);
+      // Add placeholder implementations for other widgets
+      case "sop-deviation-count":
         return (
           <InfoCard
             key={widgetId}
-            title="Controls Identified Count"
-            value={totalControls.toString()}
-            subtitle="Total identified controls in the process"
+            title="SOP Deviation Count"
+            value="23"
+            subtitle="Standard operating procedure deviations"
             size="medium"
           />
         );
+      case "incomplete-cases-count":
+        return (
+          <InfoCard
+            key={widgetId}
+            title="Incomplete Cases Count"
+            value="45"
+            subtitle="Cases that remain incomplete"
+            size="medium"
+          />
+        );
+      case "long-running-cases-count":
+        return (
+          <InfoCard
+            key={widgetId}
+            title="Long-Running Cases Count"
+            value="12"
+            subtitle="Cases taking longer than expected"
+            size="medium"
+          />
+        );
+      case "resource-switches-count":
+        return (
+          <InfoCard
+            key={widgetId}
+            title="Resource Switches Count"
+            value="78"
+            subtitle="Resource handovers in processes"
+            size="medium"
+          />
+        );
+      case "rework-activities-count":
+        return (
+          <InfoCard
+            key={widgetId}
+            title="Rework Activities Count"
+            value="34"
+            subtitle="Activities that required rework"
+            size="medium"
+          />
+        );
+      case "timing-violations-count":
+        return (
+          <InfoCard
+            key={widgetId}
+            title="Timing Violations Count"
+            value="56"
+            subtitle="Identified timing violations"
+            size="medium"
+          />
+        );
+      // Add basic table implementations for other widgets as placeholders
+      case "incomplete-case-table":
+      case "long-running-table":
+      case "resource-switches-table":
+      case "resource-switches-count-table":
+      case "reworked-activities-table":
+      case "timing-violations-table":
+      case "sop-deviation-patterns":
+      case "activity-pair-threshold":
+      case "case-complexity-analysis":
+      case "controls-description":
+      case "controls":
+      case "control-definition":
+      case "sla-analysis":
+      case "kpi":
+        return (
+          <div key={widgetId} className="w-full">
+            <div className="enterprise-card p-6">
+              <h3 className="text-lg font-semibold text-slate-100 mb-4">
+                {AVAILABLE_WIDGETS.find(w => w.id === widgetId)?.name || widgetId}
+              </h3>
+              <p className="text-slate-400">This widget is being implemented...</p>
+            </div>
+          </div>
+        );
       default:
+        console.warn(`[Dashboard] Unknown widget ID: ${widgetId}`);
         return null;
     }
   };

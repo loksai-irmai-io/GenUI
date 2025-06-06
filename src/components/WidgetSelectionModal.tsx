@@ -22,10 +22,30 @@ interface WidgetSelectionModalProps {
 
 // Comprehensive widget definitions organized by category and page relevance
 const ALL_WIDGETS = {
+  "Process Discovery": [
+    {
+      id: "mortgage-lifecycle",
+      name: "Mortgage Application Lifecycle",
+      description: "Interactive process flow diagram for mortgage applications",
+      relevantPages: ["/", "/process-discovery"],
+    },
+  ],
   "Outlier Analysis": [
     {
+      id: "all-failure-patterns-count",
+      name: "All Failure Patterns Count",
+      description: "Total count of all identified failure patterns as info card",
+      relevantPages: ["/", "/outlier-analysis"],
+    },
+    {
+      id: "sop-deviation-count",
+      name: "SOP Deviation Count",
+      description: "Count of standard operating procedure deviations as info card",
+      relevantPages: ["/", "/outlier-analysis"],
+    },
+    {
       id: "incomplete-cases-count",
-      name: "Incomplete Cases (Info Card)",
+      name: "Incomplete Cases Count",
       description: "Count of cases that remain incomplete displayed as info card",
       relevantPages: ["/", "/outlier-analysis"],
     },
@@ -37,20 +57,26 @@ const ALL_WIDGETS = {
     },
     {
       id: "long-running-cases-count",
-      name: "Long-Running Cases (Info Card)",
+      name: "Long-Running Cases Count",
       description: "Count of cases taking longer than expected as info card",
       relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "long-running-table",
-      name: "Long-Running Table",
+      name: "Long-Running Cases Table",
       description: "Detailed table of all long-running cases with metrics",
       relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "resource-switches-count",
-      name: "Resource Switches (Info Card)",
+      name: "Resource Switches Count",
       description: "Count of resource handovers in processes as info card",
+      relevantPages: ["/", "/outlier-analysis"],
+    },
+    {
+      id: "resource-switches-count-table",
+      name: "Resource Switches Count Table",
+      description: "Summary table of resource switches by category",
       relevantPages: ["/", "/outlier-analysis"],
     },
     {
@@ -61,13 +87,19 @@ const ALL_WIDGETS = {
     },
     {
       id: "rework-activities-count",
-      name: "Rework Activities (Info Card)",
+      name: "Rework Activities Count",
       description: "Count of activities that required rework as info card",
       relevantPages: ["/", "/outlier-analysis"],
     },
     {
+      id: "reworked-activities-table",
+      name: "Reworked Activities Table",
+      description: "Detailed table of all reworked activities with analysis",
+      relevantPages: ["/", "/outlier-analysis"],
+    },
+    {
       id: "timing-violations-count",
-      name: "Timing Violations (Info Card)",
+      name: "Timing Violations Count",
       description: "Count of identified timing violations as info card",
       relevantPages: ["/", "/outlier-analysis"],
     },
@@ -78,37 +110,65 @@ const ALL_WIDGETS = {
       relevantPages: ["/", "/outlier-analysis"],
     },
     {
+      id: "sop-deviation-patterns",
+      name: "SOP Deviation Patterns",
+      description: "Table showing patterns of SOP deviations across processes",
+      relevantPages: ["/", "/outlier-analysis"],
+    },
+    {
       id: "resource-performance",
-      name: "Resource Performance Table",
+      name: "Resource Performance",
       description: "Performance analysis table of resources by efficiency and utilization",
       relevantPages: ["/", "/outlier-analysis"],
     },
     {
-      id: "timing-analysis",
-      name: "Timing Analysis Table",
-      description: "Overview table of timing patterns and performance deviations",
+      id: "activity-pair-threshold",
+      name: "Activity Pair Threshold",
+      description: "Analysis of activity pair timing thresholds and violations",
       relevantPages: ["/", "/outlier-analysis"],
     },
-  ],
-  "Process Discovery": [
     {
-      id: "mortgage-lifecycle",
-      name: "Mortgage Application Lifecycle",
-      description: "Interactive process flow diagram for mortgage applications",
-      relevantPages: ["/", "/process-discovery"],
-    },
-    {
-      id: "object-lifecycle",
-      name: "Object Lifecycle",
-      description: "Track object lifecycle and state transitions",
-      relevantPages: ["/process-discovery"],
+      id: "case-complexity-analysis",
+      name: "Case Complexity Analysis",
+      description: "Detailed analysis of case complexity factors and metrics",
+      relevantPages: ["/", "/outlier-analysis"],
     },
   ],
   "CCM": [
     {
       id: "controls-identified-count",
-      name: "Controls Identified (Info Card)",
+      name: "Controls Identified Count",
       description: "Count of identified controls displayed as info card",
+      relevantPages: ["/", "/ccm"],
+    },
+    {
+      id: "controls-description",
+      name: "Controls Description",
+      description: "Detailed description table of all identified controls",
+      relevantPages: ["/", "/ccm"],
+    },
+    {
+      id: "controls",
+      name: "Controls",
+      description: "Comprehensive controls management and tracking table",
+      relevantPages: ["/", "/ccm"],
+    },
+    {
+      id: "control-definition",
+      name: "Control Definition",
+      description: "Table defining all control types and their specifications",
+      relevantPages: ["/", "/ccm"],
+    },
+    {
+      id: "sla-analysis",
+      name: "SLA Analysis",
+      description: "Service Level Agreement analysis with activity duration metrics",
+      relevantPages: ["/", "/ccm"],
+    },
+    {
+      id: "kpi",
+      name: "KPI",
+      description: "Key Performance Indicators dashboard and metrics",
       relevantPages: ["/", "/ccm"],
     },
   ],
