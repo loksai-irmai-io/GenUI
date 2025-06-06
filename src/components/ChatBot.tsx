@@ -8,6 +8,17 @@ import DataVisualizationWidget from "./widgets/DataVisualizationWidget";
 import ResourcePerformanceTable from "./widgets/ResourcePerformanceTable";
 import DataTable from "./widgets/DataTable";
 import InfoCard from "./widgets/InfoCard";
+import SOPWidget from "./widgets/SOPWidget";
+import TimingAnalysisTable from "./widgets/TimingAnalysisTable";
+
+// Import actual data services
+import { fetchIncompleteCasesData } from "@/services/incompleteCasesService";
+import { fetchLongRunningCasesData } from "@/services/longRunningCasesService";
+import { fetchResourceSwitchesData } from "@/services/resourceSwitchesService";
+import { fetchReworkActivitiesData } from "@/services/reworkActivitiesService";
+import { fetchTimingViolationsData } from "@/services/timingViolationsService";
+import { fetchSOPDeviationData } from "@/services/sopDeviationService";
+import { fetchTimingAnalysisData } from "@/services/timingAnalysisService";
 
 interface Message {
   id: string;
@@ -53,8 +64,12 @@ const ChatBot: React.FC<ChatBotProps> = ({
   const [fmeaLikelihoodData, setFmeaLikelihoodData] = useState<any[]>([]);
   const [fmeaDetectabilityData, setFmeaDetectabilityData] = useState<any[]>([]);
 
+  // Real data states
+  const [realDataCache, setRealDataCache] = useState<{[key: string]: any}>({});
+
   useEffect(() => {
     fetchFMEAData();
+    preloadRealData();
   }, []);
 
   const fetchFMEAData = async () => {
@@ -99,6 +114,40 @@ const ChatBot: React.FC<ChatBotProps> = ({
     }
   };
 
+  const preloadRealData = async () => {
+    try {
+      const [
+        incompleteCases,
+        longRunningCases,
+        resourceSwitches,
+        reworkActivities,
+        timingViolations,
+        sopDeviation,
+        timingAnalysis
+      ] = await Promise.all([
+        fetchIncompleteCasesData(),
+        fetchLongRunningCasesData(),
+        fetchResourceSwitchesData(),
+        fetchReworkActivitiesData(),
+        fetchTimingViolationsData(),
+        fetchSOPDeviationData(),
+        fetchTimingAnalysisData()
+      ]);
+
+      setRealDataCache({
+        incompleteCases,
+        longRunningCases,
+        resourceSwitches,
+        reworkActivities,
+        timingViolations,
+        sopDeviation,
+        timingAnalysis
+      });
+    } catch (error) {
+      console.error('Error preloading real data:', error);
+    }
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -110,7 +159,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
   const generateResponse = (userMessage: string): { text: string; widget?: React.ReactNode } => {
     const message = userMessage.toLowerCase();
     
-    // FMEA-related responses - Enhanced to prioritize specific analysis requests
+    // FMEA-related responses
     if (message.includes("severity analysis") || (message.includes("fmea") && message.includes("severity"))) {
       const severityCols = fmeaSeverityData.length > 0
         ? Object.keys(fmeaSeverityData[0]).map((key) => ({ key, label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) }))
@@ -131,7 +180,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
         ),
       };
 
-      // Call onDataReceived if provided
       if (onDataReceived && fmeaSeverityData.length > 0) {
         onDataReceived("fmea-severity", fmeaSeverityData, "FMEA Severity Analysis");
       }
@@ -159,7 +207,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
         ),
       };
 
-      // Call onDataReceived if provided
       if (onDataReceived && fmeaLikelihoodData.length > 0) {
         onDataReceived("fmea-likelihood", fmeaLikelihoodData, "FMEA Likelihood Analysis");
       }
@@ -187,7 +234,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
         ),
       };
 
-      // Call onDataReceived if provided
       if (onDataReceived && fmeaDetectabilityData.length > 0) {
         onDataReceived("fmea-detectability", fmeaDetectabilityData, "FMEA Detectability Analysis");
       }
@@ -196,60 +242,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
     }
 
     if (message.includes("fmea") || message.includes("failure mode") || message.includes("risk priority")) {
-      if (message.includes("dashboard") || message.includes("overview") || message.includes("rpn")) {
-        const dashboardData = fmeaSummaryData ? [
-          { name: 'Severity', value: fmeaSummaryData.severity_rating, color: '#ef4444' },
-          { name: 'Likelihood', value: fmeaSummaryData.likelihood_rating, color: '#f59e0b' },
-          { name: 'Detectability', value: fmeaSummaryData.detectability_rating, color: '#10b981' }
-        ] : [];
-
-        const response = {
-          text: fmeaSummaryData 
-            ? `Here's your FMEA dashboard overview. The current Risk Priority Number (RPN) is ${fmeaSummaryData.rpn} with a ${fmeaSummaryData.risk_level} risk level. The severity rating is ${fmeaSummaryData.severity_rating}, likelihood is ${fmeaSummaryData.likelihood_rating}, and detectability is ${fmeaSummaryData.detectability_rating}.`
-            : "Here's your FMEA dashboard with risk analysis metrics.",
-          widget: (
-            <div className="space-y-4">
-              {fmeaSummaryData && (
-                <div className="grid grid-cols-3 gap-4">
-                  <InfoCard
-                    title="RPN Score"
-                    value={fmeaSummaryData.rpn.toString()}
-                    subtitle={`${fmeaSummaryData.risk_level} Risk`}
-                    size="small"
-                  />
-                  <InfoCard
-                    title="Severity"
-                    value={fmeaSummaryData.severity_rating.toString()}
-                    subtitle="Impact"
-                    size="small"
-                  />
-                  <InfoCard
-                    title="Likelihood"
-                    value={fmeaSummaryData.likelihood_rating.toString()}
-                    subtitle="Probability"
-                    size="small"
-                  />
-                </div>
-              )}
-              {dashboardData.length > 0 && (
-                <DataVisualizationWidget
-                  type="incomplete-bar"
-                  title="Risk Rating Distribution"
-                  data={dashboardData}
-                />
-              )}
-            </div>
-          ),
-        };
-
-        // Call onDataReceived if provided
-        if (onDataReceived && dashboardData.length > 0) {
-          onDataReceived("fmea-dashboard", dashboardData, "FMEA Risk Rating Distribution");
-        }
-
-        return response;
-      }
-
       if (message.includes("table") || message.includes("analysis table")) {
         const fmeaTableCols = fmeaTableData.length > 0
           ? Object.keys(fmeaTableData[0]).map((key) => ({ key, label: key }))
@@ -266,7 +258,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
           ),
         };
 
-        // Call onDataReceived if provided
         if (onDataReceived && fmeaTableData.length > 0) {
           onDataReceived("fmea-table", fmeaTableData, "FMEA Analysis Table");
         }
@@ -327,6 +318,135 @@ const ChatBot: React.FC<ChatBotProps> = ({
       return response;
     }
 
+    // Use real data for other queries
+    if (message.includes("incomplete") || message.includes("incomplete cases")) {
+      const data = realDataCache.incompleteCases;
+      if (data) {
+        if (onDataReceived) {
+          onDataReceived("incomplete-cases", data, "Incomplete Cases Analysis");
+        }
+        return {
+          text: "Here's the analysis of incomplete cases in the mortgage process.",
+          widget: (
+            <DataVisualizationWidget
+              type="incomplete-bar"
+              title="Incomplete Cases"
+              data={data}
+            />
+          ),
+        };
+      }
+    }
+
+    if (message.includes("long running") || message.includes("longrunning")) {
+      const data = realDataCache.longRunningCases;
+      if (data) {
+        if (onDataReceived) {
+          onDataReceived("long-running-cases", data, "Long Running Cases Analysis");
+        }
+        return {
+          text: "Here's the analysis of long running cases that exceed normal processing times.",
+          widget: (
+            <DataVisualizationWidget
+              type="longrunning-bar"
+              title="Long Running Cases"
+              data={data}
+            />
+          ),
+        };
+      }
+    }
+
+    if (message.includes("resource switches") || (message.includes("resource") && message.includes("switch"))) {
+      const data = realDataCache.resourceSwitches;
+      if (data) {
+        if (onDataReceived) {
+          onDataReceived("resource-switches", data, "Resource Switches Analysis");
+        }
+        return {
+          text: "Here's the analysis of resource switches during case processing.",
+          widget: (
+            <DataVisualizationWidget
+              type="resource-switches-bar"
+              title="Resource Switches"
+              data={data}
+            />
+          ),
+        };
+      }
+    }
+
+    if (message.includes("rework") || message.includes("rework activities")) {
+      const data = realDataCache.reworkActivities;
+      if (data) {
+        if (onDataReceived) {
+          onDataReceived("rework-activities", data, "Rework Activities Analysis");
+        }
+        return {
+          text: "Here's the analysis of rework activities in the process.",
+          widget: (
+            <DataVisualizationWidget
+              type="rework-activities-bar"
+              title="Rework Activities"
+              data={data}
+            />
+          ),
+        };
+      }
+    }
+
+    if (message.includes("timing violations") || (message.includes("timing") && message.includes("violation"))) {
+      const data = realDataCache.timingViolations;
+      if (data) {
+        if (onDataReceived) {
+          onDataReceived("timing-violations", data, "Timing Violations Analysis");
+        }
+        return {
+          text: "Here's the analysis of timing violations in the process.",
+          widget: (
+            <DataVisualizationWidget
+              type="timing-violations-bar"
+              title="Timing Violations"
+              data={data}
+            />
+          ),
+        };
+      }
+    }
+
+    if (message.includes("sop") || message.includes("standard operating") || message.includes("deviation")) {
+      const data = realDataCache.sopDeviation;
+      if (data) {
+        if (onDataReceived) {
+          onDataReceived("sop-deviation", data, "SOP Deviation Analysis");
+        }
+        return {
+          text: "Here's the analysis of Standard Operating Procedure deviations.",
+          widget: <SOPWidget />,
+        };
+      }
+    }
+
+    if (message.includes("timing analysis") || (message.includes("timing") && message.includes("analysis"))) {
+      const data = realDataCache.timingAnalysis;
+      if (data) {
+        if (onDataReceived) {
+          onDataReceived("timing-analysis", data, "Timing Analysis");
+        }
+        return {
+          text: "Here's the detailed timing analysis of process activities.",
+          widget: <TimingAnalysisTable />,
+        };
+      }
+    }
+
+    if (message.includes("resource") && (message.includes("performance") || message.includes("efficiency"))) {
+      return {
+        text: "Here's a performance analysis of our resources, showing efficiency and utilization metrics.",
+        widget: <ResourcePerformanceTable />,
+      };
+    }
+
     if (message.includes("sla") || message.includes("service level agreement")) {
       const slaData = [
         { name: "Valuation Accepted", value: 383.9 },
@@ -335,130 +455,17 @@ const ChatBot: React.FC<ChatBotProps> = ({
         { name: "Pre-Approval", value: 48.1 },
       ];
 
-      // Call onDataReceived if provided
       if (onDataReceived) {
         onDataReceived("sla-analysis", slaData, "SLA Analysis: Average Activity Duration");
       }
 
       return {
-        text: "Here's an analysis of our Service Level Agreements. I'm showing you the average activity duration.",
+        text: "Here's an analysis of our Service Level Agreements showing average activity duration.",
         widget: (
           <DataVisualizationWidget
             type="incomplete-bar"
             title="SLA Analysis: Average Activity Duration (hrs)"
             data={slaData}
-          />
-        ),
-      };
-    }
-
-    if (
-      message.includes("resource") &&
-      (message.includes("performance") || message.includes("efficiency"))
-    ) {
-      return {
-        text: "Here's a performance analysis of our resources, showing efficiency and utilization metrics.",
-        widget: <ResourcePerformanceTable />,
-      };
-    }
-
-    if (message.includes("failure patterns") || message.includes("failures")) {
-      const failureData = [
-        { name: "SOP Deviations", value: 23 },
-        { name: "Incomplete Cases", value: 45 },
-        { name: "Long Running Cases", value: 12 },
-        { name: "Resource Switches", value: 78 },
-        { name: "Timing Violations", value: 34 },
-        { name: "Rework Activities", value: 67 },
-        { name: "Quality Issues", value: 19 },
-        { name: "Compliance Failures", value: 28 }
-      ];
-
-      // Call onDataReceived if provided
-      if (onDataReceived) {
-        onDataReceived("failure-patterns", failureData, "Process Failure Patterns Distribution");
-      }
-
-      return {
-        text: "Here's a comprehensive distribution of process failure patterns to help identify common issues across different categories.",
-        widget: (
-          <DataVisualizationWidget
-            type="process-failure-patterns-bar"
-            title="Process Failure Patterns Distribution"
-            data={failureData}
-          />
-        ),
-      };
-    }
-
-    // Additional analysis queries with visualizations
-    if (message.includes("outlier") || message.includes("anomaly")) {
-      const outlierData = [
-        { name: "Normal Cases", value: 847 },
-        { name: "Minor Outliers", value: 124 },
-        { name: "Major Outliers", value: 34 },
-        { name: "Critical Outliers", value: 8 }
-      ];
-
-      if (onDataReceived) {
-        onDataReceived("outlier-analysis", outlierData, "Outlier Detection Analysis");
-      }
-
-      return {
-        text: "Here's an outlier detection analysis showing the distribution of normal and anomalous cases in the process.",
-        widget: (
-          <DataVisualizationWidget
-            type="incomplete-bar"
-            title="Outlier Detection Analysis"
-            data={outlierData}
-          />
-        ),
-      };
-    }
-
-    if (message.includes("timing") || message.includes("duration")) {
-      const timingData = [
-        { name: "Under 24hrs", value: 234 },
-        { name: "1-3 days", value: 456 },
-        { name: "4-7 days", value: 187 },
-        { name: "Over 1 week", value: 89 }
-      ];
-
-      if (onDataReceived) {
-        onDataReceived("timing-analysis", timingData, "Process Timing Analysis");
-      }
-
-      return {
-        text: "Here's a timing analysis showing the distribution of process completion times.",
-        widget: (
-          <DataVisualizationWidget
-            type="incomplete-bar"
-            title="Process Timing Analysis"
-            data={timingData}
-          />
-        ),
-      };
-    }
-
-    if (message.includes("compliance") || message.includes("regulation")) {
-      const complianceData = [
-        { name: "Fully Compliant", value: 823 },
-        { name: "Minor Issues", value: 67 },
-        { name: "Major Issues", value: 23 },
-        { name: "Non-Compliant", value: 12 }
-      ];
-
-      if (onDataReceived) {
-        onDataReceived("compliance-analysis", complianceData, "Compliance Analysis");
-      }
-
-      return {
-        text: "Here's a compliance analysis showing adherence to regulatory requirements.",
-        widget: (
-          <DataVisualizationWidget
-            type="incomplete-bar"
-            title="Compliance Analysis"
-            data={complianceData}
           />
         ),
       };
@@ -489,35 +496,9 @@ const ChatBot: React.FC<ChatBotProps> = ({
       };
     }
 
-    // Catch-all for unrecognized queries - still provide value
-    const defaultData = [
-      { name: "Query Processed", value: 1 },
-      { name: "Available Topics", value: 8 },
-      { name: "Analysis Ready", value: 1 }
-    ];
-
-    if (onDataReceived) {
-      onDataReceived("query-status", defaultData, "Query Status");
-    }
-
+    // Default response for unrecognized queries
     return {
-      text: "I've processed your query. Here are some analysis topics I can help with: FMEA analysis, SLA performance, resource efficiency, failure patterns, outlier detection, timing analysis, compliance status, and process overview.",
-      widget: (
-        <DataVisualizationWidget
-          type="incomplete-bar"
-          title="Available Analysis Topics"
-          data={[
-            { name: "FMEA Analysis", value: 1 },
-            { name: "SLA Performance", value: 1 },
-            { name: "Resource Efficiency", value: 1 },
-            { name: "Failure Patterns", value: 1 },
-            { name: "Outlier Detection", value: 1 },
-            { name: "Timing Analysis", value: 1 },
-            { name: "Compliance Status", value: 1 },
-            { name: "Process Overview", value: 1 }
-          ]}
-        />
-      ),
+      text: "I can help you analyze various aspects of the process. Try asking about: incomplete cases, long running cases, resource switches, rework activities, timing violations, SOP deviations, timing analysis, resource performance, FMEA analysis, or SLA performance.",
     };
   };
 
@@ -616,7 +597,6 @@ const ChatBot: React.FC<ChatBotProps> = ({
               </div>
             ))}
             
-            {/* Display external visualizations */}
             {visualizations && visualizations.length > 0 && (
               <div className="mb-3">
                 <div className="bg-slate-700 text-slate-300 rounded-lg p-3">
