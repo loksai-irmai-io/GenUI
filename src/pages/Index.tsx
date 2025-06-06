@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -677,14 +676,14 @@ const Index = () => {
     }
   };
 
-  const renderWidget = (widget: any) => {
-    console.log(`[Dashboard] Rendering widget: ${widget.type}`);
+  const renderWidget = (widgetId: string) => {
+    console.log(`[Dashboard] Rendering widget: ${widgetId}`);
     
-    switch (widget.type) {
+    switch (widgetId) {
       case "sla-analysis-bar":
         return (
           <DataVisualizationWidget
-            key={widget.id}
+            key={widgetId}
             type="incomplete-bar"
             title="SLA Analysis: Average Activity Duration (hrs)"
             data={slaAnalysisData}
@@ -693,17 +692,17 @@ const Index = () => {
       case "process-failure-patterns":
         return (
           <DataVisualizationWidget
-            key={widget.id}
+            key={widgetId}
             type="process-failure-patterns-bar"
             title="Process Failure Patterns Distribution"
             data={processFailureData}
           />
         );
       case "resource-performance":
-        return <ResourcePerformanceTable key={widget.id} />;
+        return <ResourcePerformanceTable key={widgetId} />;
       case "mortgage-lifecycle":
         return (
-          <div key={widget.id} className="w-full">
+          <div key={widgetId} className="w-full">
             <h2 className="text-2xl font-bold text-slate-100 mb-6 tracking-tight">
               Mortgage Application Lifecycle
             </h2>
@@ -719,7 +718,7 @@ const Index = () => {
         );
         return (
           <InfoCard
-            key={widget.id}
+            key={widgetId}
             title="Controls Identified Count"
             value={totalControls.toString()}
             subtitle="Total identified controls in the process"
@@ -733,7 +732,7 @@ const Index = () => {
         );
         return (
           <InfoCard
-            key={widget.id}
+            key={widgetId}
             title="All Failure Patterns Count"
             value={totalFailures.toString()}
             subtitle="Total count of all failure patterns"
@@ -743,7 +742,7 @@ const Index = () => {
       case "sop-deviation-count":
         return (
           <InfoCard
-            key={widget.id}
+            key={widgetId}
             title="SOP Deviation Count"
             value={sopDeviationCount.toString()}
             subtitle="Standard operating procedure deviations"
@@ -753,7 +752,7 @@ const Index = () => {
       case "incomplete-cases-count":
         return (
           <InfoCard
-            key={widget.id}
+            key={widgetId}
             title="Incomplete Cases Count"
             value={incompleteCasesCount.toString()}
             subtitle="Cases that remain incomplete"
@@ -763,7 +762,7 @@ const Index = () => {
       case "long-running-cases-count":
         return (
           <InfoCard
-            key={widget.id}
+            key={widgetId}
             title="Long-Running Cases Count"
             value={longRunningCasesCount.toString()}
             subtitle="Cases taking longer than expected"
@@ -773,7 +772,7 @@ const Index = () => {
       case "resource-switches-count":
         return (
           <InfoCard
-            key={widget.id}
+            key={widgetId}
             title="Resource Switches Count"
             value={resourceSwitchesCount.toString()}
             subtitle="Resource handovers in processes"
@@ -783,7 +782,7 @@ const Index = () => {
       case "rework-activities-count":
         return (
           <InfoCard
-            key={widget.id}
+            key={widgetId}
             title="Rework Activities Count"
             value={reworkActivitiesCount.toString()}
             subtitle="Activities that required rework"
@@ -793,7 +792,7 @@ const Index = () => {
       case "timing-violations-count":
         return (
           <InfoCard
-            key={widget.id}
+            key={widgetId}
             title="Timing Violations Count"
             value={timingViolationsCount.toString()}
             subtitle="Identified timing violations"
@@ -810,7 +809,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Incomplete Cases Table"
             data={incompleteCasesData}
             columns={incompleteCols}
@@ -826,7 +825,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Long-Running Cases Table"
             data={longRunningData}
             columns={longRunningCols}
@@ -842,7 +841,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Timing Violations Table"
             data={timingViolationsData}
             columns={timingCols}
@@ -858,7 +857,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="SOP Deviation Patterns"
             data={sopDeviationData}
             columns={sopCols}
@@ -879,7 +878,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Activity Pair Threshold"
             data={
               activityPairThresholdData.length > 0
@@ -899,7 +898,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Case Complexity Analysis"
             data={caseComplexityData}
             columns={complexityCols}
@@ -915,7 +914,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Resource Switches Table"
             data={resourceSwitchesData}
             columns={resourceSwitchesCols}
@@ -972,7 +971,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Resource Switches Count Table"
             data={resourceSwitchesCountData}
             columns={switchCountCols}
@@ -988,7 +987,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Reworked Activities Table"
             data={reworkActivitiesData}
             columns={reworkCols}
@@ -1047,7 +1046,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Controls Management"
             data={controlsTableData}
             columns={controlsTableCols}
@@ -1068,7 +1067,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="SLA Analysis"
             data={
               slaAnalysisTableData.length > 0
@@ -1085,7 +1084,7 @@ const Index = () => {
             : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="KPI"
             data={kpiData}
             columns={kpiCols}
@@ -1099,7 +1098,7 @@ const Index = () => {
         ] : [];
         
         return (
-          <div key={widget.id} className="w-full space-y-6">
+          <div key={widgetId} className="w-full space-y-6">
             <h2 className="text-2xl font-bold text-slate-100 mb-6 tracking-tight">
               FMEA Dashboard
             </h2>
@@ -1143,7 +1142,7 @@ const Index = () => {
           : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="FMEA Analysis Table"
             data={fmeaTableData}
             columns={fmeaTableCols}
@@ -1156,7 +1155,7 @@ const Index = () => {
           : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Severity Analysis"
             data={fmeaSeverityData}
             columns={severityCols}
@@ -1169,7 +1168,7 @@ const Index = () => {
           : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Likelihood Analysis"
             data={fmeaLikelihoodData}
             columns={likelihoodCols}
@@ -1182,7 +1181,7 @@ const Index = () => {
           : [];
         return (
           <DataTable
-            key={widget.id}
+            key={widgetId}
             title="Detectability Analysis"
             data={fmeaDetectabilityData}
             columns={detectabilityCols}
@@ -1196,7 +1195,7 @@ const Index = () => {
         ] : [];
         
         return (
-          <div key={widget.id} className="w-full">
+          <div key={widgetId} className="w-full">
             <h2 className="text-2xl font-bold text-slate-100 mb-6 tracking-tight">
               FMEA Risk Charts
             </h2>
@@ -1212,12 +1211,12 @@ const Index = () => {
 
       default:
         return (
-          <Card key={widget.id}>
+          <Card key={widgetId}>
             <CardHeader>
               <CardTitle>Unknown Widget</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>Widget type not recognized: {widget.type}</p>
+              <p>Widget type not recognized: {widgetId}</p>
             </CardContent>
           </Card>
         );
@@ -1250,7 +1249,7 @@ const Index = () => {
         </div>
 
         <div className="space-y-8">
-          {sortedWidgets.map((widget) => renderWidget(widget))}
+          {sortedWidgets.map((widgetId) => renderWidget(widgetId))}
         </div>
       </div>
     </div>

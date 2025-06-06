@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { User, LogOut, ChevronDown, Settings } from "lucide-react";
@@ -22,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
 import WidgetSelectionModal from "@/components/WidgetSelectionModal";
 import { supabase } from "@/integrations/supabase/client";
+import { formatUserDisplayName } from "@/lib/userUtils";
 
 interface HeaderProps {
   onSelectWidgets: () => void;
@@ -129,8 +129,8 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
     }
   };
 
-  // Extract username from email (part before @)
-  const username = user?.email?.split('@')[0] || 'User';
+  // Format username with capitalization
+  const displayName = formatUserDisplayName(user);
 
   return (
     <>
@@ -190,7 +190,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
                     <User className="w-3.5 h-3.5 text-blue-400" />
                   </div>
                   <span className="hidden sm:inline max-w-24 md:max-w-none truncate text-slate-200">
-                    {username}
+                    {displayName}
                   </span>
                   <ChevronDown className="w-3 h-3 text-slate-400" />
                 </Button>
@@ -198,7 +198,7 @@ const Header: React.FC<HeaderProps> = ({ onSelectWidgets }) => {
               <DropdownMenuContent align="end" className="w-56 bg-slate-800 border-slate-700 shadow-xl z-50">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none text-slate-100">{username}</p>
+                    <p className="text-sm font-medium leading-none text-slate-100">{displayName}</p>
                     <p className="text-xs leading-none text-slate-400 truncate">{user?.email}</p>
                   </div>
                 </DropdownMenuLabel>
