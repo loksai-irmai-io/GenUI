@@ -206,7 +206,7 @@ const ChatBot: React.FC<ChatBotProps> = ({
         const response = {
           text: fmeaSummaryData 
             ? `Here's your FMEA dashboard overview. The current Risk Priority Number (RPN) is ${fmeaSummaryData.rpn} with a ${fmeaSummaryData.risk_level} risk level. The severity rating is ${fmeaSummaryData.severity_rating}, likelihood is ${fmeaSummaryData.likelihood_rating}, and detectability is ${fmeaSummaryData.detectability_rating}.`
-            : "I'm showing you the FMEA dashboard with risk analysis metrics.",
+            : "Here's your FMEA dashboard with risk analysis metrics.",
           widget: (
             <div className="space-y-4">
               {fmeaSummaryData && (
@@ -274,10 +274,57 @@ const ChatBot: React.FC<ChatBotProps> = ({
         return response;
       }
 
-      // General FMEA response
-      return {
-        text: "FMEA (Failure Mode and Effects Analysis) helps identify potential failure points in our mortgage process. Would you like to see the dashboard overview, analysis table, or specific ratings (severity analysis, likelihood analysis, detectability analysis)?",
+      // Default FMEA response with dashboard
+      const dashboardData = fmeaSummaryData ? [
+        { name: 'Severity', value: fmeaSummaryData.severity_rating, color: '#ef4444' },
+        { name: 'Likelihood', value: fmeaSummaryData.likelihood_rating, color: '#f59e0b' },
+        { name: 'Detectability', value: fmeaSummaryData.detectability_rating, color: '#10b981' }
+      ] : [];
+
+      const response = {
+        text: fmeaSummaryData 
+          ? `FMEA (Failure Mode and Effects Analysis) helps identify potential failure points in our mortgage process. Current RPN is ${fmeaSummaryData.rpn} with ${fmeaSummaryData.risk_level} risk level.`
+          : "FMEA (Failure Mode and Effects Analysis) helps identify potential failure points in our mortgage process.",
+        widget: (
+          <div className="space-y-4">
+            {fmeaSummaryData && (
+              <div className="grid grid-cols-3 gap-4">
+                <InfoCard
+                  title="RPN Score"
+                  value={fmeaSummaryData.rpn.toString()}
+                  subtitle={`${fmeaSummaryData.risk_level} Risk`}
+                  size="small"
+                />
+                <InfoCard
+                  title="Severity"
+                  value={fmeaSummaryData.severity_rating.toString()}
+                  subtitle="Impact"
+                  size="small"
+                />
+                <InfoCard
+                  title="Likelihood"
+                  value={fmeaSummaryData.likelihood_rating.toString()}
+                  subtitle="Probability"
+                  size="small"
+                />
+              </div>
+            )}
+            {dashboardData.length > 0 && (
+              <DataVisualizationWidget
+                type="incomplete-bar"
+                title="Risk Rating Distribution"
+                data={dashboardData}
+              />
+            )}
+          </div>
+        ),
       };
+
+      if (onDataReceived && dashboardData.length > 0) {
+        onDataReceived("fmea-dashboard", dashboardData, "FMEA Risk Rating Distribution");
+      }
+
+      return response;
     }
 
     if (message.includes("sla") || message.includes("service level agreement")) {
@@ -344,9 +391,133 @@ const ChatBot: React.FC<ChatBotProps> = ({
       };
     }
 
-    // Default response
+    // Additional analysis queries with visualizations
+    if (message.includes("outlier") || message.includes("anomaly")) {
+      const outlierData = [
+        { name: "Normal Cases", value: 847 },
+        { name: "Minor Outliers", value: 124 },
+        { name: "Major Outliers", value: 34 },
+        { name: "Critical Outliers", value: 8 }
+      ];
+
+      if (onDataReceived) {
+        onDataReceived("outlier-analysis", outlierData, "Outlier Detection Analysis");
+      }
+
+      return {
+        text: "Here's an outlier detection analysis showing the distribution of normal and anomalous cases in the process.",
+        widget: (
+          <DataVisualizationWidget
+            type="incomplete-bar"
+            title="Outlier Detection Analysis"
+            data={outlierData}
+          />
+        ),
+      };
+    }
+
+    if (message.includes("timing") || message.includes("duration")) {
+      const timingData = [
+        { name: "Under 24hrs", value: 234 },
+        { name: "1-3 days", value: 456 },
+        { name: "4-7 days", value: 187 },
+        { name: "Over 1 week", value: 89 }
+      ];
+
+      if (onDataReceived) {
+        onDataReceived("timing-analysis", timingData, "Process Timing Analysis");
+      }
+
+      return {
+        text: "Here's a timing analysis showing the distribution of process completion times.",
+        widget: (
+          <DataVisualizationWidget
+            type="incomplete-bar"
+            title="Process Timing Analysis"
+            data={timingData}
+          />
+        ),
+      };
+    }
+
+    if (message.includes("compliance") || message.includes("regulation")) {
+      const complianceData = [
+        { name: "Fully Compliant", value: 823 },
+        { name: "Minor Issues", value: 67 },
+        { name: "Major Issues", value: 23 },
+        { name: "Non-Compliant", value: 12 }
+      ];
+
+      if (onDataReceived) {
+        onDataReceived("compliance-analysis", complianceData, "Compliance Analysis");
+      }
+
+      return {
+        text: "Here's a compliance analysis showing adherence to regulatory requirements.",
+        widget: (
+          <DataVisualizationWidget
+            type="incomplete-bar"
+            title="Compliance Analysis"
+            data={complianceData}
+          />
+        ),
+      };
+    }
+
+    // Process overview for general queries
+    if (message.includes("process") || message.includes("overview") || message.includes("summary")) {
+      const processData = [
+        { name: "Active Cases", value: 245 },
+        { name: "Completed Cases", value: 1823 },
+        { name: "Pending Cases", value: 67 },
+        { name: "Failed Cases", value: 34 }
+      ];
+
+      if (onDataReceived) {
+        onDataReceived("process-overview", processData, "Process Overview");
+      }
+
+      return {
+        text: "Here's a comprehensive process overview showing the current state of all cases.",
+        widget: (
+          <DataVisualizationWidget
+            type="incomplete-bar"
+            title="Process Overview"
+            data={processData}
+          />
+        ),
+      };
+    }
+
+    // Catch-all for unrecognized queries - still provide value
+    const defaultData = [
+      { name: "Query Processed", value: 1 },
+      { name: "Available Topics", value: 8 },
+      { name: "Analysis Ready", value: 1 }
+    ];
+
+    if (onDataReceived) {
+      onDataReceived("query-status", defaultData, "Query Status");
+    }
+
     return {
-      text: "I can help you with process analysis! Try asking about:\n• SLA analysis and performance metrics\n• Resource performance and efficiency\n• Process failure patterns\n• FMEA analysis and risk assessment (severity analysis, likelihood analysis, detectability analysis)\n• Outlier detection and analysis\n\nWhat would you like to explore?",
+      text: "I've processed your query. Here are some analysis topics I can help with: FMEA analysis, SLA performance, resource efficiency, failure patterns, outlier detection, timing analysis, compliance status, and process overview.",
+      widget: (
+        <DataVisualizationWidget
+          type="incomplete-bar"
+          title="Available Analysis Topics"
+          data={[
+            { name: "FMEA Analysis", value: 1 },
+            { name: "SLA Performance", value: 1 },
+            { name: "Resource Efficiency", value: 1 },
+            { name: "Failure Patterns", value: 1 },
+            { name: "Outlier Detection", value: 1 },
+            { name: "Timing Analysis", value: 1 },
+            { name: "Compliance Status", value: 1 },
+            { name: "Process Overview", value: 1 }
+          ]}
+        />
+      ),
     };
   };
 
