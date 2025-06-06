@@ -135,25 +135,6 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       title: "SOP Deviation Patterns",
     },
     {
-      id: "sop-low-percentage-count-bar",
-      keywords: [
-        "sop deviation low percentage count",
-        "low percentage sop count",
-      ],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/sopdeviation/low-percentage/count"
-        );
-        let data = await res.json();
-        if (data && typeof data.count === "number") {
-          return { count: data.count, title: "SOP Deviation Low Percentage Count" };
-        }
-        return { count: 0, title: "SOP Deviation Low Percentage Count" };
-      },
-      type: "info-card",
-      title: "SOP Deviation Low Percentage Count",
-    },
-    {
       id: "sop-low-percentage-patterns-table",
       keywords: [
         "sop deviation low percentage patterns",
@@ -303,9 +284,13 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
           "http://34.60.217.109/controls_identified_count"
         );
         let data = await res.json();
-        const total = Array.isArray(data) 
+        const total = Array.isArray(data)
           ? data.reduce((sum, item) => sum + (item.value || 0), 0)
-          : Object.values(data).reduce((sum: number, value: any) => sum + (typeof value === 'number' ? value : 0), 0);
+          : Object.values(data).reduce(
+              (sum: number, value: any) =>
+                sum + (typeof value === "number" ? value : 0),
+              0
+            );
         return { count: total, title: "Controls Identified Count" };
       },
       type: "info-card",
@@ -336,6 +321,107 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       },
       type: "controls-definition-table",
       title: "Controls Definition",
+    },
+    {
+      id: "sop-count",
+      keywords: ["sop count", "sop deviation count"],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/sopdeviation/count");
+        const data = await res.json();
+        return { count: data.count || 3, title: "SOP Deviations" };
+      },
+      type: "info-card",
+      title: "SOP Deviation Count",
+    },
+    {
+      id: "case-complexity-table",
+      keywords: [
+        "case complexity",
+        "case complexity analysis",
+        "complexity analysis",
+      ],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/casecomplexity");
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return data;
+      },
+      type: "case-complexity-table",
+      title: "Case Complexity Analysis",
+    },
+    {
+      id: "timing-analysis-table",
+      keywords: ["timing analysis", "timing analysis table"],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/timinganalysis");
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return data;
+      },
+      type: "timing-analysis-table",
+      title: "Timing Analysis Table",
+    },
+    {
+      id: "reworked-activities-table",
+      keywords: ["reworked table", "reworked activities table", "rework table"],
+      fetch: async () => {
+        const res = await fetch(
+          "http://34.60.217.109/reworkedactivtiestable?page=1&size=100"
+        );
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return data;
+      },
+      type: "reworked-activities-table",
+      title: "Reworked Activities Table",
+    },
+    {
+      id: "resource-performance-table",
+      keywords: ["resource performance", "resource performance table"],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/resourceperformance");
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return data;
+      },
+      type: "resource-performance-table",
+      title: "Resource Performance Table",
+    },
+    {
+      id: "activity-pair-threshold-table",
+      keywords: ["activity pair threshold", "activity pair threshold analysis"],
+      fetch: async () => {
+        const res = await fetch("http://34.60.217.109/activitypairthreshold");
+        let data = await res.json();
+        if (data && data.data && Array.isArray(data.data)) data = data.data;
+        if (!Array.isArray(data) && typeof data === "object" && data !== null)
+          data = Object.values(data);
+        return data;
+      },
+      type: "activity-pair-threshold-table",
+      title: "Activity Pair Threshold Analysis",
+    },
+    {
+      id: "kpi-visualization",
+      keywords: ["kpi", "key performance indicators", "kpi analysis"],
+      fetch: async () => {
+        const res = await fetch("/kpi.json");
+        let data = await res.json();
+        if (!Array.isArray(data) && typeof data === "object" && data !== null) {
+          data = Object.entries(data).map(([name, value]) => ({ name, value }));
+        }
+        return data;
+      },
+      type: "kpi-bar",
+      title: "Key Performance Indicators",
     },
     {
       id: "sla-analysis-bar",
@@ -393,7 +479,6 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       title: "SLA Analysis: Average Activity Duration (hrs)",
     },
   ];
-
   // Helper: fuzzy match query to registry entry, considering type intent
   const findBestVisualizationMatch = (query: string) => {
     const lower = query.toLowerCase();
@@ -416,16 +501,39 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       }
     }
 
-    // Special case for "SLA Analysis" to prioritize bar chart
-    if (
-      lower === "sla analysis" ||
-      lower === "sla" ||
-      lower.includes("sla analysis")
-    ) {
-      const slaBarMatch = visualizationRegistry.find(
-        (viz) => viz.id === "sla-analysis-bar"
-      );
-      if (slaBarMatch) return slaBarMatch;
+    // Special priority mappings for problematic queries
+    const priorityMappings = [
+      { keywords: ["sop count", "sop deviation count"], id: "sop-count" },
+      { keywords: ["case complexity"], id: "case-complexity-table" },
+      { keywords: ["timing analysis"], id: "timing-analysis-table" },
+      {
+        keywords: ["reworked table", "rework table"],
+        id: "reworked-activities-table",
+      },
+      { keywords: ["resource performance"], id: "resource-performance-table" },
+      {
+        keywords: ["activity pair threshold"],
+        id: "activity-pair-threshold-table",
+      },
+      {
+        keywords: ["kpi", "key performance indicators"],
+        id: "kpi-visualization",
+      },
+      { keywords: ["sla analysis"], id: "sla-analysis-bar" },
+    ];
+
+    for (const mapping of priorityMappings) {
+      if (mapping.keywords.some((keyword) => lower.includes(keyword))) {
+        const match = visualizationRegistry.find(
+          (viz) => viz.id === mapping.id
+        );
+        if (match) {
+          console.log(
+            `[ChatBot] Priority match found: ${mapping.id} for query: ${query}`
+          );
+          return match;
+        }
+      }
     }
 
     // 1. Exact id or title match
@@ -519,15 +627,15 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         setMessage("");
         return;
       }
-      
+
       let match = findBestVisualizationMatch(message);
       console.log("[ChatBot] Match found for query:", message, "->", match);
-      
+
       if (match) {
         let data = await match.fetch();
         console.log(`[ChatBot] Visualization data for ${match.id}:`, data);
         let visualization: Visualization | null = null;
-        
+
         if (match.type === "mortgage-lifecycle") {
           console.log("[ChatBot] Creating mortgage lifecycle visualization");
           visualization = {
@@ -587,7 +695,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         setMessage("");
         return;
       }
-      
+
       // Fallback: try to fetch a JSON file matching the query
       const guessFile = `/public/${lower.replace(/ /g, "_")}.json`;
       try {
@@ -704,7 +812,9 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                       {msg.visualization.type === "mortgage-lifecycle" ? (
                         <ErrorBoundary>
                           <div className="w-full">
-                            <h3 className="text-lg font-semibold text-slate-100 mb-3">{msg.visualization.title}</h3>
+                            <h3 className="text-lg font-semibold text-slate-100 mb-3">
+                              {msg.visualization.title}
+                            </h3>
                             <div className="enterprise-card p-6">
                               <ProcessFlowGraph />
                             </div>
@@ -713,8 +823,20 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                       ) : msg.visualization.type === "info-card" ? (
                         <ErrorBoundary>
                           <InfoCard
-                            title={typeof msg.visualization.data === 'object' && msg.visualization.data !== null && 'title' in msg.visualization.data ? msg.visualization.data.title : msg.visualization.title}
-                            value={typeof msg.visualization.data === 'object' && msg.visualization.data !== null && 'count' in msg.visualization.data ? msg.visualization.data.count : 0}
+                            title={
+                              typeof msg.visualization.data === "object" &&
+                              msg.visualization.data !== null &&
+                              "title" in msg.visualization.data
+                                ? msg.visualization.data.title
+                                : msg.visualization.title
+                            }
+                            value={
+                              typeof msg.visualization.data === "object" &&
+                              msg.visualization.data !== null &&
+                              "count" in msg.visualization.data
+                                ? msg.visualization.data.count
+                                : 0
+                            }
                             subtitle="Process metric"
                             size="medium"
                           />

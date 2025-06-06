@@ -1,1 +1,65 @@
-[]
+[
+  {
+    "process": "Application Review",
+    "step": "Verify applicant information and documentation",
+    "failure_mode": "Missing or inaccurate applicant documentation",
+    "effect": "Delays in processing applications and increased rejection rates",
+    "cause": "Incomplete submissions by applicants or data entry errors in the system"
+  },
+  {
+    "process": "Credit Assessment",
+    "step": "Perform credit checks and risk scoring",
+    "failure_mode": "Faulty credit score calculation",
+    "effect": "Approving risky applicants or rejecting eligible ones",
+    "cause": "Credit bureau API integration issues or algorithm inaccuracies"
+  },
+  {
+    "process": "Underwriting",
+    "step": "Automated underwriting",
+    "failure_mode": "System fails to flag high-risk applicants",
+    "effect": "Loan approval for high-risk borrowers, leading to potential defaults",
+    "cause": "Underwriting guidelines not properly configured in the system"
+  },
+  {
+    "process": "Approval Process",
+    "step": "Dual approval for high-value loans",
+    "failure_mode": "Omission of secondary review for high-value loans",
+    "effect": "Potential compliance breach and approval of unviable loans",
+    "cause": "Workflows bypassing secondary approval or human oversight errors"
+  },
+  {
+    "process": "Post-Approval Monitoring",
+    "step": "Review payment and delinquency status",
+    "failure_mode": "Missed reviews for adjustable-rate mortgages",
+    "effect": "Higher-than-average default rates among such loans",
+    "cause": "Lack of prioritization in servicer workflow or incorrect account categorization"
+  },
+  {
+    "process": "Data Quality",
+    "step": "Double-check all entries",
+    "failure_mode": "Increase in data entry errors",
+    "effect": "Delays, wrong approvals, or rejections due to misrepresented data",
+    "cause": "Resource skill gaps or pressure during peak application periods"
+  },
+  {
+    "process": "Compliance",
+    "step": "Meet regulatory and fraud control protocols",
+    "failure_mode": "Non-compliance with lending law or fraud misdetection",
+    "effect": "Legal penalties, reputation damage, and financial losses",
+    "cause": "Regulation updates not integrated or system flag failures"
+  },
+  {
+    "process": "Closing",
+    "step": "Loan agreement signing and disbursement",
+    "failure_mode": "Incorrect loan terms or delayed disbursement",
+    "effect": "Customer dissatisfaction and SLA violations",
+    "cause": "Errors in document preparation or validation technology issues"
+  },
+  {
+    "process": "Servicing",
+    "step": "Handle repayments and escrow",
+    "failure_mode": "Escrow allocation mistakes",
+    "effect": "Customer complaints, operational inefficiencies",
+    "cause": "Calculation errors or system integration failures"
+  }
+]

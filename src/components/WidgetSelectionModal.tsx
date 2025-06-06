@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -34,19 +33,22 @@ const ALL_WIDGETS = {
     {
       id: "all-failure-patterns-count",
       name: "All Failure Patterns Count",
-      description: "Total count of all identified failure patterns as info card",
+      description:
+        "Total count of all identified failure patterns as info card",
       relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "sop-deviation-count",
       name: "SOP Deviation Count",
-      description: "Count of standard operating procedure deviations as info card",
+      description:
+        "Count of standard operating procedure deviations as info card",
       relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "incomplete-cases-count",
       name: "Incomplete Cases Count",
-      description: "Count of cases that remain incomplete displayed as info card",
+      description:
+        "Count of cases that remain incomplete displayed as info card",
       relevantPages: ["/", "/outlier-analysis"],
     },
     {
@@ -118,7 +120,8 @@ const ALL_WIDGETS = {
     {
       id: "resource-performance",
       name: "Resource Performance",
-      description: "Performance analysis table of resources by efficiency and utilization",
+      description:
+        "Performance analysis table of resources by efficiency and utilization",
       relevantPages: ["/", "/outlier-analysis"],
     },
     {
@@ -136,21 +139,16 @@ const ALL_WIDGETS = {
     {
       id: "process-failure-patterns",
       name: "Process Failure Patterns Distribution",
-      description: "Distribution chart showing different types of process failures",
+      description:
+        "Distribution chart showing different types of process failures",
       relevantPages: ["/", "/outlier-analysis"],
     },
   ],
-  "CCM": [
+  CCM: [
     {
       id: "controls-identified-count",
       name: "Controls Identified Count",
       description: "Count of identified controls displayed as info card",
-      relevantPages: ["/", "/ccm"],
-    },
-    {
-      id: "controls-description",
-      name: "Controls Description",
-      description: "Detailed description table of all identified controls",
       relevantPages: ["/", "/ccm"],
     },
     {
@@ -160,21 +158,17 @@ const ALL_WIDGETS = {
       relevantPages: ["/", "/ccm"],
     },
     {
-      id: "control-definition",
-      name: "Control Definition",
-      description: "Table defining all control types and their specifications",
-      relevantPages: ["/", "/ccm"],
-    },
-    {
       id: "sla-analysis",
       name: "SLA Analysis",
-      description: "Service Level Agreement analysis with activity duration metrics",
+      description:
+        "Service Level Agreement analysis with activity duration metrics",
       relevantPages: ["/", "/ccm"],
     },
     {
       id: "sla-analysis-bar",
       name: "SLA Analysis Bar Chart",
-      description: "Service Level Agreement analysis with activity duration metrics",
+      description:
+        "Service Level Agreement analysis with activity duration metrics",
       relevantPages: ["/", "/ccm"],
     },
     {
@@ -242,7 +236,10 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
   };
 
   const relevantWidgets = getRelevantWidgets();
-  const totalRelevantWidgets = Object.values(relevantWidgets).reduce((total, widgets) => total + widgets.length, 0);
+  const totalRelevantWidgets = Object.values(relevantWidgets).reduce(
+    (total, widgets) => total + widgets.length,
+    0
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
@@ -254,10 +251,16 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
           <DialogTitle className="flex items-center justify-between text-slate-100">
             <span>Configure Dashboard Widgets</span>
             <div className="flex gap-2">
-              <Badge variant="outline" className="border-slate-600 text-slate-300">
+              <Badge
+                variant="outline"
+                className="border-slate-600 text-slate-300"
+              >
                 {totalRelevantWidgets} available
               </Badge>
-              <Badge variant="outline" className="border-slate-600 text-slate-300">
+              <Badge
+                variant="outline"
+                className="border-slate-600 text-slate-300"
+              >
                 {localPinnedWidgets.length} pinned
               </Badge>
             </div>
@@ -269,7 +272,10 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
             <div key={category} className="space-y-4">
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-bold text-slate-100">{category}</h2>
-                <Badge variant="secondary" className="text-xs bg-slate-700 text-slate-300 border-slate-600">
+                <Badge
+                  variant="secondary"
+                  className="text-xs bg-slate-700 text-slate-300 border-slate-600"
+                >
                   {widgets.length} widget{widgets.length !== 1 ? "s" : ""}
                 </Badge>
               </div>
@@ -325,7 +331,8 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
 
         <div className="flex justify-between items-center pt-6 border-t border-slate-700">
           <p className="text-sm text-slate-400">
-            Click widgets to pin/unpin them on your dashboard • Configure widgets from Process Discovery, Outlier Analysis, and CCM categories
+            Click widgets to pin/unpin them on your dashboard • Configure
+            widgets from Process Discovery, Outlier Analysis, and CCM categories
           </p>
           <div className="flex space-x-3">
             <Button

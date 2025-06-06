@@ -3,7 +3,13 @@ import DataVisualizationWidget from "../components/widgets/DataVisualizationWidg
 import DataTable from "../components/widgets/DataTable";
 import InfoCard from "../components/widgets/InfoCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Toggle } from "@/components/ui/toggle";
 
 const CCM = () => {
@@ -60,7 +66,7 @@ const CCM = () => {
         setControlsCount(countArr);
         setSlaAnalysis(Array.isArray(sla) ? sla : sla.data || []);
         setKpi(Array.isArray(kpi) ? kpi : kpi.data || []);
-        
+
         let barArr: any[] = [];
         if (slaBar && Array.isArray(slaBar.data)) {
           const bar = slaBar.data[0];
@@ -115,98 +121,210 @@ const CCM = () => {
       })
       .catch((e) => setError("Failed to load CCM data."))
       .finally(() => setLoading(false));
-  }, []);
-
-  // Function to fetch control data based on selection
+  }, []); // Function to fetch control data based on selection
   const fetchControlData = async (controlValue: string) => {
     setControlLoading(true);
     setControlError(null);
-    
+
     console.log(`Attempting to fetch data for control: ${controlValue}`);
-    
+
     try {
-      const baseUrl = `http://34.60.217.109/${controlValue}-clean`;
-      const endpoints = [
-        `${baseUrl}/definition`,
-        `${baseUrl}/test-configuration`,
-        `${baseUrl}/results`
-      ];
-      
-      console.log('Fetching from endpoints:', endpoints);
-      
+      // Define endpoint patterns based on control type
+      let endpoints: string[] = [];
+
+      if (controlValue === "valuation-accepted") {
+        endpoints = [
+          "http://34.60.217.109/valuation-accepted/definition",
+          "http://34.60.217.109/valuation-accepted/test-configuration",
+          "http://34.60.217.109/valuation-accepted/results",
+        ];
+      } else if (controlValue === "underwriting-approved") {
+        endpoints = [
+          "http://34.60.217.109/underwriting-approval/definition",
+          "http://34.60.217.109/underwriting-approval/test-configuration",
+          "http://34.60.217.109/underwriting-approval/results",
+        ];
+      } else {
+        // Default pattern for other controls (existing implementation)
+        const baseUrl = `http://34.60.217.109/${controlValue}-clean`;
+        endpoints = [
+          `${baseUrl}/definition`,
+          `${baseUrl}/test-configuration`,
+          `${baseUrl}/results`,
+        ];
+      }
+
+      console.log("Fetching from endpoints:", endpoints);
       const [definitionRes, testConfigRes, resultsRes] = await Promise.all([
-        fetch(endpoints[0]).catch(err => {
-          console.error(`Failed to fetch definition from ${endpoints[0]}:`, err);
+        fetch(endpoints[0], {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          mode: "cors",
+        }).catch((err) => {
+          console.error(
+            `Failed to fetch definition from ${endpoints[0]}:`,
+            err
+          );
           throw err;
         }),
-        fetch(endpoints[1]).catch(err => {
-          console.error(`Failed to fetch test-configuration from ${endpoints[1]}:`, err);
+        fetch(endpoints[1], {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          mode: "cors",
+        }).catch((err) => {
+          console.error(
+            `Failed to fetch test-configuration from ${endpoints[1]}:`,
+            err
+          );
           throw err;
         }),
-        fetch(endpoints[2]).catch(err => {
+        fetch(endpoints[2], {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          mode: "cors",
+        }).catch((err) => {
           console.error(`Failed to fetch results from ${endpoints[2]}:`, err);
           throw err;
-        })
+        }),
       ]);
-
-      console.log('Response statuses:', {
+      console.log("Response statuses:", {
         definition: definitionRes.status,
         testConfig: testConfigRes.status,
-        results: resultsRes.status
+        results: resultsRes.status,
       });
 
+      // Check if responses are ok
+      if (!definitionRes.ok) {
+        console.error(
+          `Definition endpoint failed with status: ${definitionRes.status}`
+        );
+      }
+      if (!testConfigRes.ok) {
+        console.error(
+          `Test config endpoint failed with status: ${testConfigRes.status}`
+        );
+      }
+      if (!resultsRes.ok) {
+        console.error(
+          `Results endpoint failed with status: ${resultsRes.status}`
+        );
+      }
+
       const [definition, testConfig, results] = await Promise.all([
-        definitionRes.json().catch(err => {
-          console.error('Failed to parse definition JSON:', err);
-          return [];
-        }),
-        testConfigRes.json().catch(err => {
-          console.error('Failed to parse test-configuration JSON:', err);
-          return [];
-        }),
-        resultsRes.json().catch(err => {
-          console.error('Failed to parse results JSON:', err);
-          return [];
-        })
+        definitionRes.ok
+          ? definitionRes.json().catch((err) => {
+              console.error("Failed to parse definition JSON:", err);
+              return [];
+            })
+          : [],
+        testConfigRes.ok
+          ? testConfigRes.json().catch((err) => {
+              console.error("Failed to parse test-configuration JSON:", err);
+              return [];
+            })
+          : [],
+        resultsRes.ok
+          ? resultsRes.json().catch((err) => {
+              console.error("Failed to parse results JSON:", err);
+              return [];
+            })
+          : [],
       ]);
+      console.log("Parsed data:", { definition, testConfig, results });
 
-      console.log('Parsed data:', { definition, testConfig, results });
+      // Convert definition object to table format
+      const definitionTableData = definition
+        ? [
+            {
+              "Control ID": definition.control_details?.["Control ID"] || "",
+              "Control Name":
+                definition.control_details?.["Control Name"] || "",
+              "Control Description":
+                definition.control_details?.["Control Description"] || "",
+              Source: definition.control_details?.["Source"] || "",
+              Department: definition.control_details?.["Department"] || "",
+              "Control Type":
+                definition.control_details?.["Control Type"] || "",
+              "Associated Risks":
+                definition.control_details?.["Associated Risks"] || "",
+              "Default Test Frequency":
+                definition.control_details?.["Default Test Frequency"] || "",
+              Activity: definition.activity_selection?.["activity"] || "",
+              "Is Control Candidate": definition.activity_selection?.[
+                "is_control_candidate"
+              ]
+                ? "Yes"
+                : "No",
+            },
+          ]
+        : [];
 
-      setControlDefinition(Array.isArray(definition) ? definition : definition.data || []);
-      setControlTestConfig(Array.isArray(testConfig) ? testConfig : testConfig.data || []);
-      setControlResults(Array.isArray(results) ? results : results.data || []);
-      
+      // Convert test config object to table format
+      const testConfigTableData = testConfig
+        ? [
+            {
+              "Domain Context": testConfig.domain_context || "",
+              "Test Period Start": testConfig.test_period?.start || "",
+              "Test Period End": testConfig.test_period?.end || "",
+              "Test Objective": testConfig.test_scenario?.test_objective || "",
+              "Expected Outcome":
+                testConfig.test_scenario?.expected_outcome || "",
+              "Sampling Notes": testConfig.test_scenario?.sampling_notes || "",
+              "Testing Plan Summary": testConfig.testing_plan_summary || "",
+              "Key Data Fields": Array.isArray(
+                testConfig.test_scenario?.key_data_fields
+              )
+                ? testConfig.test_scenario.key_data_fields.join(", ")
+                : "",
+            },
+          ]
+        : [];
+
+      // Convert results object to table format
+      const resultsTableData = results
+        ? [
+            {
+              "Control ID":
+                results.test_execution_results?.["Control ID"] || "",
+              "Control Name":
+                results.test_execution_results?.["Control Name"] || "",
+              "Test Date": results.test_execution_results?.["Test Date"] || "",
+              "Test Period Start":
+                results.test_execution_results?.["Test Period Start"] || "",
+              "Test Period End":
+                results.test_execution_results?.["Test Period End"] || "",
+              Status: results.test_execution_results?.["Status"] || "",
+              Findings: results.test_execution_results?.["Findings"] || "",
+              "AI Generated Insight":
+                results.test_execution_results?.["AI Generated Insight"] || "",
+              "Evidence Datasets": Array.isArray(results.evidence_datasets)
+                ? results.evidence_datasets.join(", ")
+                : "",
+            },
+          ]
+        : [];
+
+      setControlDefinition(definitionTableData);
+      setControlTestConfig(testConfigTableData);
+      setControlResults(resultsTableData);
     } catch (error) {
-      const errorMessage = `Failed to load data for ${controlValue}. The API endpoints may be unavailable.`;
+      const errorMessage = `Failed to load data for ${controlValue}. Please check if the API endpoints are accessible.`;
       setControlError(errorMessage);
       console.error("Error fetching control data:", error);
-      
-      // Set fallback data for demo purposes
-      console.log("Setting fallback data due to API failure");
-      setControlDefinition([
-        { 
-          id: "demo-1", 
-          control_name: "Initial Assessment Control", 
-          description: "Demo data - API endpoint unavailable",
-          status: "Active"
-        }
-      ]);
-      setControlTestConfig([
-        { 
-          test_id: "test-1", 
-          test_name: "Assessment Validation", 
-          configuration: "Demo configuration - API endpoint unavailable",
-          frequency: "Daily"
-        }
-      ]);
-      setControlResults([
-        { 
-          result_id: "result-1", 
-          test_result: "Pass", 
-          execution_date: "2025-06-06",
-          notes: "Demo result - API endpoint unavailable"
-        }
-      ]);
+
+      // Clear data on error instead of setting fallback
+      setControlDefinition([]);
+      setControlTestConfig([]);
+      setControlResults([]);
     } finally {
       setControlLoading(false);
     }
@@ -237,10 +355,19 @@ const CCM = () => {
   };
 
   // Enhanced table widget with toggle button
-  const TableWidget = ({ title, data, columns, showToggle = false, toggleState, onToggleChange }: any) => (
+  const TableWidget = ({
+    title,
+    data,
+    columns,
+    showToggle = false,
+    toggleState,
+    onToggleChange,
+  }: any) => (
     <div className="w-full enterprise-card p-6 mb-6">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-slate-100 tracking-tight">{title}</h3>
+        <h3 className="text-xl font-semibold text-slate-100 tracking-tight">
+          {title}
+        </h3>
         {showToggle && (
           <div className="flex items-center gap-3">
             <span className="text-sm text-slate-400">
@@ -250,8 +377,8 @@ const CCM = () => {
               pressed={toggleState}
               onPressedChange={onToggleChange}
               className={`${
-                toggleState 
-                  ? "bg-green-600 text-white data-[state=on]:bg-green-600" 
+                toggleState
+                  ? "bg-green-600 text-white data-[state=on]:bg-green-600"
                   : "bg-red-600 text-white data-[state=on]:bg-red-600"
               } px-4 py-2 font-medium transition-colors`}
             >
@@ -291,7 +418,10 @@ const CCM = () => {
                   className="border-b border-slate-700 hover:bg-slate-700/50 transition-colors"
                 >
                   {columns.map((col: any) => (
-                    <td key={col.key} className="px-6 py-4 text-slate-300 align-top">
+                    <td
+                      key={col.key}
+                      className="px-6 py-4 text-slate-300 align-top"
+                    >
                       {formatCell(row[col.key])}
                     </td>
                   ))}
@@ -415,7 +545,8 @@ const CCM = () => {
           CCM
         </h1>
         <p className="text-lg text-slate-300 font-medium max-w-3xl">
-          Comprehensive Control and Compliance Management dashboard with SLA analysis and KPI tracking.
+          Comprehensive Control and Compliance Management dashboard with SLA
+          analysis and KPI tracking.
         </p>
       </div>
 
@@ -433,9 +564,24 @@ const CCM = () => {
 
       <Tabs defaultValue="controls" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-8 bg-slate-800/50 border border-slate-700">
-          <TabsTrigger value="controls" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300">Controls</TabsTrigger>
-          <TabsTrigger value="sla-analysis" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300">SLA Analysis</TabsTrigger>
-          <TabsTrigger value="kpi" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300">KPI</TabsTrigger>
+          <TabsTrigger
+            value="controls"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+          >
+            Controls
+          </TabsTrigger>
+          <TabsTrigger
+            value="sla-analysis"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+          >
+            SLA Analysis
+          </TabsTrigger>
+          <TabsTrigger
+            value="kpi"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300"
+          >
+            KPI
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="controls" className="space-y-6">
@@ -444,28 +590,35 @@ const CCM = () => {
               <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full mr-4"></div>
               Controls Overview
             </h2>
-            
+
             <div className="mb-8">
               <InfoCard
                 title="Controls Identified Count"
-                value={controlsCount.reduce((sum, item) => sum + (item.value || 0), 0).toString()}
+                value={controlsCount
+                  .reduce((sum, item) => sum + (item.value || 0), 0)
+                  .toString()}
                 subtitle="Total identified controls in the process"
                 size="large"
               />
             </div>
-            
+
             <div className="space-y-6">
               <div className="w-full enterprise-card p-6">
-                <h3 className="text-xl font-semibold text-slate-100 mb-4 tracking-tight">Controls</h3>
+                <h3 className="text-xl font-semibold text-slate-100 mb-4 tracking-tight">
+                  Controls
+                </h3>
                 <div className="mb-6">
-                  <Select onValueChange={handleControlSelection} value={selectedControl}>
+                  <Select
+                    onValueChange={handleControlSelection}
+                    value={selectedControl}
+                  >
                     <SelectTrigger className="w-full max-w-md bg-slate-800 border-slate-600 text-slate-100">
                       <SelectValue placeholder="Select a control to view details" />
                     </SelectTrigger>
                     <SelectContent className="bg-slate-800 border-slate-600">
                       {controlOptions.map((option) => (
-                        <SelectItem 
-                          key={option.value} 
+                        <SelectItem
+                          key={option.value}
                           value={option.value}
                           className="text-slate-100 focus:bg-slate-700"
                         >
@@ -475,19 +628,64 @@ const CCM = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
                 {controlLoading && (
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
                   </div>
-                )}
-
+                )}{" "}
                 {controlError && (
                   <div className="bg-red-900/50 border border-red-700 rounded-xl p-4 text-red-300 mb-4">
-                    {controlError}
+                    <div className="font-semibold mb-2">API Error:</div>
+                    <div>{controlError}</div>{" "}
+                    {selectedControl && (
+                      <div className="mt-2 text-sm text-red-400">
+                        Expected endpoints:
+                        <ul className="list-disc list-inside mt-1">
+                          {selectedControl === "valuation-accepted" ? (
+                            <>
+                              <li>
+                                http://34.60.217.109/valuation-accepted/definition
+                              </li>
+                              <li>
+                                http://34.60.217.109/valuation-accepted/test-configuration
+                              </li>
+                              <li>
+                                http://34.60.217.109/valuation-accepted/results
+                              </li>
+                            </>
+                          ) : selectedControl === "underwriting-approved" ? (
+                            <>
+                              <li>
+                                http://34.60.217.109/underwriting-approval/definition
+                              </li>
+                              <li>
+                                http://34.60.217.109/underwriting-approval/test-configuration
+                              </li>
+                              <li>
+                                http://34.60.217.109/underwriting-approval/results
+                              </li>
+                            </>
+                          ) : (
+                            <>
+                              <li>
+                                http://34.60.217.109/{selectedControl}
+                                -clean/definition
+                              </li>
+                              <li>
+                                http://34.60.217.109/{selectedControl}
+                                -clean/test-configuration
+                              </li>
+                              <li>
+                                http://34.60.217.109/{selectedControl}
+                                -clean/results
+                              </li>
+                            </>
+                          )}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 )}
-
                 {selectedControl && !controlLoading && (
                   <div className="space-y-6">
                     <TableWidget
@@ -540,7 +738,12 @@ const CCM = () => {
               <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full mr-4"></div>
               Key Performance Indicators
             </h2>
-            <TableWidget title="KPI Metrics" data={kpi} columns={getColumns(kpi)} showToggle={false} />
+            <TableWidget
+              title="KPI Metrics"
+              data={kpi}
+              columns={getColumns(kpi)}
+              showToggle={false}
+            />
           </div>
         </TabsContent>
       </Tabs>
