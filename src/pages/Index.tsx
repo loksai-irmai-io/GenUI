@@ -10,7 +10,7 @@ import SOPWidget from "@/components/widgets/SOPWidget";
 import DataVisualizationWidget from "@/components/widgets/DataVisualizationWidget";
 import TimingAnalysisTable from "@/components/widgets/TimingAnalysisTable";
 import ResourcePerformanceTable from "@/components/widgets/ResourcePerformanceTable";
-import ProcessFlowGraph from "@/components/ProcessFlowGraph";
+import MortgageLifecycleGraph from "@/components/MortgageLifecycleGraph";
 
 const AVAILABLE_WIDGETS = [
   // Process Discovery
@@ -123,6 +123,14 @@ const AVAILABLE_WIDGETS = [
     name: "Process Failure Patterns",
     component: "ProcessFailurePatterns",
   },
+
+  // FMEA
+  { id: "fmea-dashboard", name: "FMEA Dashboard", component: "FMEADashboard" },
+  { id: "fmea-analysis-table", name: "FMEA Analysis Table", component: "FMEAAnalysisTable" },
+  { id: "fmea-severity-analysis", name: "Severity Analysis", component: "FMEASeverityAnalysis" },
+  { id: "fmea-likelihood-analysis", name: "Likelihood Analysis", component: "FMEALikelihoodAnalysis" },
+  { id: "fmea-detectability-analysis", name: "Detectability Analysis", component: "FMEADetectabilityAnalysis" },
+  { id: "fmea-risk-charts", name: "FMEA Risk Charts", component: "FMEARiskCharts" },
 ];
 
 const Dashboard: React.FC = () => {
@@ -161,6 +169,14 @@ const Dashboard: React.FC = () => {
     useState<any[]>([]);
   const [slaAnalysisTableData, setSlaAnalysisTableData] = useState<any[]>([]);
 
+  // FMEA data states
+  const [fmeaSummaryData, setFmeaSummaryData] = useState<any>(null);
+  const [fmeaTableData, setFmeaTableData] = useState<any[]>([]);
+  const [fmeaDetailedResults, setFmeaDetailedResults] = useState<any>(null);
+  const [fmeaSeverityData, setFmeaSeverityData] = useState<any[]>([]);
+  const [fmeaLikelihoodData, setFmeaLikelihoodData] = useState<any[]>([]);
+  const [fmeaDetectabilityData, setFmeaDetectabilityData] = useState<any[]>([]);
+
   useEffect(() => {
     if (user) {
       fetchUserPreferences();
@@ -181,7 +197,9 @@ const Dashboard: React.FC = () => {
     fetchActivityPairThresholdData();
     fetchResourceSwitchesCountTableData();
     fetchSLAAnalysisTableData();
+    fetchFMEAData();
   }, [user, refreshKey]);
+
   const fetchControlsData = async () => {
     try {
       const response = await fetch(
@@ -581,6 +599,49 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const fetchFMEAData = async () => {
+    try {
+      // Fetch FMEA summary data
+      const summaryResponse = await fetch('/latest_fmea_summary.json');
+      const summary = await summaryResponse.json();
+      setFmeaSummaryData(summary);
+
+      // Fetch FMEA table data
+      const tableResponse = await fetch('/fmea_table_20250605_221129.json');
+      const table = await tableResponse.json();
+      setFmeaTableData(table);
+
+      // Fetch detailed results
+      const detailedResponse = await fetch('/fmea_complete_results_20250605_221129.json');
+      const detailed = await detailedResponse.json();
+      setFmeaDetailedResults(detailed);
+
+      // Parse rating data from JSON strings
+      if (detailed.ratings && detailed.ratings.severity && detailed.ratings.severity.full_response) {
+        const severityMatch = detailed.ratings.severity.full_response.match(/```json\n([\s\S]*?)\n```/);
+        if (severityMatch) {
+          setFmeaSeverityData(JSON.parse(severityMatch[1]));
+        }
+      }
+
+      if (detailed.ratings && detailed.ratings.likelihood && detailed.ratings.likelihood.full_response) {
+        const likelihoodMatch = detailed.ratings.likelihood.full_response.match(/```json\n([\s\S]*?)\n```/);
+        if (likelihoodMatch) {
+          setFmeaLikelihoodData(JSON.parse(likelihoodMatch[1]));
+        }
+      }
+
+      if (detailed.ratings && detailed.ratings.detectability && detailed.ratings.detectability.full_response) {
+        const detectabilityMatch = detailed.ratings.detectability.full_response.match(/```json\n([\s\S]*?)\n```/);
+        if (detectabilityMatch) {
+          setFmeaDetectabilityData(JSON.parse(detectabilityMatch[1]));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching FMEA data:', error);
+    }
+  };
+
   const fetchUserPreferences = async () => {
     try {
       if (!user) {
@@ -638,7 +699,7 @@ const Dashboard: React.FC = () => {
               Mortgage Application Lifecycle
             </h2>
             <div className="enterprise-card p-6">
-              <ProcessFlowGraph />
+              <MortgageLifecycleGraph />
             </div>
           </div>
         );
@@ -1021,6 +1082,125 @@ const Dashboard: React.FC = () => {
             columns={kpiCols}
           />
         );
+      case "fmea-dashboard":
+        const dashboardData = fmeaSummaryData ? [
+          { name: 'Severity', value: fmeaSummaryData.severity_rating, color: '#ef4444' },
+          { name: 'Likelihood', value: fmeaSummaryData.likelihood_rating, color: '#f59e0b' },
+          { name: 'Detectability', value: fmeaSummaryData.detectability_rating, color: '#10b981' }
+        ] : [];
+        
+        return (
+          <div key={widgetId} className="w-full space-y-6">
+            <h2 className="text-2xl font-bold text-slate-100 mb-6 tracking-tight">
+              FMEA Dashboard
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {fmeaSummaryData && (
+                <>
+                  <InfoCard
+                    title="RPN Score"
+                    value={fmeaSummaryData.rpn.toString()}
+                    subtitle={`${fmeaSummaryData.risk_level} Risk`}
+                    size="medium"
+                  />
+                  <InfoCard
+                    title="Severity Rating"
+                    value={fmeaSummaryData.severity_rating.toString()}
+                    subtitle="Impact Assessment"
+                    size="medium"
+                  />
+                  <InfoCard
+                    title="Likelihood Rating"
+                    value={fmeaSummaryData.likelihood_rating.toString()}
+                    subtitle="Probability Score"
+                    size="medium"
+                  />
+                </>
+              )}
+            </div>
+            {dashboardData.length > 0 && (
+              <DataVisualizationWidget
+                type="incomplete-bar"
+                title="Risk Rating Distribution"
+                data={dashboardData}
+              />
+            )}
+          </div>
+        );
+
+      case "fmea-analysis-table":
+        const fmeaTableCols = fmeaTableData.length > 0
+          ? Object.keys(fmeaTableData[0]).map((key) => ({ key, label: key }))
+          : [];
+        return (
+          <DataTable
+            key={widgetId}
+            title="FMEA Analysis Table"
+            data={fmeaTableData}
+            columns={fmeaTableCols}
+          />
+        );
+
+      case "fmea-severity-analysis":
+        const severityCols = fmeaSeverityData.length > 0
+          ? Object.keys(fmeaSeverityData[0]).map((key) => ({ key, label: key }))
+          : [];
+        return (
+          <DataTable
+            key={widgetId}
+            title="Severity Analysis"
+            data={fmeaSeverityData}
+            columns={severityCols}
+          />
+        );
+
+      case "fmea-likelihood-analysis":
+        const likelihoodCols = fmeaLikelihoodData.length > 0
+          ? Object.keys(fmeaLikelihoodData[0]).map((key) => ({ key, label: key }))
+          : [];
+        return (
+          <DataTable
+            key={widgetId}
+            title="Likelihood Analysis"
+            data={fmeaLikelihoodData}
+            columns={likelihoodCols}
+          />
+        );
+
+      case "fmea-detectability-analysis":
+        const detectabilityCols = fmeaDetectabilityData.length > 0
+          ? Object.keys(fmeaDetectabilityData[0]).map((key) => ({ key, label: key }))
+          : [];
+        return (
+          <DataTable
+            key={widgetId}
+            title="Detectability Analysis"
+            data={fmeaDetectabilityData}
+            columns={detectabilityCols}
+          />
+        );
+
+      case "fmea-risk-charts":
+        const riskChartData = fmeaSummaryData ? [
+          { name: 'Current Risk', value: fmeaSummaryData.rpn },
+          { name: 'Remaining', value: Math.max(0, 1000 - fmeaSummaryData.rpn) }
+        ] : [];
+        
+        return (
+          <div key={widgetId} className="w-full">
+            <h2 className="text-2xl font-bold text-slate-100 mb-6 tracking-tight">
+              FMEA Risk Charts
+            </h2>
+            {riskChartData.length > 0 && (
+              <DataVisualizationWidget
+                type="process-failure-patterns-bar"
+                title="Risk Level Breakdown"
+                data={riskChartData}
+              />
+            )}
+          </div>
+        );
+
       default:
         console.warn(`[Dashboard] Unknown widget ID: ${widgetId}`);
         return (

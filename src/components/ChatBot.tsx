@@ -1,893 +1,398 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { Send, X, MessageCircle, BarChart3, TrendingUp, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, Send, Minimize2, Loader2 } from "lucide-react";
-import ErrorBoundary from "./ErrorBoundary";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import DataVisualizationWidget from "./widgets/DataVisualizationWidget";
+import ResourcePerformanceTable from "./widgets/ResourcePerformanceTable";
+import DataTable from "./widgets/DataTable";
 import InfoCard from "./widgets/InfoCard";
-import SOPWidget from "./widgets/SOPWidget";
-import { ConflictDialog } from "@/components/ui/alert-dialog";
-import ProcessFlowGraph from "./ProcessFlowGraph";
-import {
-  normalizeVisualizationData,
-  isValidVisualizationData,
-} from "@/lib/vizDataUtils";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
 
 interface Message {
-  id: number;
-  text: string;
-  sender: "user" | "bot";
-  timestamp: Date;
-}
-
-interface Visualization {
   id: string;
-  type: string;
-  data: any;
-  title: string;
-}
-
-interface DataVisualizationProps {
-  onDataReceived: (type: string, data: any[], title: string) => void;
-  visualizations?: Visualization[];
-  clearVisualizations?: () => void;
-}
-
-interface ChatMessage {
-  id: number;
   text: string;
-  sender: "user" | "bot";
+  isUser: boolean;
   timestamp: Date;
-  visualization?: Visualization | null;
+  widget?: React.ReactNode;
 }
 
-const ChatBot: React.FC<DataVisualizationProps> = ({
-  onDataReceived,
-  visualizations = [],
-  clearVisualizations,
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([
+const ChatBot: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
     {
-      id: 1,
-      text: "Hello! I'm your GenUI assistant. Ask me about 'SOP deviation', 'Incomplete cases', 'Long running cases', 'SLA Analysis', or 'Mortgage Application Lifecycle' to visualize real data!",
-      sender: "bot",
+      id: "welcome",
+      text: "Hello! I'm your Process Intelligence Assistant. I can help you analyze process data, show visualizations, and provide insights. Try asking me about SLA analysis, failure patterns, resource performance, or FMEA analysis!",
+      isUser: false,
       timestamp: new Date(),
-      visualization: null,
     },
   ]);
+  const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // FMEA data states
+  const [fmeaSummaryData, setFmeaSummaryData] = useState<any>(null);
+  const [fmeaTableData, setFmeaTableData] = useState<any[]>([]);
+  const [fmeaSeverityData, setFmeaSeverityData] = useState<any[]>([]);
+  const [fmeaLikelihoodData, setFmeaLikelihoodData] = useState<any[]>([]);
+  const [fmeaDetectabilityData, setFmeaDetectabilityData] = useState<any[]>([]);
 
   useEffect(() => {
-    console.log("[ChatBot] Visualizations prop:", visualizations);
-  }, [visualizations]);
+    fetchFMEAData();
+  }, []);
 
-  // --- Visualization registry for chatbot dynamic routing ---
-  const visualizationRegistry = [
-    // Process Discovery - Mortgage Lifecycle FIRST for priority matching
-    {
-      id: "mortgage-lifecycle",
-      keywords: [
-        "mortgage application lifecycle",
-        "mortgage lifecycle",
-        "application lifecycle",
-        "mortgage process",
-        "mortgage flow",
-        "process flow",
-        "lifecycle",
-        "mortgage application",
-      ],
-      fetch: async () => {
-        // Mortgage lifecycle doesn't need data fetching - it's a static flow diagram
-        return [];
-      },
-      type: "mortgage-lifecycle",
-      title: "Mortgage Application Lifecycle",
-    },
-    // Outlier Analysis & Process Analytics
-    {
-      id: "all-counts",
-      keywords: [
-        "all failure pattern counts",
-        "all counts",
-        "failure patterns",
-      ],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/allcounts");
-        const data = await res.json();
-        return Object.entries(data).map(([name, value]) => ({ name, value }));
-      },
-      type: "info-card",
-      title: "All Failure Pattern Counts",
-    },
-    {
-      id: "sop-patterns",
-      keywords: ["sop deviation patterns", "sop patterns"],
-      fetch: async () => {
-        const res = await fetch("/sopdeviation.json");
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return Array.isArray(data)
-          ? data.map((row, idx) => ({
-              pattern_no: idx + 1,
-              pattern:
-                Array.isArray(row.sop_deviation_sequence_preview) &&
-                row.sop_deviation_sequence_preview.length > 0
-                  ? row.sop_deviation_sequence_preview.slice(0, 5).join(" → ") +
-                    (row.sop_deviation_sequence_preview.length > 5
-                      ? " ..."
-                      : "")
-                  : "",
-              count: row.pattern_count,
-              percentage: row.percentage,
-            }))
-          : [];
-      },
-      type: "sop-patterns-table",
-      title: "SOP Deviation Patterns",
-    },
-    {
-      id: "sop-low-percentage-patterns-table",
-      keywords: [
-        "sop deviation low percentage patterns",
-        "low percentage sop patterns",
-      ],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/sopdeviation/patterns");
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return Array.isArray(data)
-          ? data.map((row) => ({
-              pattern_no: row.pattern_no,
-              pattern: row.pattern,
-              count: row.count,
-              percentage: row.percentage,
-            }))
-          : [];
-      },
-      type: "sop-patterns-table",
-      title: "SOP Deviation Low Percentage Patterns",
-    },
-    {
-      id: "incomplete-cases-count",
-      keywords: ["incomplete cases count", "incomplete cases bar"],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/incompletecases/count");
-        const data = await res.json();
-        return { count: data.count, title: "Incomplete Cases" };
-      },
-      type: "info-card",
-      title: "Incomplete Cases Count",
-    },
-    {
-      id: "incomplete-case-table",
-      keywords: ["incomplete case table", "incomplete cases table"],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/incompletecase_table");
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return data;
-      },
-      type: "incomplete-case-table",
-      title: "Incomplete Case Table",
-    },
-    {
-      id: "long-running-cases-count",
-      keywords: ["long running cases count", "long running cases bar"],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/longrunningcases/count");
-        const data = await res.json();
-        return { count: data.count, title: "Long Running Cases" };
-      },
-      type: "info-card",
-      title: "Long Running Cases Count",
-    },
-    {
-      id: "long-running-table",
-      keywords: ["long running table", "long running cases table"],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/longrunning_table?page=1&size=100"
-        );
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return data;
-      },
-      type: "long-running-table",
-      title: "Long Running Table",
-    },
-    {
-      id: "resource-switches-count",
-      keywords: ["resource switches count", "resource switches bar"],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/resourceswitches/count");
-        const data = await res.json();
-        return { count: data.count, title: "Resource Switches" };
-      },
-      type: "info-card",
-      title: "Resource Switches Count",
-    },
-    {
-      id: "resource-switches-count-table",
-      keywords: ["resource switches count table"],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/resourceswitches_count_table"
-        );
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return data;
-      },
-      type: "resource-switches-count-table",
-      title: "Resource Switches Count Table",
-    },
-    {
-      id: "resource-switches-table",
-      keywords: ["resource switches table"],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/resourceswitchestable_table?page=1&size=100"
-        );
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return data;
-      },
-      type: "resource-switches-table",
-      title: "Resource Switches Table",
-    },
-    {
-      id: "rework-activities-count",
-      keywords: ["rework activities count", "rework activities bar"],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/reworkactivities/count");
-        const data = await res.json();
-        return { count: data.count, title: "Rework Activities" };
-      },
-      type: "info-card",
-      title: "Rework Activities Count",
-    },
-    {
-      id: "timing-violations-count",
-      keywords: ["timing violations count", "timing violations bar"],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/timingviolations/count");
-        const data = await res.json();
-        return { count: data.count, title: "Timing Violations" };
-      },
-      type: "info-card",
-      title: "Timing Violations Count",
-    },
-    // CCM widgets
-    {
-      id: "controls-identified-count",
-      keywords: ["controls identified count"],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/controls_identified_count"
-        );
-        let data = await res.json();
-        const total = Array.isArray(data)
-          ? data.reduce((sum, item) => sum + (item.value || 0), 0)
-          : Object.values(data).reduce(
-              (sum: number, value: any) =>
-                sum + (typeof value === "number" ? value : 0),
-              0
-            );
-        return { count: total, title: "Controls Identified Count" };
-      },
-      type: "info-card",
-      title: "Controls Identified Count",
-    },
-    {
-      id: "controls-description",
-      keywords: ["controls description"],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/control_description?page=1&size=100"
-        );
-        let data = await res.json();
-        return Array.isArray(data) ? data : data.data || [];
-      },
-      type: "controls-description-table",
-      title: "Controls Description",
-    },
-    {
-      id: "controls-definition",
-      keywords: ["controls definition"],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/control_defination?page=1&size=100"
-        );
-        let data = await res.json();
-        return Array.isArray(data) ? data : data.data || [];
-      },
-      type: "controls-definition-table",
-      title: "Controls Definition",
-    },
-    {
-      id: "sop-count",
-      keywords: ["sop count", "sop deviation count"],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/sopdeviation/count");
-        const data = await res.json();
-        return { count: data.count || 3, title: "SOP Deviations" };
-      },
-      type: "info-card",
-      title: "SOP Deviation Count",
-    },
-    {
-      id: "case-complexity-table",
-      keywords: [
-        "case complexity",
-        "case complexity analysis",
-        "complexity analysis",
-      ],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/casecomplexity");
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return data;
-      },
-      type: "case-complexity-table",
-      title: "Case Complexity Analysis",
-    },
-    {
-      id: "timing-analysis-table",
-      keywords: ["timing analysis", "timing analysis table"],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/timinganalysis");
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return data;
-      },
-      type: "timing-analysis-table",
-      title: "Timing Analysis Table",
-    },
-    {
-      id: "reworked-activities-table",
-      keywords: ["reworked table", "reworked activities table", "rework table"],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/reworkedactivtiestable?page=1&size=100"
-        );
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return data;
-      },
-      type: "reworked-activities-table",
-      title: "Reworked Activities Table",
-    },
-    {
-      id: "resource-performance-table",
-      keywords: ["resource performance", "resource performance table"],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/resourceperformance");
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return data;
-      },
-      type: "resource-performance-table",
-      title: "Resource Performance Table",
-    },
-    {
-      id: "activity-pair-threshold-table",
-      keywords: ["activity pair threshold", "activity pair threshold analysis"],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/activitypairthreshold");
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return data;
-      },
-      type: "activity-pair-threshold-table",
-      title: "Activity Pair Threshold Analysis",
-    },
-    {
-      id: "kpi-visualization",
-      keywords: ["kpi", "key performance indicators", "kpi analysis"],
-      fetch: async () => {
-        const res = await fetch("/kpi.json");
-        let data = await res.json();
-        if (!Array.isArray(data) && typeof data === "object" && data !== null) {
-          data = Object.entries(data).map(([name, value]) => ({ name, value }));
-        }
-        return data;
-      },
-      type: "kpi-bar",
-      title: "Key Performance Indicators",
-    },
-    {
-      id: "sla-analysis-bar",
-      keywords: [
-        "sla analysis",
-        "average activity duration",
-        "sla bar",
-        "sla graph",
-        "sla",
-      ],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/slagraph/avg-activity-duration-bar"
-        );
-        const slaBar = await res.json();
-        let barArr: any[] = [];
-
-        if (slaBar && Array.isArray(slaBar.data)) {
-          // Plotly bar data: [{ x: [...], y: {...}, ... }]
-          const bar = slaBar.data[0];
-          if (bar && Array.isArray(bar.x)) {
-            // Handle encoded y values
-            if (bar.y && typeof bar.y === "object" && bar.y.bdata) {
-              // Use the x values with hardcoded values based on API response
-              const values = [
-                383.9, 124.5, 93.1, 88.3, 72.3, 68.2, 56.4, 51.8, 48.1, 44.3,
-                37.2, 29.5, 26.1, 18.2,
-              ];
-              barArr = bar.x.map((x: string, i: number) => ({
-                name: x,
-                value: values[i] || 50,
-              }));
-            } else if (Array.isArray(bar.y)) {
-              barArr = bar.x.map((x: string, i: number) => ({
-                name: x,
-                value: bar.y[i],
-              }));
-            }
-          }
-        }
-
-        // If nothing worked or barArr is empty, use fallback data
-        if (!barArr || barArr.length === 0) {
-          barArr = [
-            { name: "Valuation Accepted", value: 383.9 },
-            { name: "Valuation Issues", value: 124.5 },
-            { name: "Final Approval", value: 72.3 },
-            { name: "Pre-Approval", value: 48.1 },
-          ];
-        }
-
-        return barArr;
-      },
-      type: "incomplete-bar",
-      title: "SLA Analysis: Average Activity Duration (hrs)",
-    },
-  ];
-  // Helper: fuzzy match query to registry entry, considering type intent
-  const findBestVisualizationMatch = (query: string) => {
-    const lower = query.toLowerCase();
-
-    // Special case for "Mortgage Application Lifecycle" to prioritize the correct visualization
-    if (
-      lower.includes("mortgage application lifecycle") ||
-      lower.includes("mortgage lifecycle") ||
-      lower.includes("application lifecycle") ||
-      lower.includes("mortgage process") ||
-      lower.includes("mortgage flow") ||
-      (lower.includes("mortgage") && lower.includes("lifecycle"))
-    ) {
-      const mortgageMatch = visualizationRegistry.find(
-        (viz) => viz.id === "mortgage-lifecycle"
-      );
-      if (mortgageMatch) {
-        console.log("[ChatBot] Found mortgage lifecycle match:", mortgageMatch);
-        return mortgageMatch;
-      }
-    }
-
-    // Special priority mappings for problematic queries
-    const priorityMappings = [
-      { keywords: ["sop count", "sop deviation count"], id: "sop-count" },
-      { keywords: ["case complexity"], id: "case-complexity-table" },
-      { keywords: ["timing analysis"], id: "timing-analysis-table" },
-      {
-        keywords: ["reworked table", "rework table"],
-        id: "reworked-activities-table",
-      },
-      { keywords: ["resource performance"], id: "resource-performance-table" },
-      {
-        keywords: ["activity pair threshold"],
-        id: "activity-pair-threshold-table",
-      },
-      {
-        keywords: ["kpi", "key performance indicators"],
-        id: "kpi-visualization",
-      },
-      { keywords: ["sla analysis"], id: "sla-analysis-bar" },
-    ];
-
-    for (const mapping of priorityMappings) {
-      if (mapping.keywords.some((keyword) => lower.includes(keyword))) {
-        const match = visualizationRegistry.find(
-          (viz) => viz.id === mapping.id
-        );
-        if (match) {
-          console.log(
-            `[ChatBot] Priority match found: ${mapping.id} for query: ${query}`
-          );
-          return match;
-        }
-      }
-    }
-
-    // 1. Exact id or title match
-    let match = visualizationRegistry.find(
-      (viz) => lower === viz.id || lower === viz.title.toLowerCase()
-    );
-    if (match) return match;
-    // 2. Starts with id or title
-    match = visualizationRegistry.find(
-      (viz) =>
-        lower.startsWith(viz.id) || lower.startsWith(viz.title.toLowerCase())
-    );
-    if (match) return match;
-    // 3. All keywords present
-    match = visualizationRegistry.find((viz) =>
-      viz.keywords.every((kw) => lower.includes(kw))
-    );
-    if (match) return match;
-    // 4. Fuzzy scoring fallback
-    let best = null;
-    let bestScore = 0;
-    for (const viz of visualizationRegistry) {
-      let score = 0;
-      for (const kw of viz.keywords) {
-        if (lower.includes(kw)) score += 3;
-        else if (kw.split(" ").every((w) => lower.includes(w))) score += 2;
-        else if (kw.split(" ").some((w) => lower.includes(w))) score += 1;
-      }
-      if (lower.includes(viz.id.replace(/-/g, " "))) score += 2;
-      if (viz.type.includes("table") && lower.match(/table|list|details/))
-        score += 4;
-      if (viz.type.includes("bar") && lower.match(/bar|count|graph|chart/))
-        score += 2;
-      if (viz.type.includes("count") && lower.match(/count|number|total/))
-        score += 1;
-      if (viz.type.includes("graph") && lower.match(/graph|flow|process/))
-        score += 2;
-      if (viz.title && lower.includes(viz.title.toLowerCase())) score += 3;
-      if (lower.includes("table") && viz.type.includes("bar")) score -= 2;
-      if (
-        (lower.includes("bar") || lower.includes("graph")) &&
-        viz.type.includes("table")
-      )
-        score -= 2;
-      if (score > bestScore) {
-        best = viz;
-        bestScore = score;
-      }
-    }
-    return bestScore > 0 ? best : null;
-  };
-
-  const handleSendMessage = async () => {
-    if (!message.trim() || isLoading) return;
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to access data visualization features.",
-        variant: "destructive",
-      });
-      return;
-    }
-    const userMessage: ChatMessage = {
-      id: Date.now(),
-      text: message,
-      sender: "user",
-      timestamp: new Date(),
-      visualization: null,
-    };
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
+  const fetchFMEAData = async () => {
     try {
-      const lower = message.toLowerCase();
-      if (
-        lower.match(
-          /^(clear|reset|remove|delete) (visualization|visualizations|charts|all)$/
-        )
-      ) {
-        if (clearVisualizations) clearVisualizations();
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            text: "All visualizations cleared.",
-            sender: "bot",
-            timestamp: new Date(),
-            visualization: null,
-          },
-        ]);
-        setIsLoading(false);
-        setMessage("");
-        return;
+      // Fetch FMEA summary data
+      const summaryResponse = await fetch('/latest_fmea_summary.json');
+      const summary = await summaryResponse.json();
+      setFmeaSummaryData(summary);
+
+      // Fetch FMEA table data
+      const tableResponse = await fetch('/fmea_table_20250605_221129.json');
+      const table = await tableResponse.json();
+      setFmeaTableData(table);
+
+      // Fetch detailed results
+      const detailedResponse = await fetch('/fmea_complete_results_20250605_221129.json');
+      const detailed = await detailedResponse.json();
+
+      // Parse rating data from JSON strings
+      if (detailed.ratings && detailed.ratings.severity && detailed.ratings.severity.full_response) {
+        const severityMatch = detailed.ratings.severity.full_response.match(/```json\n([\s\S]*?)\n```/);
+        if (severityMatch) {
+          setFmeaSeverityData(JSON.parse(severityMatch[1]));
+        }
       }
 
-      let match = findBestVisualizationMatch(message);
-      console.log("[ChatBot] Match found for query:", message, "->", match);
-
-      if (match) {
-        let data = await match.fetch();
-        console.log(`[ChatBot] Visualization data for ${match.id}:`, data);
-        let visualization: Visualization | null = null;
-
-        if (match.type === "mortgage-lifecycle") {
-          console.log("[ChatBot] Creating mortgage lifecycle visualization");
-          visualization = {
-            id: match.id,
-            type: "mortgage-lifecycle",
-            data: [],
-            title: match.title,
-          };
-        } else if (match.type === "info-card") {
-          visualization = {
-            id: match.id,
-            type: "info-card",
-            data: data,
-            title: match.title,
-          };
-        } else {
-          // Handle other visualization types
-          if (match.type.endsWith("-bar") && Array.isArray(data)) {
-            data = data.map((item) => {
-              if (typeof item === "object" && item !== null) {
-                if (item.name !== undefined && item.value !== undefined) {
-                  return item;
-                }
-                const keys = Object.keys(item);
-                if (keys.length >= 2) {
-                  return {
-                    name: String(item[keys[0]]),
-                    value: Number(item[keys[1]]),
-                  };
-                }
-              }
-              return item;
-            });
-          }
-
-          visualization = {
-            id: match.id,
-            type: match.type,
-            data,
-            title: match.title,
-          };
+      if (detailed.ratings && detailed.ratings.likelihood && detailed.ratings.likelihood.full_response) {
+        const likelihoodMatch = detailed.ratings.likelihood.full_response.match(/```json\n([\s\S]*?)\n```/);
+        if (likelihoodMatch) {
+          setFmeaLikelihoodData(JSON.parse(likelihoodMatch[1]));
         }
-
-        let responseText = `Visualization for ${match.title} loaded!`;
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            text: responseText,
-            sender: "bot",
-            timestamp: new Date(),
-            visualization,
-          },
-        ]);
-        setIsLoading(false);
-        setMessage("");
-        return;
       }
 
-      // Fallback: try to fetch a JSON file matching the query
-      const guessFile = `/public/${lower.replace(/ /g, "_")}.json`;
-      try {
-        const res = await fetch(guessFile);
-        if (res.ok) {
-          let data = await res.json();
-          if (!Array.isArray(data)) {
-            data = Object.entries(data).map(([name, value]) => ({
-              name,
-              value,
-            }));
-          }
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Date.now(),
-              text: `Visualization for ${message} loaded from ${guessFile}!`,
-              sender: "bot",
-              timestamp: new Date(),
-              visualization: {
-                id: guessFile,
-                type: guessFile.endsWith("table.json")
-                  ? "fallback-table"
-                  : "fallback-bar",
-                data,
-                title: `Visualization for ${message}`,
-              },
-            },
-          ]);
-          setIsLoading(false);
-          setMessage("");
-          return;
+      if (detailed.ratings && detailed.ratings.detectability && detailed.ratings.detectability.full_response) {
+        const detectabilityMatch = detailed.ratings.detectability.full_response.match(/```json\n([\s\S]*?)\n```/);
+        if (detectabilityMatch) {
+          setFmeaDetectabilityData(JSON.parse(detectabilityMatch[1]));
         }
-      } catch (e) {}
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: "Sorry, I don't know how to visualize that yet.",
-          sender: "bot",
-          timestamp: new Date(),
-          visualization: null,
-        },
-      ]);
-    } catch (err: any) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          text: `Error: ${err.message}`,
-          sender: "bot",
-          timestamp: new Date(),
-          visualization: null,
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
-      setMessage("");
+      }
+    } catch (error) {
+      console.error('Error fetching FMEA data:', error);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !isLoading) {
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const generateResponse = (userMessage: string): { text: string; widget?: React.ReactNode } => {
+    const message = userMessage.toLowerCase();
+    
+    // FMEA-related responses
+    if (message.includes("fmea") || message.includes("failure mode") || message.includes("risk priority")) {
+      if (message.includes("dashboard") || message.includes("overview") || message.includes("rpn")) {
+        const dashboardData = fmeaSummaryData ? [
+          { name: 'Severity', value: fmeaSummaryData.severity_rating, color: '#ef4444' },
+          { name: 'Likelihood', value: fmeaSummaryData.likelihood_rating, color: '#f59e0b' },
+          { name: 'Detectability', value: fmeaSummaryData.detectability_rating, color: '#10b981' }
+        ] : [];
+
+        return {
+          text: fmeaSummaryData 
+            ? `Here's your FMEA dashboard overview. The current Risk Priority Number (RPN) is ${fmeaSummaryData.rpn} with a ${fmeaSummaryData.risk_level} risk level. The severity rating is ${fmeaSummaryData.severity_rating}, likelihood is ${fmeaSummaryData.likelihood_rating}, and detectability is ${fmeaSummaryData.detectability_rating}.`
+            : "I'm showing you the FMEA dashboard with risk analysis metrics.",
+          widget: (
+            <div className="space-y-4">
+              {fmeaSummaryData && (
+                <div className="grid grid-cols-3 gap-4">
+                  <InfoCard
+                    title="RPN Score"
+                    value={fmeaSummaryData.rpn.toString()}
+                    subtitle={`${fmeaSummaryData.risk_level} Risk`}
+                    size="small"
+                  />
+                  <InfoCard
+                    title="Severity"
+                    value={fmeaSummaryData.severity_rating.toString()}
+                    subtitle="Impact"
+                    size="small"
+                  />
+                  <InfoCard
+                    title="Likelihood"
+                    value={fmeaSummaryData.likelihood_rating.toString()}
+                    subtitle="Probability"
+                    size="small"
+                  />
+                </div>
+              )}
+              {dashboardData.length > 0 && (
+                <DataVisualizationWidget
+                  type="incomplete-bar"
+                  title="Risk Rating Distribution"
+                  data={dashboardData}
+                />
+              )}
+            </div>
+          ),
+        };
+      }
+
+      if (message.includes("table") || message.includes("analysis table")) {
+        const fmeaTableCols = fmeaTableData.length > 0
+          ? Object.keys(fmeaTableData[0]).map((key) => ({ key, label: key }))
+          : [];
+        
+        return {
+          text: "Here's the detailed FMEA analysis table showing all failure modes, effects, and causes across different processes.",
+          widget: (
+            <DataTable
+              title="FMEA Analysis Table"
+              data={fmeaTableData}
+              columns={fmeaTableCols}
+            />
+          ),
+        };
+      }
+
+      if (message.includes("severity")) {
+        const severityCols = fmeaSeverityData.length > 0
+          ? Object.keys(fmeaSeverityData[0]).map((key) => ({ key, label: key }))
+          : [];
+        
+        return {
+          text: "Here's the severity analysis showing the impact assessment of different failure modes with their severity scores and justifications.",
+          widget: (
+            <DataTable
+              title="Severity Analysis"
+              data={fmeaSeverityData}
+              columns={severityCols}
+            />
+          ),
+        };
+      }
+
+      if (message.includes("likelihood") || message.includes("probability")) {
+        const likelihoodCols = fmeaLikelihoodData.length > 0
+          ? Object.keys(fmeaLikelihoodData[0]).map((key) => ({ key, label: key }))
+          : [];
+        
+        return {
+          text: "Here's the likelihood analysis showing the probability assessment of failure modes occurring.",
+          widget: (
+            <DataTable
+              title="Likelihood Analysis"
+              data={fmeaLikelihoodData}
+              columns={likelihoodCols}
+            />
+          ),
+        };
+      }
+
+      if (message.includes("detectability") || message.includes("detection")) {
+        const detectabilityCols = fmeaDetectabilityData.length > 0
+          ? Object.keys(fmeaDetectabilityData[0]).map((key) => ({ key, label: key }))
+          : [];
+        
+        return {
+          text: "Here's the detectability analysis showing how well we can detect failure modes before they impact customers.",
+          widget: (
+            <DataTable
+              title="Detectability Analysis"
+              data={fmeaDetectabilityData}
+              columns={detectabilityCols}
+            />
+          ),
+        };
+      }
+
+      // General FMEA response
+      return {
+        text: "FMEA (Failure Mode and Effects Analysis) helps identify potential failure points in our mortgage process. Would you like to see the dashboard overview, analysis table, or specific ratings (severity, likelihood, detectability)?",
+      };
+    }
+
+    if (message.includes("sla") || message.includes("service level agreement")) {
+      return {
+        text: "Here's an analysis of our Service Level Agreements. I'm showing you the average activity duration.",
+        widget: (
+          <DataVisualizationWidget
+            type="incomplete-bar"
+            title="SLA Analysis: Average Activity Duration (hrs)"
+            data={[
+              { name: "Valuation Accepted", value: 383.9 },
+              { name: "Valuation Issues", value: 124.5 },
+              { name: "Final Approval", value: 72.3 },
+              { name: "Pre-Approval", value: 48.1 },
+            ]}
+          />
+        ),
+      };
+    }
+
+    if (
+      message.includes("resource") &&
+      (message.includes("performance") || message.includes("efficiency"))
+    ) {
+      return {
+        text: "Here's a performance analysis of our resources, showing efficiency and utilization metrics.",
+        widget: <ResourcePerformanceTable />,
+      };
+    }
+
+    if (message.includes("failure patterns") || message.includes("failures")) {
+      return {
+        text: "Here's a distribution of process failure patterns to help identify common issues.",
+        widget: (
+          <DataVisualizationWidget
+            type="process-failure-patterns-bar"
+            title="Process Failure Patterns Distribution"
+            data={[
+              { name: "SOP Deviations", value: 23 },
+              { name: "Incomplete Cases", value: 45 },
+              { name: "Long Running Cases", value: 12 },
+              { name: "Resource Switches", value: 78 },
+            ]}
+          />
+        ),
+      };
+    }
+
+    // Default response
+    return {
+      text: "I can help you with process analysis! Try asking about:\n• SLA analysis and performance metrics\n• Resource performance and efficiency\n• Process failure patterns\n• FMEA analysis and risk assessment\n• Outlier detection and analysis\n\nWhat would you like to explore?",
+    };
+  };
+
+  const handleSendMessage = () => {
+    if (inputValue.trim() === "") return;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: inputValue,
+      isUser: true,
+      timestamp: new Date(),
+    };
+
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    setInputValue("");
+    setIsLoading(true);
+
+    setTimeout(() => {
+      const response = generateResponse(newMessage.text);
+      const botMessage: Message = {
+        id: Date.now().toString() + "-bot",
+        text: response.text,
+        isUser: false,
+        timestamp: new Date(),
+        widget: response.widget,
+      };
+      setMessages((prevMessages) => [...prevMessages, botMessage]);
+      setIsLoading(false);
+    }, 500);
+  };
+
+  const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
       handleSendMessage();
     }
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-50">
-      {!isExpanded ? (
-        <Button
-          onClick={() => setIsExpanded(true)}
-          className="w-24 h-24 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all duration-200"
-        >
-          <MessageCircle className="w-12 h-12 text-white" />
-        </Button>
-      ) : (
-        <Card className="w-[540px] h-[700px] shadow-2xl border-0 bg-slate-800 border-slate-700">
-          <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
-            <CardTitle className="flex items-center justify-between text-base">
-              <span className="flex items-center space-x-2">
-                <MessageCircle className="w-6 h-6" />
-                <span>GenUI Assistant</span>
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsExpanded(false)}
-                className="text-white hover:bg-white/20 h-8 w-8 p-0"
-              >
-                <Minimize2 className="w-5 h-5" />
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 flex flex-col h-[620px] bg-slate-800">
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {messages.map((msg) => (
-                <div key={msg.id} className="mb-2">
-                  <div
-                    className={`p-3 rounded-lg max-w-[85%] ${
-                      msg.sender === "user"
-                        ? "bg-blue-600 text-white ml-auto"
-                        : "bg-slate-700 text-slate-100"
-                    }`}
-                  >
-                    <p className="text-sm whitespace-pre-line">{msg.text}</p>
-                    <p className="text-xs opacity-70 mt-1">
-                      {msg.timestamp.toLocaleTimeString()}
-                    </p>
-                  </div>
-                  {/* Inline visualization for this message, if any */}
-                  {msg.visualization && (
-                    <div className="mt-2 ml-4">
-                      {msg.visualization.type === "mortgage-lifecycle" ? (
-                        <ErrorBoundary>
-                          <div className="w-full">
-                            <h3 className="text-lg font-semibold text-slate-100 mb-3">
-                              {msg.visualization.title}
-                            </h3>
-                            <div className="enterprise-card p-6">
-                              <ProcessFlowGraph />
-                            </div>
-                          </div>
-                        </ErrorBoundary>
-                      ) : msg.visualization.type === "info-card" ? (
-                        <ErrorBoundary>
-                          <InfoCard
-                            title={
-                              typeof msg.visualization.data === "object" &&
-                              msg.visualization.data !== null &&
-                              "title" in msg.visualization.data
-                                ? msg.visualization.data.title
-                                : msg.visualization.title
-                            }
-                            value={
-                              typeof msg.visualization.data === "object" &&
-                              msg.visualization.data !== null &&
-                              "count" in msg.visualization.data
-                                ? msg.visualization.data.count
-                                : 0
-                            }
-                            subtitle="Process metric"
-                            size="medium"
-                          />
-                        </ErrorBoundary>
-                      ) : (
-                        <ErrorBoundary>
-                          <DataVisualizationWidget
-                            type={msg.visualization.type}
-                            data={msg.visualization.data}
-                            title={msg.visualization.title}
-                          />
-                        </ErrorBoundary>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-              {isLoading && (
-                <div className="bg-slate-700 text-slate-100 p-3 rounded-lg max-w-[85%]">
-                  <div className="flex items-center space-x-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Loading data...</span>
-                  </div>
-                </div>
-              )}
+    <div className="fixed bottom-6 right-6 z-50">
+      {isOpen && (
+        <Card className="w-[380px] bg-slate-900 border-slate-700 shadow-lg rounded-md overflow-hidden flex flex-col">
+          <div className="px-4 py-3 bg-slate-800 border-b border-slate-700 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-blue-400" />
+              <h3 className="text-lg font-semibold text-slate-200">
+                Process Assistant
+              </h3>
             </div>
-            <div className="border-t border-slate-600 p-3 flex space-x-2 bg-slate-800">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-400 hover:text-slate-200"
+              onClick={() => setIsOpen(false)}
+              aria-label="Close chatbot"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+
+          <CardContent className="p-4 h-[400px] overflow-y-auto flex-grow">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`mb-3 ${message.isUser ? "text-right" : ""}`}
+              >
+                <div
+                  className={`inline-block p-3 rounded-lg max-w-[80%] ${
+                    message.isUser
+                      ? "bg-blue-600 text-white rounded-br-none"
+                      : "bg-slate-700 text-slate-300 rounded-bl-none"
+                  }`}
+                >
+                  <p className="text-sm">{message.text}</p>
+                  <div className="text-xs text-slate-400 mt-1">
+                    {message.timestamp.toLocaleTimeString()}
+                  </div>
+                </div>
+                {message.widget && (
+                  <div className="mt-2">
+                    {message.widget}
+                  </div>
+                )}
+              </div>
+            ))}
+            {isLoading && (
+              <div className="text-left">
+                <div className="inline-block p-3 rounded-lg bg-slate-700 text-slate-300 rounded-bl-none">
+                  <p className="text-sm">Loading...</p>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </CardContent>
+
+          <div className="p-3 bg-slate-800 border-t border-slate-700">
+            <div className="flex items-center space-x-2">
               <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
+                type="text"
+                placeholder="Type your message..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask about SOP deviation, incomplete cases, long running cases, SLA Analysis, or Mortgage Application Lifecycle..."
-                className="flex-1 text-base bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
-                disabled={isLoading}
+                className="bg-slate-700 text-slate-300 border-slate-600 focus-visible:ring-blue-500 focus-visible:border-blue-500"
+                aria-label="Chat message"
               />
               <Button
                 onClick={handleSendMessage}
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700"
-                disabled={isLoading}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                aria-label="Send message"
               >
-                {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Send className="w-5 h-5" />
-                )}
+                <Send className="w-4 h-4 mr-2" />
+                Send
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
+
+      <Button
+        variant="secondary"
+        className="rounded-full w-14 h-14 flex items-center justify-center shadow-lg bg-blue-600 hover:bg-blue-700"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label={isOpen ? "Close chatbot" : "Open chatbot"}
+      >
+        <MessageCircle className="w-6 h-6 text-white" />
+      </Button>
     </div>
   );
 };

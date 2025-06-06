@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -176,6 +177,44 @@ const ALL_WIDGETS = {
       name: "KPI",
       description: "Key Performance Indicators dashboard and metrics",
       relevantPages: ["/", "/ccm"],
+    },
+  ],
+  FMEA: [
+    {
+      id: "fmea-dashboard",
+      name: "FMEA Dashboard",
+      description: "Risk Priority Number (RPN) and risk level overview with charts",
+      relevantPages: ["/", "/fmea"],
+    },
+    {
+      id: "fmea-analysis-table",
+      name: "FMEA Analysis Table",
+      description: "Detailed failure mode and effects analysis table",
+      relevantPages: ["/", "/fmea"],
+    },
+    {
+      id: "fmea-severity-analysis",
+      name: "Severity Analysis",
+      description: "Impact assessment of failure modes with severity scores",
+      relevantPages: ["/", "/fmea"],
+    },
+    {
+      id: "fmea-likelihood-analysis",
+      name: "Likelihood Analysis",
+      description: "Probability assessment of failure modes",
+      relevantPages: ["/", "/fmea"],
+    },
+    {
+      id: "fmea-detectability-analysis",
+      name: "Detectability Analysis",
+      description: "Detection capability assessment of failure modes",
+      relevantPages: ["/", "/fmea"],
+    },
+    {
+      id: "fmea-risk-charts",
+      name: "FMEA Risk Charts",
+      description: "Risk rating distribution and breakdown charts",
+      relevantPages: ["/", "/fmea"],
     },
   ],
 };
