@@ -42,7 +42,7 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
     loadData();
   }, []);
 
-  // Convert to ReactFlow format with improved spacing and reduced visual clutter
+  // Convert to ReactFlow format with improved spacing and new color scheme
   const { reactFlowNodes, reactFlowEdges } = useMemo(() => {
     if (!graphData.nodes.length) return { reactFlowNodes: [], reactFlowEdges: [] };
 
@@ -63,15 +63,15 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
       }
     }
 
-    // Improved auto-layout with better spacing and cleaner alignment
+    // Updated phase configuration with new colors
     const nodePositions = new Map<string, { x: number; y: number }>();
     const phaseConfig = {
-      application: { y: 100, color: '#3b82f6' },
-      credit_assessment: { y: 280, color: '#8b5cf6' },
-      underwriting: { y: 460, color: '#06b6d4' },
-      funding: { y: 640, color: '#10b981' },
-      closure: { y: 820, color: '#f59e0b' },
-      intermediate: { y: 370, color: '#6b7280' }
+      application: { y: 100, color: '#4B8BBE' },        // Soft Blue
+      credit_assessment: { y: 280, color: '#72BDA3' },   // Mint Green
+      underwriting: { y: 460, color: '#F0C808' },       // Warm Amber
+      funding: { y: 640, color: '#8E7CC3' },            // Cool Lavender
+      closure: { y: 820, color: '#f59e0b' },            // Keep amber for closure
+      intermediate: { y: 370, color: '#6b7280' }        // Keep gray for intermediate
     };
     
     // Better node positioning with consistent spacing
@@ -89,12 +89,17 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
       });
     });
 
-    // Cleaner node design with reduced highlighting
+    // Updated node design with new text color scheme
     const maxFrequency = Math.max(...filteredNodes.map(n => n.frequency));
     const reactFlowNodes: Node[] = filteredNodes.map(node => {
       const position = nodePositions.get(node.id) || { x: 0, y: 0 };
       const phaseInfo = phaseConfig[node.phase_id as keyof typeof phaseConfig];
       const normalizedSize = Math.max(120, Math.min(180, 120 + (node.frequency / maxFrequency) * 60));
+      
+      // Use Sky Blue for process variations instead of red
+      const nodeColor = node.is_deviation ? '#A2D2FF' : phaseInfo?.color || '#6b7280';
+      const borderColor = node.is_deviation ? '#A2D2FF' : `${phaseInfo?.color || '#6b7280'}66`;
+      const shadowColor = node.is_deviation ? '#A2D2FF' : phaseInfo?.color || '#6b7280';
       
       return {
         id: node.id,
@@ -103,20 +108,28 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
         data: {
           label: (
             <div className="text-center p-3 min-w-[120px] max-w-[180px]">
-              <div className="font-semibold text-sm text-white mb-2 leading-tight">
+              <div className="font-semibold text-sm mb-2 leading-tight" style={{ color: '#1E3A5F' }}>
                 {node.name}
               </div>
               <div className="flex items-center justify-center gap-2 text-xs">
                 <Badge 
                   variant="secondary" 
-                  className="text-xs bg-white/20 text-white border-white/30 font-medium"
+                  className="text-xs border font-medium"
+                  style={{ 
+                    backgroundColor: 'rgba(30, 58, 95, 0.1)', 
+                    color: '#1E3A5F', 
+                    borderColor: 'rgba(30, 58, 95, 0.2)' 
+                  }}
                 >
                   {node.frequency.toLocaleString()}
                 </Badge>
                 {node.is_deviation && (
-                  <div className="flex items-center gap-1 px-2 py-1 bg-red-500/25 rounded border border-red-400/30">
-                    <AlertTriangle className="w-3 h-3 text-red-200" />
-                    <span className="text-red-100 text-xs">SOP</span>
+                  <div className="flex items-center gap-1 px-2 py-1 rounded border" style={{ 
+                    backgroundColor: 'rgba(30, 58, 95, 0.1)', 
+                    borderColor: 'rgba(30, 58, 95, 0.2)' 
+                  }}>
+                    <AlertTriangle className="w-3 h-3" style={{ color: '#1E3A5F' }} />
+                    <span className="text-xs" style={{ color: '#1E3A5F' }}>VAR</span>
                   </div>
                 )}
               </div>
@@ -125,19 +138,15 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
         },
         style: {
           background: node.is_deviation 
-            ? 'linear-gradient(135deg, #dc2626, #b91c1c)' 
-            : `linear-gradient(135deg, ${phaseInfo?.color || '#6b7280'}, ${phaseInfo?.color || '#6b7280'}dd)`,
-          border: node.is_deviation 
-            ? '1px solid #f87171' 
-            : `1px solid ${phaseInfo?.color || '#6b7280'}66`,
+            ? 'linear-gradient(135deg, #A2D2FF, #87CEEB)' 
+            : `linear-gradient(135deg, ${nodeColor}, ${nodeColor}dd)`,
+          border: `1px solid ${borderColor}`,
           borderRadius: 12,
-          color: '#ffffff',
+          color: '#1E3A5F',
           width: normalizedSize,
           height: Math.max(80, normalizedSize * 0.6),
           fontSize: 11,
-          boxShadow: node.is_deviation
-            ? '0 8px 25px rgba(220, 38, 38, 0.25)'
-            : `0 8px 25px ${phaseInfo?.color || '#6b7280'}25`,
+          boxShadow: `0 8px 25px ${shadowColor}25`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center'
@@ -145,12 +154,19 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
       };
     });
 
-    // Cleaner edge design with reduced visual emphasis
+    // Updated edge design with new color scheme
     const maxEdgeFreq = Math.max(...filteredEdges.map(e => e.frequency));
     const reactFlowEdges: Edge[] = filteredEdges.map(edge => {
       const thickness = Math.max(2, Math.min(8, (edge.frequency / maxEdgeFreq) * 6));
       const sourceNode = filteredNodes.find(n => n.id === edge.source_node_id);
       const targetNode = filteredNodes.find(n => n.id === edge.target_node_id);
+      
+      // Use Sky Blue for SOP deviations instead of red
+      const edgeColor = edge.is_sop_deviation 
+        ? '#A2D2FF' 
+        : sourceNode?.phase_id === targetNode?.phase_id 
+          ? phaseConfig[sourceNode?.phase_id as keyof typeof phaseConfig]?.color || '#64748b'
+          : '#64748b';
       
       return {
         id: edge.id,
@@ -160,19 +176,16 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
         animated: edge.is_sop_deviation,
         style: {
           strokeWidth: thickness,
-          stroke: edge.is_sop_deviation 
-            ? '#dc2626' 
-            : sourceNode?.phase_id === targetNode?.phase_id 
-              ? phaseConfig[sourceNode?.phase_id as keyof typeof phaseConfig]?.color || '#64748b'
-              : '#64748b',
-          opacity: edge.is_sop_deviation ? 0.8 : 0.6
+          stroke: edgeColor,
+          opacity: edge.is_sop_deviation ? 0.8 : 0.6,
+          strokeDasharray: edge.is_sop_deviation ? '5,5' : 'none'
         },
         label: edge.frequency > maxEdgeFreq * 0.15 ? edge.frequency.toLocaleString() : '',
         labelStyle: {
           fontSize: 10,
-          fill: '#e2e8f0',
+          fill: '#1E3A5F',
           fontWeight: 600,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backgroundColor: 'rgba(255, 255, 255, 0.9)',
           padding: '2px 6px',
           borderRadius: '4px'
         }
@@ -264,7 +277,7 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
                 id="deviations-only"
                 checked={showDeviationsOnly}
                 onCheckedChange={setShowDeviationsOnly}
-                className="data-[state=checked]:bg-red-500"
+                className="data-[state=checked]:bg-blue-500"
               />
               <Label htmlFor="deviations-only" className="text-xs text-slate-200 flex items-center gap-1 font-medium">
                 <Eye className="w-3 h-3" />
@@ -374,29 +387,29 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
               />
             </ReactFlow>
             
-            {/* Floating Legend */}
-            <div className="absolute top-6 right-6 bg-slate-900/95 backdrop-blur-sm border border-slate-600 rounded-xl p-4 text-xs text-slate-200 shadow-xl">
-              <div className="font-bold mb-3 text-slate-100 text-sm">Process Legend</div>
+            {/* Floating Legend with original lighter background */}
+            <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-sm border border-gray-300 rounded-xl p-4 text-xs shadow-xl">
+              <div className="font-bold mb-3 text-sm text-gray-800">Process Legend</div>
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded bg-gradient-to-r from-blue-500 to-blue-600"></div>
-                  <span className="text-slate-200">Application Phase</span>
+                  <div className="w-4 h-4 rounded bg-gradient-to-r from-[#4B8BBE] to-[#4B8BBE]"></div>
+                  <span className="text-gray-700">Application Phase</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded bg-gradient-to-r from-purple-500 to-purple-600"></div>
-                  <span className="text-slate-200">Credit Assessment</span>
+                  <div className="w-4 h-4 rounded bg-gradient-to-r from-[#72BDA3] to-[#72BDA3]"></div>
+                  <span className="text-gray-700">Credit Assessment</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded bg-gradient-to-r from-cyan-500 to-cyan-600"></div>
-                  <span className="text-slate-200">Underwriting</span>
+                  <div className="w-4 h-4 rounded bg-gradient-to-r from-[#F0C808] to-[#F0C808]"></div>
+                  <span className="text-gray-700">Underwriting</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
-                  <span className="text-slate-200">Funding</span>
+                  <div className="w-4 h-4 rounded bg-gradient-to-r from-[#8E7CC3] to-[#8E7CC3]"></div>
+                  <span className="text-gray-700">Funding</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 rounded bg-gradient-to-r from-red-500 to-red-600"></div>
-                  <span className="text-slate-200">Process Variation</span>
+                  <div className="w-4 h-4 rounded bg-gradient-to-r from-[#A2D2FF] to-[#A2D2FF]"></div>
+                  <span className="text-gray-700">Process Variation</span>
                 </div>
               </div>
             </div>
@@ -404,7 +417,7 @@ const MortgageLifecycleGraph: React.FC<MortgageLifecycleGraphProps> = ({ classNa
         </CardContent>
       </Card>
 
-      {/* Improved Insights Section with better contrast */}
+      {/* Updated Insights Section */}
       <Card className="bg-gradient-to-r from-slate-800 to-slate-700 border-slate-500">
         <CardHeader>
           <CardTitle className="text-lg text-slate-100 flex items-center gap-2 font-semibold">

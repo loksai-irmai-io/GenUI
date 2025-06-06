@@ -61,16 +61,16 @@ class MortgageLifecycleService {
 
   private getNodeColor(isDeviation: boolean, phase: string): string {
     if (isDeviation) {
-      return '#ef4444'; // Red for deviations
+      return '#A2D2FF'; // Sky Blue for process variations
     }
     
     const phaseColors = {
-      application: '#3b82f6',    // Blue
-      credit_assessment: '#8b5cf6', // Purple
-      underwriting: '#06b6d4',   // Cyan
-      funding: '#10b981',        // Green
-      closure: '#f59e0b',        // Amber
-      intermediate: '#6b7280'    // Gray
+      application: '#4B8BBE',      // Soft Blue
+      credit_assessment: '#72BDA3', // Mint Green
+      underwriting: '#F0C808',     // Warm Amber
+      funding: '#8E7CC3',          // Cool Lavender
+      closure: '#f59e0b',          // Keep amber for closure
+      intermediate: '#6b7280'      // Keep gray for intermediate
     };
     
     return phaseColors[phase as keyof typeof phaseColors] || '#6b7280';
@@ -146,12 +146,12 @@ class MortgageLifecycleService {
         };
       });
       
-      // Create phases
+      // Create phases with updated colors
       const phases: MortgagePhase[] = [
         {
           id: 'application',
           name: 'Application Phase',
-          color: '#3b82f6',
+          color: '#4B8BBE',
           node_ids: nodes.filter(n => n.phase_id === 'application').map(n => n.id),
           edge_ids: edges.filter(e => 
             nodes.find(n => n.id === e.source_node_id)?.phase_id === 'application' ||
@@ -161,7 +161,7 @@ class MortgageLifecycleService {
         {
           id: 'credit_assessment',
           name: 'Credit Assessment',
-          color: '#8b5cf6',
+          color: '#72BDA3',
           node_ids: nodes.filter(n => n.phase_id === 'credit_assessment').map(n => n.id),
           edge_ids: edges.filter(e => 
             nodes.find(n => n.id === e.source_node_id)?.phase_id === 'credit_assessment' ||
@@ -171,7 +171,7 @@ class MortgageLifecycleService {
         {
           id: 'underwriting',
           name: 'Underwriting',
-          color: '#06b6d4',
+          color: '#F0C808',
           node_ids: nodes.filter(n => n.phase_id === 'underwriting').map(n => n.id),
           edge_ids: edges.filter(e => 
             nodes.find(n => n.id === e.source_node_id)?.phase_id === 'underwriting' ||
@@ -181,7 +181,7 @@ class MortgageLifecycleService {
         {
           id: 'funding',
           name: 'Funding',
-          color: '#10b981',
+          color: '#8E7CC3',
           node_ids: nodes.filter(n => n.phase_id === 'funding').map(n => n.id),
           edge_ids: edges.filter(e => 
             nodes.find(n => n.id === e.source_node_id)?.phase_id === 'funding' ||
