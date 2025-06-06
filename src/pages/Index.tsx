@@ -1,15 +1,21 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Settings } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import DataVisualizationWidget from "@/components/widgets/DataVisualizationWidget";
 import InfoCardGrid from "@/components/widgets/InfoCardGrid";
+import InfoCard from "@/components/widgets/InfoCard";
 import ResourcePerformanceTable from "@/components/widgets/ResourcePerformanceTable";
 import TimingAnalysisTable from "@/components/widgets/TimingAnalysisTable";
 import DataTable from "@/components/widgets/DataTable";
 import SOPWidget from "@/components/widgets/SOPWidget";
 import WidgetSelectionModal from "@/components/WidgetSelectionModal";
 import ChatBot from "@/components/ChatBot";
+import MortgageLifecycleGraph from "@/components/MortgageLifecycleGraph";
 import { normalizeVisualizationData } from "@/lib/vizDataUtils";
 
 const AVAILABLE_WIDGETS = [
