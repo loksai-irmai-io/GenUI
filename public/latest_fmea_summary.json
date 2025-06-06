@@ -1,0 +1,9 @@
+{
+  "timestamp": "20250605_221129",
+  "datetime": "2025-06-05T22:12:15.693039",
+  "severity_rating": 4,
+  "likelihood_rating": 4,
+  "detectability_rating": 7,
+  "rpn": 112,
+  "risk_level": "Medium"
+}
