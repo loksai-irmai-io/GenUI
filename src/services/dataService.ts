@@ -1,3 +1,4 @@
+
 export interface SOPCountData {
   count: number;
   percentage: number;
@@ -221,3 +222,81 @@ class DataService {
 }
 
 export const dataService = new DataService();
+
+// Export the missing functions that Index.tsx is trying to import
+export async function fetchControlsIdentifiedCount(): Promise<Array<{ name: string; value: number }>> {
+  try {
+    const response = await fetch('/controls_identified_count.json');
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Error fetching controls identified count:', error);
+    return [];
+  }
+}
+
+export async function fetchSOPDeviationCount(): Promise<number> {
+  try {
+    const response = await fetch('/sopdeviation.json');
+    const data = await response.json();
+    return data.data?.filter((item: any) => item.is_sop_deviation === 1)?.length || 0;
+  } catch (error) {
+    console.error('Error fetching SOP deviation count:', error);
+    return 0;
+  }
+}
+
+export async function fetchIncompleteCasesCount(): Promise<number> {
+  try {
+    const response = await fetch('/incompletecases.json');
+    const data = await response.json();
+    return data.data?.filter((item: any) => item.is_incomplete === 1)?.length || 0;
+  } catch (error) {
+    console.error('Error fetching incomplete cases count:', error);
+    return 0;
+  }
+}
+
+export async function fetchLongRunningCasesCount(): Promise<number> {
+  try {
+    const response = await fetch('/longrunning_case.json');
+    const data = await response.json();
+    return parseInt(data.data?.[0]?.long_running_case_count) || 0;
+  } catch (error) {
+    console.error('Error fetching long running cases count:', error);
+    return 0;
+  }
+}
+
+export async function fetchResourceSwitchesCount(): Promise<number> {
+  try {
+    const response = await fetch('http://34.60.217.109/resourceswitches/count');
+    const data = await response.json();
+    return data.resource_switches ?? data.count ?? 0;
+  } catch (error) {
+    console.error('Error fetching resource switches count:', error);
+    return 0;
+  }
+}
+
+export async function fetchReworkActivitiesCount(): Promise<number> {
+  try {
+    const response = await fetch('http://34.60.217.109/reworkactivities/count');
+    const data = await response.json();
+    return data.rework_activities ?? data.count ?? 0;
+  } catch (error) {
+    console.error('Error fetching rework activities count:', error);
+    return 0;
+  }
+}
+
+export async function fetchTimingViolationsCount(): Promise<number> {
+  try {
+    const response = await fetch('http://34.60.217.109/timingviolations/count');
+    const data = await response.json();
+    return data.timing_violations ?? data.count ?? 0;
+  } catch (error) {
+    console.error('Error fetching timing violations count:', error);
+    return 0;
+  }
+}
