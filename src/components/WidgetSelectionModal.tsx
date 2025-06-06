@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Save, X, Pin, PinOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "react-router-dom";
 
 interface WidgetSelectionModalProps {
   isOpen: boolean;
@@ -19,92 +20,116 @@ interface WidgetSelectionModalProps {
   pinnedWidgets: string[];
 }
 
-// Updated comprehensive list of all available widgets organized by category
-const CATEGORY_WIDGETS = {
-  "Dashboard Essentials": [
-    {
-      id: "info-cards",
-      name: "Key Metrics Overview",
-      description: "Essential KPIs and metrics cards for dashboard overview",
-    },
-    {
-      id: "sla-analysis-bar",
-      name: "SLA Analysis Bar Chart",
-      description: "Service Level Agreement analysis with activity duration metrics",
-    },
-    {
-      id: "process-failure-patterns",
-      name: "Process Failure Patterns",
-      description: "Distribution chart showing different types of process failures",
-    },
-    {
-      id: "mortgage-lifecycle",
-      name: "Mortgage Application Lifecycle",
-      description: "Interactive process flow diagram for mortgage applications",
-    },
-  ],
-  "Process Discovery": [
-    {
-      id: "object-lifecycle",
-      name: "Object Lifecycle",
-      description: "Track object lifecycle and transitions",
-    },
-  ],
+// Comprehensive widget definitions organized by category and page relevance
+const ALL_WIDGETS = {
   "Outlier Analysis": [
     {
       id: "incomplete-cases-count",
       name: "Incomplete Cases (Info Card)",
       description: "Count of cases that remain incomplete displayed as info card",
+      relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "incomplete-case-table",
       name: "Incomplete Cases Table",
-      description: "Detailed table of all incomplete cases",
+      description: "Detailed table of all incomplete cases with analysis",
+      relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "long-running-cases-count",
       name: "Long-Running Cases (Info Card)",
       description: "Count of cases taking longer than expected as info card",
+      relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "long-running-table",
       name: "Long-Running Table",
-      description: "Detailed table of all long-running cases",
+      description: "Detailed table of all long-running cases with metrics",
+      relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "resource-switches-count",
       name: "Resource Switches (Info Card)",
       description: "Count of resource handovers in processes as info card",
+      relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "resource-switches-table",
       name: "Resource Switches Table",
-      description: "Detailed table of all resource switches",
+      description: "Detailed table of all resource switches and handovers",
+      relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "rework-activities-count",
       name: "Rework Activities (Info Card)",
       description: "Count of activities that required rework as info card",
+      relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "timing-violations-count",
       name: "Timing Violations (Info Card)",
       description: "Count of identified timing violations as info card",
+      relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "timing-violations-table",
       name: "Timing Violations Table",
-      description: "Detailed table of all timing violations",
+      description: "Detailed table of all timing violations with analysis",
+      relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "resource-performance",
       name: "Resource Performance Table",
       description: "Performance analysis table of resources by efficiency and utilization",
+      relevantPages: ["/", "/outlier-analysis"],
     },
     {
       id: "timing-analysis",
       name: "Timing Analysis Table",
-      description: "Overview table of timing patterns and deviations",
+      description: "Overview table of timing patterns and performance deviations",
+      relevantPages: ["/", "/outlier-analysis"],
+    },
+  ],
+  "Process Discovery": [
+    {
+      id: "mortgage-lifecycle",
+      name: "Mortgage Application Lifecycle",
+      description: "Interactive process flow diagram for mortgage applications",
+      relevantPages: ["/", "/process-discovery"],
+    },
+    {
+      id: "object-lifecycle",
+      name: "Object Lifecycle",
+      description: "Track object lifecycle and state transitions",
+      relevantPages: ["/process-discovery"],
+    },
+  ],
+  "CCM": [
+    {
+      id: "controls-identified-count",
+      name: "Controls Identified (Info Card)",
+      description: "Count of identified controls displayed as info card",
+      relevantPages: ["/", "/ccm"],
+    },
+  ],
+  "Dashboard Essentials": [
+    {
+      id: "info-cards",
+      name: "Key Metrics Overview",
+      description: "Essential KPIs and metrics cards for dashboard overview",
+      relevantPages: ["/"],
+    },
+    {
+      id: "sla-analysis-bar",
+      name: "SLA Analysis Bar Chart",
+      description: "Service Level Agreement analysis with activity duration metrics",
+      relevantPages: ["/"],
+    },
+    {
+      id: "process-failure-patterns",
+      name: "Process Failure Patterns",
+      description: "Distribution chart showing different types of process failures",
+      relevantPages: ["/"],
     },
   ],
   "Legacy Widgets": [
@@ -112,21 +137,19 @@ const CATEGORY_WIDGETS = {
       id: "chart-widget",
       name: "Performance Chart",
       description: "Basic line chart for performance tracking",
+      relevantPages: ["/"],
     },
     {
       id: "sop-widget",
       name: "SOP Deviations",
       description: "Standard operating procedure deviation analysis",
+      relevantPages: ["/"],
     },
     {
       id: "data-viz",
       name: "Data Visualization",
       description: "Generic data visualization widget",
-    },
-    {
-      id: "controls-identified-count",
-      name: "Controls Identified (Info Card)",
-      description: "Count of identified controls displayed as info card",
+      relevantPages: ["/"],
     },
   ],
 };
@@ -142,11 +165,30 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
     useState<string[]>(pinnedWidgets);
   const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
+  const location = useLocation();
 
   useEffect(() => {
     setLocalPinnedWidgets(pinnedWidgets);
     setHasChanges(false);
   }, [pinnedWidgets, isOpen]);
+
+  // Filter widgets based on current page
+  const getRelevantWidgets = () => {
+    const currentPath = location.pathname;
+    const relevantCategories: { [key: string]: any[] } = {};
+
+    Object.entries(ALL_WIDGETS).forEach(([category, widgets]) => {
+      const relevantWidgets = widgets.filter(widget => 
+        widget.relevantPages.includes(currentPath) || widget.relevantPages.includes("/")
+      );
+      
+      if (relevantWidgets.length > 0) {
+        relevantCategories[category] = relevantWidgets;
+      }
+    });
+
+    return relevantCategories;
+  };
 
   const handleTogglePin = (widgetId: string) => {
     setLocalPinnedWidgets((prev) => {
@@ -180,6 +222,9 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
     onClose();
   };
 
+  const relevantWidgets = getRelevantWidgets();
+  const totalRelevantWidgets = Object.values(relevantWidgets).reduce((total, widgets) => total + widgets.length, 0);
+
   return (
     <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent
@@ -189,12 +234,19 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between text-slate-100">
             <span>Configure Dashboard Widgets</span>
-            <Badge variant="outline" className="border-slate-600 text-slate-300">{localPinnedWidgets.length} pinned</Badge>
+            <div className="flex gap-2">
+              <Badge variant="outline" className="border-slate-600 text-slate-300">
+                {totalRelevantWidgets} available
+              </Badge>
+              <Badge variant="outline" className="border-slate-600 text-slate-300">
+                {localPinnedWidgets.length} pinned
+              </Badge>
+            </div>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-8">
-          {Object.entries(CATEGORY_WIDGETS).map(([category, widgets]) => (
+          {Object.entries(relevantWidgets).map(([category, widgets]) => (
             <div key={category} className="space-y-4">
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-bold text-slate-100">{category}</h2>
@@ -254,7 +306,7 @@ const WidgetSelectionModal: React.FC<WidgetSelectionModalProps> = ({
 
         <div className="flex justify-between items-center pt-6 border-t border-slate-700">
           <p className="text-sm text-slate-400">
-            Click widgets to pin/unpin them on your dashboard
+            Click widgets to pin/unpin them on your dashboard • Showing widgets relevant to current page
           </p>
           <div className="flex space-x-3">
             <Button

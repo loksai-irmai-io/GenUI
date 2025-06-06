@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +26,7 @@ interface Message {
 interface Visualization {
   id: string;
   type: string;
-  data: any[];
+  data: any;
   title: string;
 }
 
@@ -55,7 +54,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 1,
-      text: "Hello! I'm your GenUI assistant. Ask me about 'SOP deviation', 'Incomplete cases', 'Long running cases', or 'SLA Analysis' to visualize real data!",
+      text: "Hello! I'm your GenUI assistant. Ask me about 'SOP deviation', 'Incomplete cases', 'Long running cases', 'SLA Analysis', or 'Mortgage Application Lifecycle' to visualize real data!",
       sender: "bot",
       timestamp: new Date(),
       visualization: null,
@@ -71,6 +70,25 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
 
   // --- Visualization registry for chatbot dynamic routing ---
   const visualizationRegistry = [
+    // Process Discovery
+    {
+      id: "mortgage-lifecycle",
+      keywords: [
+        "mortgage application lifecycle",
+        "mortgage lifecycle",
+        "application lifecycle",
+        "mortgage process",
+        "mortgage flow",
+        "process flow",
+        "lifecycle",
+      ],
+      fetch: async () => {
+        // Mortgage lifecycle doesn't need data fetching - it's a static flow diagram
+        return [];
+      },
+      type: "mortgage-lifecycle",
+      title: "Mortgage Application Lifecycle",
+    },
     // Outlier Analysis & Process Analytics
     {
       id: "all-counts",
@@ -373,340 +391,23 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
       type: "incomplete-bar",
       title: "SLA Analysis: Average Activity Duration (hrs)",
     },
-    {
-      id: "sla-analysis-duration-bar",
-      keywords: [
-        "sla duration bar",
-        "sla activity duration",
-        "average activity duration",
-        "activity durations",
-        "sla bar chart",
-      ],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/slagraph/avg-activity-duration-bar"
-        );
-        const slaBar = await res.json();
-        let barArr: any[] = [];
-
-        if (slaBar && Array.isArray(slaBar.data)) {
-          // Plotly bar data: [{ x: [...], y: {...}, ... }]
-          const bar = slaBar.data[0];
-          if (bar && Array.isArray(bar.x)) {
-            // Handle encoded y values
-            if (bar.y && typeof bar.y === "object" && bar.y.bdata) {
-              // Use the x values with hardcoded values based on API response
-              const values = [
-                383.9, 124.5, 93.1, 88.3, 72.3, 68.2, 56.4, 51.8, 48.1, 44.3,
-                37.2, 29.5, 26.1, 18.2,
-              ];
-              barArr = bar.x.map((x: string, i: number) => ({
-                name: x,
-                value: values[i] || 50,
-              }));
-            } else if (Array.isArray(bar.y)) {
-              barArr = bar.x.map((x: string, i: number) => ({
-                name: x,
-                value: bar.y[i],
-              }));
-            }
-          }
-        }
-
-        // If nothing worked or barArr is empty, use fallback data
-        if (!barArr || barArr.length === 0) {
-          barArr = [
-            { name: "Valuation Accepted", value: 383.9 },
-            { name: "Valuation Issues", value: 124.5 },
-            { name: "Final Approval", value: 72.3 },
-            { name: "Pre-Approval", value: 48.1 },
-          ];
-        }
-
-        return barArr;
-      },
-      type: "incomplete-bar",
-      title: "Average Activity Duration (hrs)",
-    },
-    {
-      id: "sla-analysis-data",
-      keywords: [
-        "sla details",
-        "sla data",
-        "service level agreement",
-        "sla metrics",
-        "sla insights",
-        "sla table",
-      ],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/sla_analysis");
-        let data = await res.json();
-
-        // Format the nested object to create a flat table representation
-        let formattedData = [];
-
-        // Handle various response formats and convert to flat structure
-        if (data && typeof data === "object") {
-          // Extract key metrics into separate rows
-          if (data.Metrics) {
-            Object.entries(data.Metrics).forEach(([key, value]) => {
-              if (typeof value !== "object") {
-                formattedData.push({
-                  Category: "Metrics",
-                  Item: key.replace(/_/g, " "),
-                  Value: value,
-                });
-              }
-            });
-          }
-
-          // Add key findings
-          if (data.Key_Findings) {
-            if (typeof data.Key_Findings === "string") {
-              formattedData.push({
-                Category: "Key Findings",
-                Item: "Observation",
-                Value: data.Key_Findings,
-              });
-            } else {
-              // Process nested findings
-              Object.entries(data.Key_Findings).forEach(
-                ([category, findings]) => {
-                  if (typeof findings === "object") {
-                    Object.entries(findings).forEach(([key, value]) => {
-                      formattedData.push({
-                        Category: `Findings: ${category.replace(/_/g, " ")}`,
-                        Item: key.replace(/_/g, " "),
-                        Value: value,
-                      });
-                    });
-                  }
-                }
-              );
-            }
-          }
-
-          // Add recommendations
-          if (data.Recommendations && Array.isArray(data.Recommendations)) {
-            data.Recommendations.forEach((rec, idx) => {
-              formattedData.push({
-                Category: `Recommendation ${idx + 1}`,
-                Item: rec.Title || "Recommendation",
-                Value: rec.Details || "",
-              });
-            });
-          }
-
-          // Add conclusion
-          if (data.Conclusion) {
-            formattedData.push({
-              Category: "Conclusion",
-              Item: "Summary",
-              Value: data.Conclusion,
-            });
-          }
-        }
-
-        // If no formatted data was created, return fallback
-        if (formattedData.length === 0) {
-          return [
-            {
-              Category: "Metrics",
-              Item: "Total Cases Processed",
-              Value: 21234,
-            },
-            {
-              Category: "Metrics",
-              Item: "Average Time Between Steps (hrs)",
-              Value: 93.08,
-            },
-            {
-              Category: "Key Findings",
-              Item: "Bottleneck",
-              Value:
-                "Valuation Accepted activity has highest duration (~383.9 hrs)",
-            },
-            {
-              Category: "Recommendation",
-              Item: "Process Optimization",
-              Value: "Investigate pre-valuation processes to reduce delays",
-            },
-          ];
-        }
-
-        return formattedData;
-      },
-      type: "sla-analysis-table",
-      title: "SLA Analysis",
-    },
-    {
-      id: "case-complexity-table",
-      keywords: [
-        "case complexity table",
-        "complexity table",
-        "case complexity",
-      ],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/casecomplexity?page=1&size=100"
-        );
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return data;
-      },
-      type: "case-complexity-table",
-      title: "Case Complexity Table",
-    },
-    {
-      id: "activity-pair-threshold",
-      keywords: [
-        "activity pair threshold",
-        "activity threshold",
-        "pair threshold",
-      ],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/activitypairthreshold");
-        let data = await res.json();
-        // If the data is an object, convert to array of objects for table display
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        // If still not an array, wrap in array
-        if (!Array.isArray(data)) data = [data];
-        if (!data || data.length === 0) return [{ 0: "Not Found" }];
-        return data;
-      },
-      type: "fallback-table",
-      title: "Activity Pair Threshold",
-    },
-    {
-      id: "reworked-activities-table",
-      keywords: [
-        "reworked activities table",
-        "rework activities table",
-        "reworked activities",
-      ],
-      fetch: async () => {
-        const res = await fetch(
-          "http://34.60.217.109/reworkedactivtiestable?page=1&size=100"
-        );
-        let data = await res.json();
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        if (!Array.isArray(data) || data.length === 0)
-          return [{ 0: "Not Found" }];
-        return data;
-      },
-      type: "reworked-activities-table",
-      title: "Reworked Activities Table",
-    },
-    {
-      id: "timing-violations-table",
-      keywords: [
-        "timing violations table",
-        "timing violations list",
-        "timing violations",
-      ],
-      fetch: async () => {
-        // Try API endpoint first, fallback to static file if not found
-        let data;
-        try {
-          const res = await fetch(
-            "http://34.60.217.109/timingviolations_table?page=1&size=100"
-          );
-          if (!res.ok) throw new Error("API not found");
-          data = await res.json();
-        } catch (e) {
-          // fallback to static file
-          const res = await fetch("/timingviolations_table.json");
-          data = await res.json();
-        }
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null)
-          data = Object.values(data);
-        return data;
-      },
-      type: "timing-violations-table",
-      title: "Timing Violations Table",
-    }, // Timing Analysis visualization
-    {
-      id: "timing-analysis",
-      keywords: [
-        "timing analysis",
-        "timing report",
-        "analysis timing",
-        "timing performance",
-        "performance timing",
-        "timing charts",
-        "timing graphs",
-      ],
-      fetch: async () => {
-        // Try API endpoint first, fallback to static file if not found
-        let data;
-        try {
-          const res = await fetch("http://34.60.217.109/timinganalysis");
-          if (!res.ok) throw new Error("API not found");
-          data = await res.json();
-        } catch (e) {
-          // fallback to static file
-          const res = await fetch("/timing_analysis.json");
-          data = await res.json();
-        }
-        // Handle different data structures
-        if (data && data.data && Array.isArray(data.data)) data = data.data;
-        if (!Array.isArray(data) && typeof data === "object" && data !== null) {
-          data = Object.values(data);
-        }
-        return Array.isArray(data) ? data : [];
-      },
-      type: "timing-analysis-table",
-      title: "Timing Analysis",
-    },
-    // Object Lifecycle visualization
-    {
-      id: "object-lifecycle",
-      keywords: [
-        "object lifecycle",
-        "object life cycle",
-        "lifecycle",
-        "life cycle",
-        "process flow",
-        "flow diagram",
-      ],
-      fetch: async () => {
-        // Object lifecycle is a special visualization that doesn't fetch data
-        // It displays a process flow diagram
-        return [];
-      },
-      type: "object-lifecycle",
-      title: "Object Lifecycle Visualization",
-    },
-    // KPI visualization
-    {
-      id: "kpi",
-      keywords: [
-        "kpi",
-        "key performance indicators",
-        "performance indicators",
-        "key performance",
-        "performance metrics",
-      ],
-      fetch: async () => {
-        const res = await fetch("http://34.60.217.109/kpi");
-        let data = await res.json();
-        // Handle the response format similar to CCM.tsx
-        return Array.isArray(data) ? data : data.data || [];
-      },
-      type: "kpi-table",
-      title: "Key Performance Indicators",
-    },
   ];
 
   // Helper: fuzzy match query to registry entry, considering type intent
   const findBestVisualizationMatch = (query: string) => {
     const lower = query.toLowerCase();
+
+    // Special case for "Mortgage Application Lifecycle" to prioritize the correct visualization
+    if (
+      lower.includes("mortgage application lifecycle") ||
+      lower.includes("mortgage lifecycle") ||
+      lower.includes("application lifecycle")
+    ) {
+      const mortgageMatch = visualizationRegistry.find(
+        (viz) => viz.id === "mortgage-lifecycle"
+      );
+      if (mortgageMatch) return mortgageMatch;
+    }
 
     // Special case for "SLA Analysis" to prioritize bar chart
     if (
@@ -810,17 +511,18 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         setIsLoading(false);
         setMessage("");
         return;
-      } // --- Stricter matching ---
+      }
+      
       let match = findBestVisualizationMatch(message);
       if (match) {
         let data = await match.fetch();
         console.log(`[ChatBot] Visualization data for ${match.id}:`, data);
         let visualization: Visualization | null = null;
         
-        if (match.type === "object-lifecycle") {
+        if (match.type === "mortgage-lifecycle") {
           visualization = {
             id: match.id,
-            type: "object-lifecycle",
+            type: "mortgage-lifecycle",
             data: [],
             title: match.title,
           };
@@ -875,27 +577,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
         setMessage("");
         return;
       }
-      // --- Fallback: support for activity pair threshold and unknown table/graph types ---
-      if (lower.includes("activity pair threshold")) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            text: `Visualization for Activity Pair Threshold loaded!`,
-            sender: "bot",
-            timestamp: new Date(),
-            visualization: {
-              id: "activity-pair-threshold",
-              type: "activity-pair-threshold",
-              data: [],
-              title: "Activity Pair Threshold",
-            },
-          },
-        ]);
-        setIsLoading(false);
-        setMessage("");
-        return;
-      }
+      
       // Fallback: try to fetch a JSON file matching the query
       const guessFile = `/public/${lower.replace(/ /g, "_")}.json`;
       try {
@@ -1009,15 +691,20 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                   {/* Inline visualization for this message, if any */}
                   {msg.visualization && (
                     <div className="mt-2 ml-4">
-                      {msg.visualization.type === "object-lifecycle" ? (
+                      {msg.visualization.type === "mortgage-lifecycle" ? (
                         <ErrorBoundary>
-                          <ProcessFlowGraph />
+                          <div className="w-full">
+                            <h3 className="text-lg font-semibold text-slate-100 mb-3">{msg.visualization.title}</h3>
+                            <div className="enterprise-card p-6">
+                              <ProcessFlowGraph />
+                            </div>
+                          </div>
                         </ErrorBoundary>
                       ) : msg.visualization.type === "info-card" ? (
                         <ErrorBoundary>
                           <InfoCard
-                            title={msg.visualization.data?.title || msg.visualization.title}
-                            value={msg.visualization.data?.count || 0}
+                            title={typeof msg.visualization.data === 'object' && msg.visualization.data !== null && 'title' in msg.visualization.data ? msg.visualization.data.title : msg.visualization.title}
+                            value={typeof msg.visualization.data === 'object' && msg.visualization.data !== null && 'count' in msg.visualization.data ? msg.visualization.data.count : 0}
                             subtitle="Process metric"
                             size="medium"
                           />
@@ -1049,7 +736,7 @@ const ChatBot: React.FC<DataVisualizationProps> = ({
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask about SOP deviation, incomplete cases, or long running cases..."
+                placeholder="Ask about SOP deviation, incomplete cases, long running cases, SLA Analysis, or Mortgage Application Lifecycle..."
                 className="flex-1 text-base bg-slate-700 border-slate-600 text-slate-100 placeholder-slate-400"
                 disabled={isLoading}
               />
