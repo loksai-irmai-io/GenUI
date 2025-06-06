@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Send, X, MessageCircle, BarChart3, TrendingUp, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,22 @@ interface Message {
   widget?: React.ReactNode;
 }
 
-const ChatBot: React.FC = () => {
+interface ChatBotProps {
+  onDataReceived?: (type: string, data: any[], title: string) => void;
+  visualizations?: Array<{
+    id: string;
+    type: string;
+    data: any[];
+    title: string;
+  }>;
+  clearVisualizations?: () => void;
+}
+
+const ChatBot: React.FC<ChatBotProps> = ({ 
+  onDataReceived, 
+  visualizations = [], 
+  clearVisualizations 
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -104,7 +120,7 @@ const ChatBot: React.FC = () => {
           { name: 'Detectability', value: fmeaSummaryData.detectability_rating, color: '#10b981' }
         ] : [];
 
-        return {
+        const response = {
           text: fmeaSummaryData 
             ? `Here's your FMEA dashboard overview. The current Risk Priority Number (RPN) is ${fmeaSummaryData.rpn} with a ${fmeaSummaryData.risk_level} risk level. The severity rating is ${fmeaSummaryData.severity_rating}, likelihood is ${fmeaSummaryData.likelihood_rating}, and detectability is ${fmeaSummaryData.detectability_rating}.`
             : "I'm showing you the FMEA dashboard with risk analysis metrics.",
@@ -142,6 +158,13 @@ const ChatBot: React.FC = () => {
             </div>
           ),
         };
+
+        // Call onDataReceived if provided
+        if (onDataReceived && dashboardData.length > 0) {
+          onDataReceived("fmea-dashboard", dashboardData, "FMEA Risk Rating Distribution");
+        }
+
+        return response;
       }
 
       if (message.includes("table") || message.includes("analysis table")) {
@@ -149,7 +172,7 @@ const ChatBot: React.FC = () => {
           ? Object.keys(fmeaTableData[0]).map((key) => ({ key, label: key }))
           : [];
         
-        return {
+        const response = {
           text: "Here's the detailed FMEA analysis table showing all failure modes, effects, and causes across different processes.",
           widget: (
             <DataTable
@@ -159,6 +182,13 @@ const ChatBot: React.FC = () => {
             />
           ),
         };
+
+        // Call onDataReceived if provided
+        if (onDataReceived && fmeaTableData.length > 0) {
+          onDataReceived("fmea-table", fmeaTableData, "FMEA Analysis Table");
+        }
+
+        return response;
       }
 
       if (message.includes("severity")) {
@@ -166,7 +196,7 @@ const ChatBot: React.FC = () => {
           ? Object.keys(fmeaSeverityData[0]).map((key) => ({ key, label: key }))
           : [];
         
-        return {
+        const response = {
           text: "Here's the severity analysis showing the impact assessment of different failure modes with their severity scores and justifications.",
           widget: (
             <DataTable
@@ -176,6 +206,13 @@ const ChatBot: React.FC = () => {
             />
           ),
         };
+
+        // Call onDataReceived if provided
+        if (onDataReceived && fmeaSeverityData.length > 0) {
+          onDataReceived("fmea-severity", fmeaSeverityData, "FMEA Severity Analysis");
+        }
+
+        return response;
       }
 
       if (message.includes("likelihood") || message.includes("probability")) {
@@ -183,7 +220,7 @@ const ChatBot: React.FC = () => {
           ? Object.keys(fmeaLikelihoodData[0]).map((key) => ({ key, label: key }))
           : [];
         
-        return {
+        const response = {
           text: "Here's the likelihood analysis showing the probability assessment of failure modes occurring.",
           widget: (
             <DataTable
@@ -193,6 +230,13 @@ const ChatBot: React.FC = () => {
             />
           ),
         };
+
+        // Call onDataReceived if provided
+        if (onDataReceived && fmeaLikelihoodData.length > 0) {
+          onDataReceived("fmea-likelihood", fmeaLikelihoodData, "FMEA Likelihood Analysis");
+        }
+
+        return response;
       }
 
       if (message.includes("detectability") || message.includes("detection")) {
@@ -200,7 +244,7 @@ const ChatBot: React.FC = () => {
           ? Object.keys(fmeaDetectabilityData[0]).map((key) => ({ key, label: key }))
           : [];
         
-        return {
+        const response = {
           text: "Here's the detectability analysis showing how well we can detect failure modes before they impact customers.",
           widget: (
             <DataTable
@@ -210,6 +254,13 @@ const ChatBot: React.FC = () => {
             />
           ),
         };
+
+        // Call onDataReceived if provided
+        if (onDataReceived && fmeaDetectabilityData.length > 0) {
+          onDataReceived("fmea-detectability", fmeaDetectabilityData, "FMEA Detectability Analysis");
+        }
+
+        return response;
       }
 
       // General FMEA response
@@ -219,18 +270,25 @@ const ChatBot: React.FC = () => {
     }
 
     if (message.includes("sla") || message.includes("service level agreement")) {
+      const slaData = [
+        { name: "Valuation Accepted", value: 383.9 },
+        { name: "Valuation Issues", value: 124.5 },
+        { name: "Final Approval", value: 72.3 },
+        { name: "Pre-Approval", value: 48.1 },
+      ];
+
+      // Call onDataReceived if provided
+      if (onDataReceived) {
+        onDataReceived("sla-analysis", slaData, "SLA Analysis: Average Activity Duration");
+      }
+
       return {
         text: "Here's an analysis of our Service Level Agreements. I'm showing you the average activity duration.",
         widget: (
           <DataVisualizationWidget
             type="incomplete-bar"
             title="SLA Analysis: Average Activity Duration (hrs)"
-            data={[
-              { name: "Valuation Accepted", value: 383.9 },
-              { name: "Valuation Issues", value: 124.5 },
-              { name: "Final Approval", value: 72.3 },
-              { name: "Pre-Approval", value: 48.1 },
-            ]}
+            data={slaData}
           />
         ),
       };
@@ -247,18 +305,25 @@ const ChatBot: React.FC = () => {
     }
 
     if (message.includes("failure patterns") || message.includes("failures")) {
+      const failureData = [
+        { name: "SOP Deviations", value: 23 },
+        { name: "Incomplete Cases", value: 45 },
+        { name: "Long Running Cases", value: 12 },
+        { name: "Resource Switches", value: 78 },
+      ];
+
+      // Call onDataReceived if provided
+      if (onDataReceived) {
+        onDataReceived("failure-patterns", failureData, "Process Failure Patterns Distribution");
+      }
+
       return {
         text: "Here's a distribution of process failure patterns to help identify common issues.",
         widget: (
           <DataVisualizationWidget
             type="process-failure-patterns-bar"
             title="Process Failure Patterns Distribution"
-            data={[
-              { name: "SOP Deviations", value: 23 },
-              { name: "Incomplete Cases", value: 45 },
-              { name: "Long Running Cases", value: 12 },
-              { name: "Resource Switches", value: 78 },
-            ]}
+            data={failureData}
           />
         ),
       };
@@ -315,15 +380,28 @@ const ChatBot: React.FC = () => {
                 Process Assistant
               </h3>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-400 hover:text-slate-200"
-              onClick={() => setIsOpen(false)}
-              aria-label="Close chatbot"
-            >
-              <X className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              {clearVisualizations && visualizations && visualizations.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-slate-400 hover:text-slate-200"
+                  onClick={clearVisualizations}
+                  aria-label="Clear visualizations"
+                >
+                  Clear
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-400 hover:text-slate-200"
+                onClick={() => setIsOpen(false)}
+                aria-label="Close chatbot"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           <CardContent className="p-4 h-[400px] overflow-y-auto flex-grow">
@@ -351,6 +429,22 @@ const ChatBot: React.FC = () => {
                 )}
               </div>
             ))}
+            
+            {/* Display external visualizations */}
+            {visualizations && visualizations.length > 0 && (
+              <div className="mb-3">
+                <div className="bg-slate-700 text-slate-300 rounded-lg p-3">
+                  <p className="text-sm mb-2">External visualizations:</p>
+                  {visualizations.map((viz) => (
+                    <div key={viz.id} className="mb-2 p-2 bg-slate-600 rounded">
+                      <p className="text-xs font-medium">{viz.title}</p>
+                      <p className="text-xs text-slate-400">Type: {viz.type}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             {isLoading && (
               <div className="text-left">
                 <div className="inline-block p-3 rounded-lg bg-slate-700 text-slate-300 rounded-bl-none">
